@@ -1,4 +1,9 @@
 const evaluateAndOutput = (interactions, evalElement) => {
+    let expressions = collectExpressions(interactions);
+    outputExpressions(expressions, evalElement);
+}
+
+const collectExpressions = (interactions) => {
     let collections = [];
     let expressions = [];
     let buffer = "";
@@ -23,11 +28,10 @@ const evaluateAndOutput = (interactions, evalElement) => {
         expressions.push(collections.reduce((a, b) => a.concat(b)));
     }
 
-    console.log(expressions);
-    for (let elem of expressions) {
-        console.log(elem);
-    }
+    return expressions;
+}
 
+const outputExpressions = (expressions, evalElement) => {
     evalElement.value = "";
 
     for (let elem of expressions) {
