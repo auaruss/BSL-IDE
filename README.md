@@ -5,4 +5,4 @@ run by doing:
 ```
 cd ../bsl-ide
 npm start
-```git
+```
