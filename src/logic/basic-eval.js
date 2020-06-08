@@ -30,7 +30,7 @@ const collectExpressions = (code) => {
         collections.push(buffer);
     }
     if (collections) {
-        expressions.push(collections.reduce((a, b) => a.concat(b), ''));
+        expressions.push([collections.reduce((a, b) => a.concat(b), ''), linum]);
     }
 
     return expressions;
