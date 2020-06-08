@@ -1,5 +1,4 @@
 const evaluateCode = (code, evaluate) => {
-    console.log(collectExpressions(code));
     let expressions = collectExpressions(code);
     return evalExpressions(expressions, evaluate);
 }
@@ -30,7 +29,7 @@ const collectExpressions = (code) => {
         collections.push(buffer);
     }
     if (collections) {
-        expressions.push([collections.reduce((a, b) => a.concat(b), ''), linum]);
+        expressions.push([collections.reduce((a, b) => a.concat(b), ''), linum] );
     }
 
     return expressions;
@@ -38,33 +37,28 @@ const collectExpressions = (code) => {
 
 const evalExpressions = (expressions, evaluate) => {
     let value = '';
-    let linum = 0;
-    let prevLinumEnd = 0;
 
-    try {
-        for (let elem of expressions) {
-            if (value) {
-                while (linum < prevLinumEnd) {
-                    value += '\n';
-                    linum += 1;
-                }
-                if (evaluate(elem[0])) {
-                    value += '\n' + String(evaluate(elem[0]));
-                } else {
-                    value += '\n';
-                }
-                linum += 1;
-            } else {
-                if (evaluate(elem[0])) {
-                    value = String(evaluate(elem[0]));
-                }
-                linum += 1;
+    for (let elem of expressions) {
+        try {
+            let exprOutput = evaluate(elem[0]);
+            while (lines(value) < elem[1]) {
+                value += '\n';
             }
+            if (exprOutput) {
+                value += String(exprOutput) + '\n';
+            }
+        } catch (err) { }
+    }
 
-            prevLinumEnd = elem[1];
-        }
-    } catch (err) { }
     return value;
+}
+
+function lines(s) {
+    let lines = 1;
+    for (let char of s) {
+        if (char == '\n') lines += 1;
+    }
+    return lines;
 }
 
 export default evaluateCode;
