@@ -50,6 +50,8 @@ const evalExpressions = (expressions, evaluate) => {
                 }
                 if (evaluate(elem[0])) {
                     value += '\n' + String(evaluate(elem[0]));
+                } else {
+                    value += '\n';
                 }
                 linum += 1;
             } else {
