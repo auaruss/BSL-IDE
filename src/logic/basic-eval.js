@@ -7,11 +7,15 @@ const evaluateCode = (code, evaluate) => {
 const collectExpressions = (code) => {
     let collections = [];
     let expressions = [];
+    let linum = 0;
     let buffer = "";
+
     for (let elem of code) {
         if (elem == "\n") {
+            linum += 1;
+
             if (! buffer) {
-                expressions.push(collections.reduce((a, b) => a.concat(b), ''));
+                expressions.push([collections.reduce((a, b) => a.concat(b), ''), linum]);
                 collections = [];
             } else {
                 collections.push(buffer);
@@ -34,17 +38,30 @@ const collectExpressions = (code) => {
 
 const evalExpressions = (expressions, evaluate) => {
     let value = '';
+    let linum = 0;
+    let prevLinumEnd = 0;
 
     try {
         for (let elem of expressions) {
             if (value) {
-                value += "\n" + String(evaluate(elem));
+                while (linum < prevLinumEnd) {
+                    value += '\n';
+                    linum += 1;
+                }
+                if (evaluate(elem[0])) {
+                    value += '\n' + String(evaluate(elem[0]));
+                }
+                linum += 1;
             } else {
-                value = String(evaluate(elem));
+                if (evaluate(elem[0])) {
+                    value = String(evaluate(elem[0]));
+                }
+                linum += 1;
             }
+
+            prevLinumEnd = elem[1];
         }
     } catch (err) { }
-    
     return value;
 }
 
