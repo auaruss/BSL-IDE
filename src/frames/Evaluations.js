@@ -1,5 +1,5 @@
 import React from 'react';
-import evaluateCode from '../logic/basic-eval';
+const formatEvaluation = require('../logic/eval-bridge.js');
 
 function Evaluations(props) {
   return (
@@ -11,7 +11,8 @@ function Evaluations(props) {
         cols="80"
         placeholder="Evaluations"
         readonly="true"
-        value={evaluateCode(props.code, eval)}
+        // value = {evaluate(props.code)}
+        value={formatEvaluation(props.code)}
       ></textarea>
     </div>
   );
