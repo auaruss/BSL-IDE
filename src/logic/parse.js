@@ -40,7 +40,7 @@ const tokenize = function(exp)
       else if (ch == '"')
       {
         let str = ch;
-        while(exp[++i] != '"')
+        while(exp[i] && exp[++i] != '"')
           str += exp[i];
         str += exp[i++];
         tokens.push({type: "id", value: str});
