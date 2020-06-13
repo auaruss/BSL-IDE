@@ -15,7 +15,6 @@ type ListOf<T>
   | NonEmpty<T>;
 
 // BSL Specification.
-
 type program = ListOf<DefOrExpr>;
 
 type DefOrExpr
