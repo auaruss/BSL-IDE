@@ -1,18 +1,17 @@
 // How to more easily check if a name is actually a valid name?
 
 // Helper types.
-type Env = ListOf<Var>;
-type Name = string;
+type BSLName = string;
 type FunctionDefinition = [Name, Closure];
 type Closure = [Env, Expr];
 type Struct = [Name, ListOf<Var>];
 type Var = [Name, Expr];
 
-type Empty<T> = [];
-type NonEmpty<T> = [T, ListOf<T>];
-type ListOf<T>
-  = Empty<T>
-  | NonEmpty<T>;
+// type Empty<T> = [];
+// type NonEmpty<T> = [T, ListOf<T>];
+// type ListOf<T>
+//   = Empty<T>
+//   | NonEmpty<T>;
 
 // BSL Specification.
 type program = ListOf<DefOrExpr>;
@@ -58,3 +57,12 @@ type LibraryRequire
 
 type Package
   = [string, string, number, number];
+
+
+// function matchExample(d: Definition): string {
+//   switch(d[0]) {
+//     case 'define':
+//       switch
+
+//   }
+// }
