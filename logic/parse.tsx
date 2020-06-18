@@ -14,31 +14,25 @@
 type Result<T>
   = {
   thing: T,
-  remain: ListOf<Token>
+  remain: Token[]
 } | {
   error: string,
-  remain: ListOf<Token>
+  remain: Token[]
 };
 
 const space = {type: "ws", value: " "};
 
-type Empty<T> = [];
-type NonEmpty<T> = [T, ListOf<T>];
-type ListOf<T>
-  = Empty<T>
-  | NonEmpty<T>;
-
-function empty<T>(): Empty<T> {
+function empty<T>(): T[] {
   return [];
 }
-function cons<T>(car: T, cdr: ListOf<T>): ListOf<T> {
-  return [car, cdr];
+function cons<T>(car: T, cdr: T[]): T[] {
+  return [car].concat(cdr);
 }
-function car<T>(ls: NonEmpty<T>): T {
+function car<T>(ls: T[]): T {
   return ls[0];
 }
-function cdr<T>(ls: NonEmpty<T>): ListOf<T> {
-  return ls[1];
+function cdr<T>(ls: T[]): T[] {
+  return ls.slice(1);
 }
 
 enum TokenType {
@@ -61,7 +55,10 @@ type Token
     value: string
   };
 
-const tokenize = (exp: string): ListOf<Token> => {
+// Regexp Definitions.
+
+
+const tokenize = (exp: string): Token[] => {
   if (exp == '') {
     return empty<Token>();
   } else if (exp[0] == '(') {

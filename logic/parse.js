@@ -4,13 +4,13 @@ function empty() {
     return [];
 }
 function cons(car, cdr) {
-    return [car, cdr];
+    return [car].concat(cdr);
 }
 function car(ls) {
     return ls[0];
 }
 function cdr(ls) {
-    return ls[1];
+    return ls.slice(1);
 }
 var TokenType;
 (function (TokenType) {
@@ -26,6 +26,7 @@ var TokenType;
     TokenType["Whitespace"] = "Whitespace";
     TokenType["Boolean"] = "Boolean";
 })(TokenType || (TokenType = {}));
+// Regexp Definitions.
 var tokenize = function (exp) {
     if (exp == '') {
         return empty();
