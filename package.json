@@ -13,8 +13,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "mtest": "mocha -r ts-node/register test/**/*.spec.ts",
+    "test": "mocha",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

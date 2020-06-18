@@ -1,250 +1,175 @@
 'use strict';
-// SExpr Parser in TS
-// Sam Soucie, Alice Russell
-
-// TODO: abstract tokenizer cases
-
-// An SExp is one of:
-// - String
-// - [SExp]
-
-// A Result is one of:
-// - {sexp: SExp, remain: [Token]}
-// - {error: String, remain: String}
-type Result<T>
-  = {
-  thing: T,
-  remain: ListOf<Token>
-} | {
-  error: string,
-  remain: ListOf<Token>
+var space = { type: "ws", value: " " };
+function empty() {
+    return [];
+}
+function cons(car, cdr) {
+    return [car, cdr];
+}
+function car(ls) {
+    return ls[0];
+}
+function cdr(ls) {
+    return ls[1];
+}
+var TokenType;
+(function (TokenType) {
+    TokenType["OpenParen"] = "OpenParen";
+    TokenType["OpenSquareParen"] = "OpenSquareParen";
+    TokenType["OpenBraceParen"] = "OpenBraceParen";
+    TokenType["CloseParen"] = "CloseParen";
+    TokenType["CloseSquareParen"] = "CloseSquareParen";
+    TokenType["CloseBraceParen"] = "CloseBraceParen";
+    TokenType["Num"] = "Num";
+    TokenType["StringLiteral"] = "StringLiteral";
+    TokenType["Identifier"] = "Identifier";
+    TokenType["Whitespace"] = "Whitespace";
+    TokenType["Boolean"] = "Boolean";
+})(TokenType || (TokenType = {}));
+var tokenize = function (exp) {
+    if (exp == '') {
+        return empty();
+    }
+    else if (exp[0] == '(') {
+        return cons({ type: TokenType.OpenParen, value: '(' }, tokenize(exp.slice(1)));
+    }
+    else if (exp[0] == '[') {
+        return cons({ type: TokenType.OpenSquareParen, value: '[' }, tokenize(exp.slice(1)));
+    }
+    else if (exp[0] == '{') {
+        return cons({ type: TokenType.OpenBraceParen, value: '{' }, tokenize(exp.slice(1)));
+    }
+    else if (exp[0] == ')') {
+        return cons({ type: TokenType.CloseParen, value: ')' }, tokenize(exp.slice(1)));
+    }
+    else if (exp[0] == ']') {
+        return cons({ type: TokenType.CloseSquareParen, value: ']' }, tokenize(exp.slice(1)));
+    }
+    else if (exp[0] == '}') {
+        return cons({ type: TokenType.CloseBraceParen, value: '}' }, tokenize(exp.slice(1)));
+    }
+    else if (startsWithNumber(exp)) {
+        var _a = splitPrefixNumber(exp), val = _a[0], rest = _a[1];
+        return cons({ type: TokenType.Num, value: val }, tokenize(rest));
+    }
+    else if (startsWithString(exp)) {
+        var _b = splitPrefixString(exp), val = _b[0], rest = _b[1];
+        return cons({ type: TokenType.StringLiteral, value: val }, tokenize(rest));
+    }
+    else if (startsWithIdentifier(exp)) {
+        var _c = splitPrefixIdentifier(exp), val = _c[0], rest = _c[1];
+        return cons({ type: TokenType.Identifier, value: val }, tokenize(rest));
+    }
+    else if (startsWithWhitespace(exp)) {
+        var _d = splitPrefixWhitespace(exp), val = _d[0], rest = _d[1];
+        return cons({ type: TokenType.Whitespace, value: val }, tokenize(rest));
+    }
+    else if (startsWithBoolean(exp)) {
+        var _e = splitPrefixBoolean(exp), val = _e[0], rest = _e[1];
+        return cons({ type: TokenType.Boolean, value: val }, tokenize(rest));
+    }
+    else {
+        throw new Error("error tokenizing");
+    }
 };
-
-const space = {type: "ws", value: " "};
-
-type Empty<T> = [];
-type NonEmpty<T> = [T, ListOf<T>];
-type ListOf<T>
-  = Empty<T>
-  | NonEmpty<T>;
-
-function empty<T>(): Empty<T> {
-  return [];
-}
-function cons<T>(car: T, cdr: ListOf<T>): ListOf<T> {
-  return [car, cdr];
-}
-function car<T>(ls: NonEmpty<T>): T {
-  return ls[0];
-}
-function cdr<T>(ls: NonEmpty<T>): ListOf<T> {
-  return ls[1];
-}
-
-enum TokenType {
-  OpenParen,
-  OpenSquareParen,
-  OpenBraceParen,
-  CloseParen,
-  CloseSquareParen,
-  CloseBraceParen,
-  Num,
-  StringLiteral,
-  Identifier,
-  Whitespace,
-  Boolean
-}
-
-type Token
-  = {
-    type: TokenType
-    value: string
-  };
-
-const tokenize = (exp: string): ListOf<Token> => {
-  if (exp == '') {
-    return empty<Token>();
-  } else if (exp[0] == '(') {
-    return cons<Token>(
-      {type: TokenType.OpenParen, value: '('},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '[') {
-    return cons<Token>(
-      {type: TokenType.OpenSquareParen, value: '['},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '{') {
-    return cons<Token>(
-      {type: TokenType.OpenBraceParen, value: '{'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == ')') {
-    return cons<Token>(
-      {type: TokenType.CloseParen, value: ')'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == ']') {
-    return cons<Token>(
-      {type: TokenType.CloseSquareParen, value: ']'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '}') {
-    return cons<Token>(
-      {type: TokenType.CloseBraceParen, value: '}'},
-      tokenize(exp.slice(1))
-    );
-  } else if (startsWithNumber(exp)) {
-    let [val, rest] = splitPrefixNumber(exp);
-    return cons<Token>(
-      {type: TokenType.Num, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithString(exp)) {
-    let [val, rest] = splitPrefixString(exp);
-    return cons<Token>(
-      {type: TokenType.StringLiteral, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithIdentifier(exp)) {
-    let [val, rest] = splitPrefixIdentifier(exp);
-    return cons<Token>(
-      {type: TokenType.Identifier, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithWhitespace(exp)) {
-    let [val, rest] = splitPrefixWhitespace(exp)
-    return cons<Token>(
-      {type: TokenType.Whitespace, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithBoolean(exp)) {
-    let [val, rest] = splitPrefixBoolean(exp);
-    return cons<Token>(
-      {type: TokenType.Boolean, value: val},
-      tokenize(rest)
-    );
-  } else {
-    throw new Error("error tokenizing");
-  }
+var isDigit = function (ch) {
+    return /[0-9]/.test(ch);
 };
-
-const isDigit = (ch: string): boolean => {
-  return /[0-9]/.test(ch);
-}
-
-const isWhitespace = (ch: string): boolean => {
+var isWhitespace = function (ch) {
     return /\s/.test(ch);
 };
-
-
-const startsWithNumber = (exp: string): boolean => {
-  if (! isDigit(exp[0])) return false;
-  
-  let i: number = 1;
-  while (i < exp.length) {
-    if (! isDigit(exp[i])) {
-      return isWhitespace(exp[i]);
+var startsWithNumber = function (exp) {
+    if (!isDigit(exp[0]))
+        return false;
+    var i = 1;
+    while (i < exp.length) {
+        if (!isDigit(exp[i])) {
+            return isWhitespace(exp[i]);
+        }
+        i++;
     }
-    i++;
-  }
-
-  return true;
-}
-
-const startsWithString = (exp: string): boolean => {
-  if (! (exp[0] == '"')) return false;
-  
-  let i: number = 1;
-  while (i < exp.length) {
-    // check for unescaped " character
-    if (exp[i] == '"' && (! (exp[i-1] == "\\"))) {
-      return true;
+    return true;
+};
+var startsWithString = function (exp) {
+    if (!(exp[0] == '"'))
+        return false;
+    var i = 1;
+    while (i < exp.length) {
+        // check for unescaped " character
+        if (exp[i] == '"' && (!(exp[i - 1] == "\\"))) {
+            return true;
+        }
+        i++;
     }
-    i++;
-  }
-  return false;
-}
-
-const startsWithIdentifier = (exp: string): boolean => {
-  if (isWhitespace(exp[0])) return false;
-  let i = 0;
-  while (i < exp.length) {
-    // Checks for invalid characters in BSL names
-    if (/[\"\,\'\`[()\[\]\{\}\|;#]/.test(exp)) return false;
-    if (isWhitespace(exp[i])) return true;
-    i++;
-  }
-  return true;
-}
-
-const startsWithWhitespace = (exp: string): boolean => {
-  return isWhitespace(exp[0]);
-}
-
-const startsWithBoolean = (exp: string) => {
-  const lower = exp.toLowerCase();
-  return (
-    lower.slice(0,2) == '#t '
-    || lower.slice(0,2) == '#f '
-    || lower.slice(0,5) == '#true '
-    || lower.slice(0,6) == '#false '
-    );
-}
-
+    return false;
+};
+var startsWithIdentifier = function (exp) {
+    if (isWhitespace(exp[0]))
+        return false;
+    var i = 0;
+    while (i < exp.length) {
+        // Checks for invalid characters in BSL names
+        if (/[\"\,\'\`()\[\]\{\}\|;#]/.test(exp[0]))
+            return false;
+        if (isWhitespace(exp[i]))
+            return true;
+        i++;
+    }
+    return true;
+};
+var startsWithWhitespace = function (exp) {
+    return isWhitespace(exp[0]);
+};
+var startsWithBoolean = function (exp) {
+    var lower = exp.toLowerCase();
+    return (lower.slice(0, 2) == '#t'
+        || lower.slice(0, 2) == '#f'
+        || lower.slice(0, 5) == '#true'
+        || lower.slice(0, 6) == '#false');
+};
 // Breaks an expression which begins with a number into that number and
 // the rest of the expression.
-const splitPrefixNumber = (exp: string): [string, string] =>  {
-  let s:string = '';
-  let i:number = 0;
-
-  while (isDigit(exp[i]) && i < exp.length) {
-    s += exp[i];
-    i++;
-  }
-
-  return [s, exp.slice(i)];
-}
-
-const splitPrefixString = (exp: string): [string, string] => {
-  let s: string = '"';
-  let i = 1;
-
-  while (exp[i] != '"') {
-    s += exp[i];
-    i++;
-  }
-
-  s += '"';
-
-  return [s, exp.slice(i+1)];
-}
-
+var splitPrefixNumber = function (exp) {
+    var s = '';
+    var i = 0;
+    while (isDigit(exp[i]) && i < exp.length) {
+        s += exp[i];
+        i++;
+    }
+    return [s, exp.slice(i)];
+};
+var splitPrefixString = function (exp) {
+    var s = '"';
+    var i = 1;
+    while (exp[i] != '"') {
+        s += exp[i];
+        i++;
+    }
+    s += '"';
+    return [s, exp.slice(i + 1)];
+};
 // Breaks an expression which begins with an identifier into that
 // identifier and the rest of the expression.
-const splitPrefixIdentifier = (exp: string): [string, string] => {
-  let s: string = '';
-  let i: number = 0;
-
-  while((! isWhitespace(exp[i])) && i < exp.length) {
-    s += exp[i];
-    i++;
-  }
-
-  return [s, exp.slice(i)];
-}
-
-const splitPrefixWhitespace = (exp: string): [string, string] => {
-  return [exp[0], exp.slice(1)];
-}
-
-const splitPrefixBoolean = (exp: string): [string, string] => {
-  let lower = exp.slice(0, 6).toLowerCase();
-  if (lower == '#false') return [lower, exp.slice(6)];
-  if (lower.slice(0, 5) == '#true') return [lower.slice(0, 5), exp.slice(5)];
-  return [lower.slice(0, 2), exp.slice(2)];
-}
-
+var splitPrefixIdentifier = function (exp) {
+    var s = '';
+    var i = 0;
+    while ((!isWhitespace(exp[i])) && i < exp.length && /[\"\,\'\`()\[\]\{\}\|;#]/.test(exp[0])) {
+        s += exp[i];
+        i++;
+    }
+    return [s, exp.slice(i)];
+};
+var splitPrefixWhitespace = function (exp) {
+    return [exp[0], exp.slice(1)];
+};
+var splitPrefixBoolean = function (exp) {
+    var lower = exp.slice(0, 6).toLowerCase();
+    if (lower == '#false')
+        return [lower, exp.slice(6)];
+    if (lower.slice(0, 5) == '#true')
+        return [lower.slice(0, 5), exp.slice(5)];
+    return [lower.slice(0, 2), exp.slice(2)];
+};
 // // parse : String -> Result
 // // parses a string into an SExp, making sure that nothing remains
 // const parse = function(str)
@@ -256,7 +181,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return res;
 //   return res.sexp;
 // };
-
 // // parseSexp : String -> Result
 // // parses an SExp String into a result
 // const parseSexp = function(str)
@@ -322,23 +246,14 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //   result.push(initialResult.sexp);
 //   return result;
 // };
-
-
 // // A CondClause is {question: BSLExpr, answer: BSLExpr}
 // // A CondExpr is [CondClause]
-
 // // An IfExpr is {question: BSLExpr, answer: BSLExpr, otherwise: BSLExpr}
-
 // // An Application is {name: Name, args: [BSLExpr]}
-
 // // An AndExpr is {and: [BSLExpr]}
-
 // // An OrExpr is {or: [BSLExpr]}
-
 // // A Name is a String without a space or any of these chars: ",'`()[]{}|;#
-
 // // A String is enclosed with ""
-
 // // A Boolean is one of:
 // // - true
 // // - false
@@ -348,7 +263,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 // // - #F
 // // - #true
 // // - #false
-
 // // A BSLExpr is one of:
 // // - Application
 // // - CondExpr
@@ -360,12 +274,10 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 // // - Boolean
 // // - String
 // // note: BSLExpr doesn't include 'name, '(), character
-
 // const generateExpr = function(str)
 // {
 //   return toBSLExpr(parse(str));  
 // };
-
 // const toBSLExpr = function(sexp)
 // {
 //   if (sexp.error != undefined)
@@ -450,11 +362,8 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //   {
 //     expr = {error: "not a BSL expression."};  
 //   }
-
 //   return expr;
-
 // };
-
 // const isLambda = function(sexp)
 // {
 //   if (typeof sexp === "string")
@@ -465,14 +374,12 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return andMap(sexp[1], (arg) => isName(arg));
 // }
-
 // const isApp = function(sexp)
 // {
 //   if (typeof sexp === "string")
 //     return false;
 //   return isLambda(first(sexp)) || isName(first(sexp)); // could add && sexp.length > 1
 // };
-
 // const isCondExpr = function(sexp)
 // {
 //   if (typeof sexp === "string")
@@ -489,28 +396,24 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //   }
 //   return result;
 // };
-
 // const isIfExpr = function(sexp)
 // {
 //   if (typeof sexp === "string")
 //     return false;
 //   return first(sexp) === "if" && sexp.length == 4; 
 // };
-
 // const isAndExpr = function(sexp)
 // {
 //   if (typeof sexp === "string")
 //     return false;
 //   return first(sexp) === "and" && sexp.length > 2;
 // };
-
 // const isOrExpr = function(sexp)
 // {
 //   if (typeof sexp === "string")
 //     return false;
 //   return first(sexp) === "or" && sexp.length > 2;
 // };
-
 // const isName = function(sexp)
 // {
 //   if (typeof sexp !== "string")
@@ -519,40 +422,33 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return !/("|,|'|`|\(|\)|\[|\]|\{|\}|\||;|#)/.test(sexp);
 // };
-
 // const isNumber = function(sexp)
 // {
 //   if (typeof sexp !== "string")
 //     return false;
 //   return !/[^0-9]/.test(sexp);
 // };
-
 // const isBoolean = function(sexp)
 // {
 //   return sexp === "true" || sexp === "false" || sexp === "#t" || sexp === "#f" || sexp === "#T" || sexp === "#F" || sexp === "#true" || sexp === "#false";
 // };
-
 // const isString = function(sexp)
 // {
 //   if (typeof sexp !== "string")
 //     return false;
 //   return sexp[0] === "\"" && sexp[sexp.length - 1] === "\"";
 // };
-
 // // A FunctionDef is {name: Name, args: [Name], body: BSLExpr}
 // // A ConstantDef is {name: Name, body: BSLExpr}
 // // A StructureDef is {name: Name, fields: [Name]}
-
 // // A DefineExpr is one of:
 // // - FunctionDef
 // // - ConstantDef
 // // - StructureDef
-
 // const generateDef = function(str)
 // {
 //   return toDefineExpr(parse(str));  
 // };
-
 // const toDefineExpr = function(sexp)
 // {
 //   if (sexp.error != undefined)
@@ -593,16 +489,13 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //   {
 //     expr = {error: "no"};  
 //   }
-
 //   return expr;
 // };
-
 // const isBSLExpr = function(sexp)
 // {
 //   let bsl = toBSLExpr(sexp);
 //   return bsl.error == undefined;
 // };
-
 // const isFuncDef = function(sexp)
 // {
 //   if (typeof sexp === "string")
@@ -618,7 +511,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return andMap(header, (x) => {return isName(x)});
 // };
-
 // const isConstDef = function(sexp)
 // {
 //   if (typeof sexp === "string")
@@ -629,7 +521,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return isName(sexp[1]) && isBSLExpr(sexp[2]);
 // };
-
 // const isStructDef = function(sexp)
 // {
 //   if (typeof sexp === "string")
@@ -645,12 +536,10 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return andMap(fields, (x) => {return isName(x)});
 // };
-
 // const generateDefOrExpr = function(str)
 // {
 //   return toDefOrExpr(parse(str));
 // };
-
 // const toDefOrExpr = function(sexp)
 // {
 //   let res = toTestCase(sexp);
@@ -662,7 +551,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //   }
 //   return res; 
 // };
-
 // const toTestCase = function(sexp)
 // {
 //   if (!Array.isArray(sexp) || sexp[0] !== "check-expect")
@@ -671,24 +559,19 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return {testerror: "expected and actual must be expressions"};
 //   return {actual: toBSLExpr(sexp[1]), expected: toBSLExpr(sexp[2])};
 // };
-
 // const generateTestCase = function(str)
 // {
 //   return toTestCase(parse(str));
 // }
-
 // // A Program is a [[Or BSLExpr DefineExpr]]
-
 // const generateProgram = function(str)
 // {
 //   return toProgram(parseSexps(str));  
 // };
-
 // const toProgram = function(sexps)
 // {
 //   return sexps.map(sexp => toDefOrExpr(sexp));    
 // };
-
 // // helpers
 // // andMap : [X] [X -> Bool] -> Bool
 // // returns true iff predicate holds for all elements of list
@@ -704,7 +587,6 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 //     return false;
 //   return pred(car(xs)) || orMap(cdr(xs), pred);
 // };
-
 // module.exports.tokenize = tokenize;
 // module.exports.parseSexp = parseSexp;
 // module.exports.parseSexps = parseSexps;
@@ -716,9 +598,8 @@ const splitPrefixBoolean = (exp: string): [string, string] => {
 // module.exports.generateProgram = generateProgram;
 // module.exports.orMap = orMap;
 // module.exports.andMap = andMap;
-
-module.exports =  {
-  'tokenize': tokenize,
-  'splitPrefixNumber': splitPrefixNumber,
-  'splitPrefixIdentifier': splitPrefixIdentifier
+module.exports = {
+    'tokenize': tokenize,
+    'splitPrefixNumber': splitPrefixNumber,
+    'splitPrefixIdentifier': splitPrefixIdentifier
 };
