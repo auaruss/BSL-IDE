@@ -1,4 +1,69 @@
 'use strict';
+
+// else if (exp[0] == '(') {
+//   return cons<Token>(
+//     {type: TokenType.OpenParen, value: '('},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (exp[0] == '[') {
+//   return cons<Token>(
+//     {type: TokenType.OpenSquareParen, value: '['},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (exp[0] == '{') {
+//   return cons<Token>(
+//     {type: TokenType.OpenBraceParen, value: '{'},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (exp[0] == ')') {
+//   return cons<Token>(
+//     {type: TokenType.CloseParen, value: ')'},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (exp[0] == ']') {
+//   return cons<Token>(
+//     {type: TokenType.CloseSquareParen, value: ']'},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (exp[0] == '}') {
+//   return cons<Token>(
+//     {type: TokenType.CloseBraceParen, value: '}'},
+//     tokenize(exp.slice(1))
+//   );
+// } else if (startsWithNumber(exp)) {
+//   let [val, rest] = splitPrefixNumber(exp);
+//   return cons<Token>(
+//     {type: TokenType.Num, value: val},
+//     tokenize(rest)
+//   );
+// } else if (startsWithString(exp)) {
+//   let [val, rest] = splitPrefixString(exp);
+//   return cons<Token>(
+//     {type: TokenType.StringLiteral, value: val},
+//     tokenize(rest)
+//   );
+// } else if (startsWithIdentifier(exp)) {
+//   let [val, rest] = splitPrefixIdentifier(exp);
+//   return cons<Token>(
+//     {type: TokenType.Identifier, value: val},
+//     tokenize(rest)
+//   );
+// } else if (startsWithWhitespace(exp)) {
+//   let [val, rest] = splitPrefixWhitespace(exp)
+//   return cons<Token>(
+//     {type: TokenType.Whitespace, value: val},
+//     tokenize(rest)
+//   );
+// } else if (startsWithBoolean(exp)) {
+//   let [val, rest] = splitPrefixBoolean(exp);
+//   return cons<Token>(
+//     {type: TokenType.Boolean, value: val},
+//     tokenize(rest)
+//   );
+// } else {
+//   throw new Error("error tokenizing");
+// }
+
 // SExpr Parser in TS
 // Sam Soucie, Alice Russell
 
@@ -56,79 +121,35 @@ type Token
   };
 
 // Regexp Definitions.
-
+const tokenExpressions: [TokenType, RegExp][] = [
+  [TokenType.OpenParen, /^\(/],
+  [TokenType.OpenSquareParen, /^\[/],
+  [TokenType.OpenBraceParen, /^\{/],
+  [TokenType.CloseParen, /^\)/],
+  [TokenType.CloseSquareParen, /^]/],
+  [TokenType.CloseBraceParen, /^}/],
+  [TokenType.Num, /^\d+/],
+];
 
 const tokenize = (exp: string): Token[] => {
   if (exp == '') {
     return empty<Token>();
-  } else if (exp[0] == '(') {
-    return cons<Token>(
-      {type: TokenType.OpenParen, value: '('},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '[') {
-    return cons<Token>(
-      {type: TokenType.OpenSquareParen, value: '['},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '{') {
-    return cons<Token>(
-      {type: TokenType.OpenBraceParen, value: '{'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == ')') {
-    return cons<Token>(
-      {type: TokenType.CloseParen, value: ')'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == ']') {
-    return cons<Token>(
-      {type: TokenType.CloseSquareParen, value: ']'},
-      tokenize(exp.slice(1))
-    );
-  } else if (exp[0] == '}') {
-    return cons<Token>(
-      {type: TokenType.CloseBraceParen, value: '}'},
-      tokenize(exp.slice(1))
-    );
-  } else if (startsWithNumber(exp)) {
-    let [val, rest] = splitPrefixNumber(exp);
-    return cons<Token>(
-      {type: TokenType.Num, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithString(exp)) {
-    let [val, rest] = splitPrefixString(exp);
-    return cons<Token>(
-      {type: TokenType.StringLiteral, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithIdentifier(exp)) {
-    let [val, rest] = splitPrefixIdentifier(exp);
-    return cons<Token>(
-      {type: TokenType.Identifier, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithWhitespace(exp)) {
-    let [val, rest] = splitPrefixWhitespace(exp)
-    return cons<Token>(
-      {type: TokenType.Whitespace, value: val},
-      tokenize(rest)
-    );
-  } else if (startsWithBoolean(exp)) {
-    let [val, rest] = splitPrefixBoolean(exp);
-    return cons<Token>(
-      {type: TokenType.Boolean, value: val},
-      tokenize(rest)
-    );
-  } else {
-    throw new Error("error tokenizing");
   }
+  for (let [tokenType, expression] of tokenExpressions) {
+    if (expression.test(exp)) {
+      let result = expression.exec(exp);
+      return cons<Token> (
+        {type: tokenType, value: result ? result[0]: ''},
+        tokenize(result ? result.input.slice(result[0].length) : '')
+      );
+    }
+  }
+  throw new Error('error tokenizing');
 };
 
 const isDigit = (ch: string): boolean => {
   return /[0-9]/.test(ch);
-}
+};
 
 const isWhitespace = (ch: string): boolean => {
     return /\s/.test(ch);

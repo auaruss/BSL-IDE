@@ -27,51 +27,27 @@ var TokenType;
     TokenType["Boolean"] = "Boolean";
 })(TokenType || (TokenType = {}));
 // Regexp Definitions.
+var tokenExpressions = [
+    [TokenType.OpenParen, /^\(/],
+    [TokenType.OpenSquareParen, /^\[/],
+    [TokenType.OpenBraceParen, /^\{/],
+    [TokenType.CloseParen, /^\)/],
+    [TokenType.CloseSquareParen, /^]/],
+    [TokenType.CloseBraceParen, /^}/],
+    [TokenType.Num, /^\d+/],
+];
 var tokenize = function (exp) {
     if (exp == '') {
         return empty();
     }
-    else if (exp[0] == '(') {
-        return cons({ type: TokenType.OpenParen, value: '(' }, tokenize(exp.slice(1)));
+    for (var _i = 0, tokenExpressions_1 = tokenExpressions; _i < tokenExpressions_1.length; _i++) {
+        var _a = tokenExpressions_1[_i], tokenType = _a[0], expression = _a[1];
+        if (expression.test(exp)) {
+            var result = expression.exec(exp);
+            return cons({ type: tokenType, value: result ? result[0] : '' }, tokenize(result ? result.input.slice(result[0].length) : ''));
+        }
     }
-    else if (exp[0] == '[') {
-        return cons({ type: TokenType.OpenSquareParen, value: '[' }, tokenize(exp.slice(1)));
-    }
-    else if (exp[0] == '{') {
-        return cons({ type: TokenType.OpenBraceParen, value: '{' }, tokenize(exp.slice(1)));
-    }
-    else if (exp[0] == ')') {
-        return cons({ type: TokenType.CloseParen, value: ')' }, tokenize(exp.slice(1)));
-    }
-    else if (exp[0] == ']') {
-        return cons({ type: TokenType.CloseSquareParen, value: ']' }, tokenize(exp.slice(1)));
-    }
-    else if (exp[0] == '}') {
-        return cons({ type: TokenType.CloseBraceParen, value: '}' }, tokenize(exp.slice(1)));
-    }
-    else if (startsWithNumber(exp)) {
-        var _a = splitPrefixNumber(exp), val = _a[0], rest = _a[1];
-        return cons({ type: TokenType.Num, value: val }, tokenize(rest));
-    }
-    else if (startsWithString(exp)) {
-        var _b = splitPrefixString(exp), val = _b[0], rest = _b[1];
-        return cons({ type: TokenType.StringLiteral, value: val }, tokenize(rest));
-    }
-    else if (startsWithIdentifier(exp)) {
-        var _c = splitPrefixIdentifier(exp), val = _c[0], rest = _c[1];
-        return cons({ type: TokenType.Identifier, value: val }, tokenize(rest));
-    }
-    else if (startsWithWhitespace(exp)) {
-        var _d = splitPrefixWhitespace(exp), val = _d[0], rest = _d[1];
-        return cons({ type: TokenType.Whitespace, value: val }, tokenize(rest));
-    }
-    else if (startsWithBoolean(exp)) {
-        var _e = splitPrefixBoolean(exp), val = _e[0], rest = _e[1];
-        return cons({ type: TokenType.Boolean, value: val }, tokenize(rest));
-    }
-    else {
-        throw new Error("error tokenizing");
-    }
+    throw new Error('error tokenizing');
 };
 var isDigit = function (ch) {
     return /[0-9]/.test(ch);

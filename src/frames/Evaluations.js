@@ -1,5 +1,5 @@
 import React from 'react';
-const formatEvaluation = require('../logic/eval-bridge.js');
+const formatEvaluation = require('../../logic/eval-bridge.js.js');
 
 function Evaluations(props) {
   return (
