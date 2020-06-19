@@ -108,7 +108,7 @@ enum TokenType {
   CloseSquareParen="CloseSquareParen",
   CloseBraceParen="CloseBraceParen",
   Num="Num",
-  StringLiteral="StringLiteral",
+  String="String",
   Identifier="Identifier",
   Whitespace="Whitespace",
   Boolean="Boolean"
@@ -129,6 +129,10 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.CloseSquareParen, /^]/],
   [TokenType.CloseBraceParen, /^}/],
   [TokenType.Num, /^\d+/],
+  [TokenType.String, /"*"/],
+  [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\+\s]+/],
+  [TokenType.Whitespace, /^\s+/],
+  [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
 
 const tokenize = (exp: string): Token[] => {
@@ -144,7 +148,7 @@ const tokenize = (exp: string): Token[] => {
       );
     }
   }
-  throw new Error('error tokenizing');
+  throw new Error('error: no matching tokens');
 };
 
 const isDigit = (ch: string): boolean => {

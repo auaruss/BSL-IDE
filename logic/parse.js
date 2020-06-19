@@ -21,7 +21,7 @@ var TokenType;
     TokenType["CloseSquareParen"] = "CloseSquareParen";
     TokenType["CloseBraceParen"] = "CloseBraceParen";
     TokenType["Num"] = "Num";
-    TokenType["StringLiteral"] = "StringLiteral";
+    TokenType["String"] = "String";
     TokenType["Identifier"] = "Identifier";
     TokenType["Whitespace"] = "Whitespace";
     TokenType["Boolean"] = "Boolean";
@@ -35,6 +35,10 @@ var tokenExpressions = [
     [TokenType.CloseSquareParen, /^]/],
     [TokenType.CloseBraceParen, /^}/],
     [TokenType.Num, /^\d+/],
+    // [TokenType.String, //],
+    [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\+\s]+/],
+    [TokenType.Whitespace, /^\s+/],
+    [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
 var tokenize = function (exp) {
     if (exp == '') {
@@ -47,7 +51,7 @@ var tokenize = function (exp) {
             return cons({ type: tokenType, value: result ? result[0] : '' }, tokenize(result ? result.input.slice(result[0].length) : ''));
         }
     }
-    throw new Error('error tokenizing');
+    throw new Error('error: no matching tokens');
 };
 var isDigit = function (ch) {
     return /[0-9]/.test(ch);
