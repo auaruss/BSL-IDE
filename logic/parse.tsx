@@ -129,7 +129,7 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.CloseSquareParen, /^]/],
   [TokenType.CloseBraceParen, /^}/],
   [TokenType.Num, /^\d+/],
-  [TokenType.String, /"*"/],
+  [TokenType.String, /^".*"/],
   [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\+\s]+/],
   [TokenType.Whitespace, /^\s+/],
   [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]

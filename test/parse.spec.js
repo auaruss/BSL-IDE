@@ -59,9 +59,62 @@ describe('tokenizer', () => {
   //     {type: 'OpenParen', value: ')'},
   //   ]
   //   expect(result).to.deep.equal(expected);
-  // });
+  // });s
 
   // it('should parse 123 as an identifier here', () => {
   //   const result = tokenize('(123)');
   // })
+
+  it('should handle booleans correctly', () => {
+    // const result = tokenize('#t123');
+    // We should expect this to error?
+  });
+
+  it('should tokenize factorial correctly', () => {
+    let result = tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')
+    let expected = [
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: 'define' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: 'fact' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Identifier', value: 'n' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: 'if' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: '=' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Identifier', value: 'n' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Num', value: '0' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Num', value: '1' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: '*' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Identifier', value: 'n' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: 'fact' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'OpenParen', value: '(' },
+      { type: 'Identifier', value: '-' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Identifier', value: 'n' },
+      { type: 'Whitespace', value: ' ' },
+      { type: 'Num', value: '1' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'CloseParen', value: ')' },
+      { type: 'CloseParen', value: ')' }
+    ];
+    expect(result).to.deep.equal(expected);
+  })
 });
