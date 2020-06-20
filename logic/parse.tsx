@@ -1,51 +1,90 @@
 'use strict';
 // SExpr Parser in TS
-// Sam Soucie, Alice Russell
+// Alice Russell, Sam Soucie
 
-// An SExp is one of:
-// - String
-// - [SExp]
+type Identifier = string;
 
-// A Result is one of:
-// - {sexp: SExp, remain: [Token]}
-// - {error: String, remain: String}
-type Result<T>
+// BSL Grammar
+type Program = DefOrExpr[];
+
+type DefOrExpr
+  = Definition
+  | Expr
+  | TestCase
+  | LibraryRequire;
+
+type Definition
+  = ['define', [Identifier, Identifier, Identifier[]?], Expr]
+  | ['define', Identifier, Expr]
+  | ['define', Identifier, ['lambda'|'λ', Identifier[], Expr]]
+  | ['define-struct', Identifier, Identifier[]]
+
+type Cond = ['cond', [Expr, Expr][], ['else', Expr]?]
+
+type Expr
+  = symbol
+  | number
+  | boolean
+  | string
+  | Identifier
+  | []
+  | [Identifier, Expr[]]
+  | Cond
+  | ['if', Expr, Expr, Expr]
+  | ['and', Expr[]]
+  | ['or', Expr[]];
+
+type TestCase
+  = ['check-expect', Expr, Expr]
+  | ['check-random', Expr, Expr]
+  | ['check-within', Expr, Expr, Expr]
+  | ['check-member-of', Expr[]]
+  | ['check-range', Expr, Expr, Expr]
+  | ['check-satisfied', Expr, Identifier]
+  | ['check-error', Expr, Expr?];
+  
+type LibraryRequire
+  = ['require', string]
+  | ['require', ['lib', string[]]]
+  | ['require', ['planet', string, Package]];
+
+type Package
+  = [string, string, number, number];
+
+type SExp
+  = 
+  | { 
+    type: TokenType.String|TokenType.Number|TokenType.Boolean|TokenType.Identifier,
+    value: string
+  }
+  | SExp[];
+
+type Result<T> = ResultSuccess<T> | ResultFailure<T>;
+type ResultSuccess<T>
   = {
-  thing: T,
-  remain: Token[]
-} | {
-  error: string,
-  remain: Token[]
-};
-
-const space = {type: "ws", value: " "};
-
-function empty<T>(): T[] {
-  return [];
-}
-function cons<T>(car: T, cdr: T[]): T[] {
-  return [car].concat(cdr);
-}
-function car<T>(ls: T[]): T {
-  return ls[0];
-}
-function cdr<T>(ls: T[]): T[] {
-  return ls.slice(1);
-}
+    thing: T,
+    remain: Token[]
+  };
+type ResultFailure<T>
+  = {
+    error: string,
+    remain: Token[]
+  };
 
 enum TokenType {
-  OpenParen="OpenParen",
-  OpenSquareParen="OpenSquareParen",
-  OpenBraceParen="OpenBraceParen",
-  CloseParen="CloseParen",
-  CloseSquareParen="CloseSquareParen",
-  CloseBraceParen="CloseBraceParen",
-  Num="Num",
-  String="String",
-  Identifier="Identifier",
-  Whitespace="Whitespace",
-  Boolean="Boolean"
-}
+  Error='Error',
+  OpenParen='OpenParen',
+  OpenSquareParen='OpenSquareParen',
+  OpenBraceParen='OpenBraceParen',
+  CloseParen='CloseParen',
+  CloseSquareParen='CloseSquareParen',
+  CloseBraceParen='CloseBraceParen',
+  Number='Number',
+  String='String',
+  Identifier='Identifier',
+  Whitespace='Whitespace',
+  Boolean='Boolean'
+};
 
 type Token
   = {
@@ -61,7 +100,7 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.CloseParen, /^\)/],
   [TokenType.CloseSquareParen, /^]/],
   [TokenType.CloseBraceParen, /^}/],
-  [TokenType.Num, /^\d+/],
+  [TokenType.Number, /^\d+/],
   [TokenType.String, /^".*"/],
   [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\+\s]+/],
   [TokenType.Whitespace, /^\s+/],
@@ -70,492 +109,109 @@ const tokenExpressions: [TokenType, RegExp][] = [
 
 const tokenize = (exp: string): Token[] => {
   if (exp == '') {
-    return empty<Token>();
+    return [];
   }
   for (let [tokenType, expression] of tokenExpressions) {
     if (expression.test(exp)) {
       let result = expression.exec(exp);
-      return cons<Token> (
-        {type: tokenType, value: result ? result[0]: ''},
-        tokenize(result ? result.input.slice(result[0].length) : '')
-      );
+      return [{type: tokenType, value: result ? result[0]: ''}]
+        .concat(tokenize(result ? result.input.slice(result[0].length) : ''));
     }
   }
-  throw new Error('error: no matching tokens');
+
+  return [{type: TokenType.Error, value: exp[0]}]
+    .concat(tokenize(exp.slice(1)));
 };
 
-// // parse : String -> Result
-// // parses a string into an SExp, making sure that nothing remains
-// const parse = function(str)
-// {
-//   let res = parseSexp(str);
-//   if (res.error == undefined && res.remain.length != 0)
-//     return {error: "not s-exp", remain: res.remain};
-//   if (res.error != undefined)
-//     return res;
-//   return res.sexp;
+// type SExp = string | SExp[];
+// type Result<T>
+//   = {
+//   thing: T,
+//   remain: Token[]
+// } | {
+//   error: string,
+//   remain: Token[]
 // };
 
-// // parseSexp : String -> Result
-// // parses an SExp String into a result
-// const parseSexp = function(str)
-// {
-//   return parseTokens(tokenize(str));
-// };
-// // parseTokens : [Token] -> Result
-// const parseTokens = function(tokens)
-// {
-//   if (tokens.length == 0)
-//     return {error: "nothing to parse", remain: []};
-//   let car = first(tokens);
-//   let cdr = rest(tokens);
-// //  if (car.value == " " || car.value == "\n")
-//   //  return parseTokens(cdr);
-//   if (car.value != "(" && car.value != ")" && car.value != "[" && car.value != "]")
-//     return {sexp: car.value, remain: cdr};
-//   if (car.value == "(")
-//   {
-//     let children = [];
-//     let remain = cdr;
-//     while (remain[0].value != ")")
-//     {
-//       const result = parseTokens(remain);
-//       if (result.error != undefined)
-//         return result;
-//       children.push(result.sexp);
-//       remain = result.remain;
-//     }
-//     return {sexp: children, remain: rest(remain)}; // skip the ) since we're in the ( case
-//   }
-//   if (car.value == "[")
-//   {
-//     let children = [];
-//     let remain = cdr;
-//     while (remain[0].value != "]")
-//     {
-//       const result = parseTokens(remain);
-//       if (result.error != undefined)
-//         return result;
-//       children.push(result.sexp);
-//       remain = result.remain;
-//     }
-//     return {sexp: children, remain: rest(remain)}; // skip the ) since we're in the ( case
-//   }
-//   // return error case for Result
-//   else
-//     return {error: car.value, remain: tokens};
-// };
-// // parseSexps : String -> [SExp]
-// // parses a string as a list of sexps
-// const parseSexps = function(str)
-// {
-//   let initialResult = parseSexp(str);
-//   let result = [];
-//   while (initialResult.error == undefined && initialResult.remain.length != 0)
-//   {
-//     result.push(initialResult.sexp);
-//     initialResult = parseTokens(initialResult.remain);
-//   }
-//   if (initialResult.error != undefined)
-//     return initialResult;
-//   result.push(initialResult.sexp);
-//   return result;
-// };
+const parseSexp = (tokens: Token[]): Result<SExp> => {
+  if (tokens.length === 0) return {thing: [], remain: tokens};
 
+  switch(tokens[0].type) {
+    case TokenType.OpenParen:
+    case TokenType.OpenSquareParen:
+    case TokenType.OpenBraceParen:
+      let lookForMatchingParenIndex: number = matchParens(tokens);
+      if (lookForMatchingParenIndex === -1) {
+        return {error: 'Too few parens in prefix Sexp.', remain: tokens};
+      }
+      if (! parensMatching(tokens[0].type, tokens[lookForMatchingParenIndex].type)) {
+        return {error: 'The wrong type of paren is matching your prefix paren.', remain: tokens};
+      }
+      return {
+        thing: parseSexps(tokens.slice(1, lookForMatchingParenIndex)),
+        remain: tokens.slice(lookForMatchingParenIndex+1)
+      };
+    case TokenType.CloseParen:
+    case TokenType.CloseSquareParen:
+    case TokenType.CloseBraceParen:
+      return {error: 'Found a close paren with no match.', remain: tokens};
+    case TokenType.Number:
+    case TokenType.String:
+    case TokenType.Identifier:
+    case TokenType.Boolean:
+      return {
+        thing: tokens[0] as SExp,
+        remain: tokens.slice(1)
+      };
+  }
 
-// // A CondClause is {question: BSLExpr, answer: BSLExpr}
-// // A CondExpr is [CondClause]
+  return {
+    error: 'dunno?',
+    remain: tokens
+  };
+}
 
-// // An IfExpr is {question: BSLExpr, answer: BSLExpr, otherwise: BSLExpr}
+const parseSexps = (tokens: Token[]): SExp[] => {
+  if (tokens.length === 0) return [];
+  let result = parseSexp(tokens);
+  if ((result as ResultSuccess<SExp>).thing) {
+    return [(result as ResultSuccess<SExp>).thing].concat(parseSexps(result.remain));
+  } else {
+    throw new Error((result as ResultFailure<SExp>).error);
+  }
+}
 
-// // An Application is {name: Name, args: [BSLExpr]}
+const parse = (exp:string): SExp[] => {
+  return parseSexps(tokenize(exp).filter(x => x.type !== TokenType.Whitespace));
+}
 
-// // An AndExpr is {and: [BSLExpr]}
+// This function can ONLY be guaranteed to work when tokens[0] is a left paren!
+const matchParens = (tokens: Token[]): number => {
+  let leftParens: number = 1, i:number = 1;
+  while (leftParens > 0 && i < tokens.length) {
+    if (tokens[i].type === TokenType.OpenParen
+        || tokens[i].type === TokenType.OpenSquareParen
+        || tokens[i].type === TokenType.OpenBraceParen) {
+      leftParens += 1;
+    }
+    else if (tokens[i].type === TokenType.CloseParen
+      || tokens[i].type === TokenType.CloseSquareParen
+      || tokens[i].type === TokenType.CloseBraceParen) {
+      leftParens -= 1;
+    }
+    i++;
+  }
+  return (leftParens > 0) ? -1 : i-1;
+}
 
-// // An OrExpr is {or: [BSLExpr]}
-
-// // A Name is a String without a space or any of these chars: ",'`()[]{}|;#
-
-// // A String is enclosed with ""
-
-// // A Boolean is one of:
-// // - true
-// // - false
-// // - #t
-// // - #f
-// // - #T
-// // - #F
-// // - #true
-// // - #false
-
-// // A BSLExpr is one of:
-// // - Application
-// // - CondExpr
-// // - IfExpr
-// // - AndExpr
-// // - OrExpr
-// // - Name
-// // - Number
-// // - Boolean
-// // - String
-// // note: BSLExpr doesn't include 'name, '(), character
-
-// const generateExpr = function(str)
-// {
-//   return toBSLExpr(parse(str));  
-// };
-
-// const toBSLExpr = function(sexp)
-// {
-//   if (sexp.error != undefined)
-//     return {error: sexp.error};
-//   let expr;
-//   if (Array.isArray(sexp) && (first(sexp) === "define" || first(sexp) === "define-struct"))
-//     return {error: "this is a define expr"};
-//   if (isLambda(sexp))
-//   {
-//     let args = [];
-//     for (let i = 0; i < sexp[1].length; i++)
-//       args.push(toBSLExpr(sexp[1][i]));
-//     let body = toBSLExpr(sexp[2]);
-//     expr = {args: args, body: body};    
-//   }
-//   else if (isCondExpr(sexp))
-//   {
-//     let clauses = rest(sexp);
-//     expr = [];
-//     while (clauses.length != 0)
-//     {
-//       expr.push({question: toBSLExpr(clauses[0][0]), answer: toBSLExpr(clauses[0][1])});
-//       clauses = rest(clauses);  
-//     }
-//   }
-//   else if (isIfExpr(sexp))
-//   {
-//     expr = {question: toBSLExpr(sexp[1]), answer: toBSLExpr(sexp[2]), otherwise: toBSLExpr(sexp[3])};
-//   }
-//   else if (isAndExpr(sexp))
-//   {
-//     let cdr = rest(sexp);
-//     let bools = [];
-//     while (cdr.length != 0)
-//     {
-//       bools.push(toBSLExpr(first(cdr)));
-//       cdr = rest(cdr);  
-//     }
-//     expr = {and: bools};
-//   }
-//   else if (isOrExpr(sexp))
-//   {
-//     let cdr = rest(sexp);
-//     let bools = [];
-//     while (cdr.length != 0)
-//     {
-//       bools.push(toBSLExpr(first(cdr)));
-//       cdr = rest(cdr);  
-//     }
-//     expr = {or: bools};
-//   }
-//   else if (isApp(sexp))
-//   {
-//     let name = toBSLExpr(first(sexp));
-//     let args = [];
-//     let cdr = rest(sexp);
-//     while (cdr.length != 0)
-//     {
-//       args.push(toBSLExpr(first(cdr)));
-//       cdr = rest(cdr); 
-//     }
-//     expr = {name: name, args: args};
-//   }
-//   else if (isName(sexp))
-//   {
-//     expr = {Name: sexp};    
-//   }
-//   else if (isNumber(sexp))
-//   {
-//     expr = {Num: sexp};
-//   }
-//   else if (isBoolean(sexp))
-//   {
-//     expr = {Bool: sexp};
-//   }
-//   else if (isString(sexp))
-//   {
-//     sexp = sexp.slice(1, sexp.length - 1);
-//     expr = {Str: sexp};
-//   }
-//   else // error
-//   {
-//     expr = {error: "not a BSL expression."};  
-//   }
-
-//   return expr;
-
-// };
-
-// const isLambda = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   if (sexp[0] !== "lambda")
-//     return false;
-//   if (!Array.isArray(sexp[1]))
-//     return false;
-//   return andMap(sexp[1], (arg) => isName(arg));
-// }
-
-// const isApp = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   return isLambda(first(sexp)) || isName(first(sexp)); // could add && sexp.length > 1
-// };
-
-// const isCondExpr = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   if (first(sexp) !== "cond")
-//     return false;
-//   let cdr = rest(sexp);
-//   let result = true;
-//   while (cdr.length != 0)
-//   {
-//     if (!Array.isArray(first(cdr)) || first(cdr).length != 2)
-//       result = false;
-//     cdr = rest(cdr);
-//   }
-//   return result;
-// };
-
-// const isIfExpr = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   return first(sexp) === "if" && sexp.length == 4; 
-// };
-
-// const isAndExpr = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   return first(sexp) === "and" && sexp.length > 2;
-// };
-
-// const isOrExpr = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   return first(sexp) === "or" && sexp.length > 2;
-// };
-
-// const isName = function(sexp)
-// {
-//   if (typeof sexp !== "string")
-//     return false;
-//   if (sexp === "cond" || isBoolean(sexp) || isNumber(sexp) || isString(sexp))
-//     return false;
-//   return !/("|,|'|`|\(|\)|\[|\]|\{|\}|\||;|#)/.test(sexp);
-// };
-
-// const isNumber = function(sexp)
-// {
-//   if (typeof sexp !== "string")
-//     return false;
-//   return !/[^0-9]/.test(sexp);
-// };
-
-// const isBoolean = function(sexp)
-// {
-//   return sexp === "true" || sexp === "false" || sexp === "#t" || sexp === "#f" || sexp === "#T" || sexp === "#F" || sexp === "#true" || sexp === "#false";
-// };
-
-// const isString = function(sexp)
-// {
-//   if (typeof sexp !== "string")
-//     return false;
-//   return sexp[0] === "\"" && sexp[sexp.length - 1] === "\"";
-// };
-
-// // A FunctionDef is {name: Name, args: [Name], body: BSLExpr}
-// // A ConstantDef is {name: Name, body: BSLExpr}
-// // A StructureDef is {name: Name, fields: [Name]}
-
-// // A DefineExpr is one of:
-// // - FunctionDef
-// // - ConstantDef
-// // - StructureDef
-
-// const generateDef = function(str)
-// {
-//   return toDefineExpr(parse(str));  
-// };
-
-// const toDefineExpr = function(sexp)
-// {
-//   if (sexp.error != undefined)
-//     return {error: sexp.error};
-//   let expr;
-//   if (isFuncDef(sexp))
-//   {
-//     let args = [];
-//     let body = toBSLExpr(sexp[sexp.length - 1]);
-//     let header = sexp[1];
-//     let cdr = rest(header);
-//     while (cdr.length != 0)
-//     {
-//       args.push(toBSLExpr(first(cdr)));
-//       cdr = rest(cdr);  
-//     }
-//     expr = {name: toBSLExpr(header[0]), args: args, body: body};
-//   }
-//   else if (isConstDef(sexp))
-//   {
-//     let name = toBSLExpr(sexp[1]);
-//     let body = toBSLExpr(sexp[2]);
-//     expr = {name: name, body: body};
-//   }
-//   else if (isStructDef(sexp))
-//   {
-//     let name = toBSLExpr(sexp[1]);
-//     let fields = [];
-//     let names = sexp[sexp.length - 1];
-//     while (names.length != 0)
-//     {
-//       fields.push(toBSLExpr(first(names)));
-//       names = rest(names);
-//     }
-//     expr = {name: name, fields: fields};
-//   }
-//   else // error case
-//   {
-//     expr = {error: "no"};  
-//   }
-
-//   return expr;
-// };
-
-// const isBSLExpr = function(sexp)
-// {
-//   let bsl = toBSLExpr(sexp);
-//   return bsl.error == undefined;
-// };
-
-// const isFuncDef = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   if (sexp.length != 3)
-//     return false;
-//   if (first(sexp) !== "define")
-//     return false;
-//   if (!isBSLExpr(sexp[2]))
-//     return false;
-//   let header = sexp[1];
-//   if (!Array.isArray(header))
-//     return false;
-//   return andMap(header, (x) => {return isName(x)});
-// };
-
-// const isConstDef = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   if (sexp.length != 3)
-//     return false;
-//   if (first(sexp) !== "define")
-//     return false;
-//   return isName(sexp[1]) && isBSLExpr(sexp[2]);
-// };
-
-// const isStructDef = function(sexp)
-// {
-//   if (typeof sexp === "string")
-//     return false;
-//   if (sexp.length != 3)
-//     return false;
-//   if (first(sexp) !== "define-struct")
-//     return false;
-//   if (!isName(sexp[1]))
-//     return false;
-//   let fields = sexp[2];
-//   if (!Array.isArray(fields))
-//     return false;
-//   return andMap(fields, (x) => {return isName(x)});
-// };
-
-// const generateDefOrExpr = function(str)
-// {
-//   return toDefOrExpr(parse(str));
-// };
-
-// const toDefOrExpr = function(sexp)
-// {
-//   let res = toTestCase(sexp);
-//   if (res.testerror != undefined)
-//   {
-//     res = toBSLExpr(sexp);
-//     if (res.error != undefined)
-//       res = toDefineExpr(sexp);
-//   }
-//   return res; 
-// };
-
-// const toTestCase = function(sexp)
-// {
-//   if (!Array.isArray(sexp) || sexp[0] !== "check-expect")
-//     return {testerror: "not a test expression"};
-//   if (!isBSLExpr(sexp[1] || !isBSLExpr(sexp[2])))
-//     return {testerror: "expected and actual must be expressions"};
-//   return {actual: toBSLExpr(sexp[1]), expected: toBSLExpr(sexp[2])};
-// };
-
-// const generateTestCase = function(str)
-// {
-//   return toTestCase(parse(str));
-// }
-
-// // A Program is a [[Or BSLExpr DefineExpr]]
-
-// const generateProgram = function(str)
-// {
-//   return toProgram(parseSexps(str));  
-// };
-
-// const toProgram = function(sexps)
-// {
-//   return sexps.map(sexp => toDefOrExpr(sexp));    
-// };
-
-// // helpers
-// // andMap : [X] [X -> Bool] -> Bool
-// // returns true iff predicate holds for all elements of list
-// const andMap = function(xs, pred)
-// {
-//   if (xs.length == 0)
-//     return true;
-//   return pred(car(xs)) && andMap(cdr(xs), pred);
-// };
-// const orMap = function(xs, pred)
-// {
-//   if (xs.length == 0)
-//     return false;
-//   return pred(car(xs)) || orMap(cdr(xs), pred);
-// };
-
-// module.exports.tokenize = tokenize;
-// module.exports.parseSexp = parseSexp;
-// module.exports.parseSexps = parseSexps;
-// module.exports.space = space;
-// module.exports.parse = parse;
-// module.exports.generateExpr = generateExpr;
-// module.exports.generateDef = generateDef;
-// module.exports.generateDefOrExpr = generateDefOrExpr;
-// module.exports.generateProgram = generateProgram;
-// module.exports.orMap = orMap;
-// module.exports.andMap = andMap;
+const parensMatching = (p1: TokenType, p2: TokenType): boolean => {
+  if (p1 === TokenType.OpenParen) return p2 === TokenType.CloseParen;
+  if (p1 === TokenType.OpenSquareParen) return p2 === TokenType.CloseSquareParen;
+  if (p1 === TokenType.OpenBraceParen) return p2 === TokenType.CloseBraceParen;
+  return false;
+}
 
 module.exports =  {
   'tokenize': tokenize,
+  'parse': parse
 };
