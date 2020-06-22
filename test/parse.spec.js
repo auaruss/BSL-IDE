@@ -1,4 +1,4 @@
-const { tokenize } = require('../logic/parse.js');
+const { tokenize, parse } = require('../logic/parse.js');
 const { expect } = require('chai');
  
 describe('tokenizer', () => {
@@ -47,23 +47,23 @@ describe('tokenizer', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  // it('should parse a simple variable definition', () => {  
-  //   const result = tokenize('(define x 10)');
-  //   const expected = [
-  //     {type: 'OpenParen', value: '('},
-  //     {type: 'OpenParen', value: 'define'},
-  //     {type: 'OpenParen', value: ' '},
-  //     {type: 'OpenParen', value: 'x'},
-  //     {type: 'OpenParen', value: ' '},
-  //     {type: 'OpenParen', value: '10'},
-  //     {type: 'OpenParen', value: ')'},
-  //   ]
-  //   expect(result).to.deep.equal(expected);
-  // });s
+  it('should parse a simple variable definition', () => {  
+    const result = tokenize('(define x 10)');
+    const expected = [
+      {type: 'OpenParen', value: '('},
+      {type: 'OpenParen', value: 'define'},
+      {type: 'OpenParen', value: ' '},
+      {type: 'OpenParen', value: 'x'},
+      {type: 'OpenParen', value: ' '},
+      {type: 'OpenParen', value: '10'},
+      {type: 'OpenParen', value: ')'},
+    ]
+    expect(result).to.deep.equal(expected);
+  });s
 
-  // it('should parse 123 as an identifier here', () => {
-  //   const result = tokenize('(123)');
-  // })
+  it('should parse 123 as an identifier here', () => {
+    const result = tokenize('(123)');
+  })
 
   it('should handle booleans correctly', () => {
     // const result = tokenize('#t123');
@@ -90,10 +90,10 @@ describe('tokenizer', () => {
       { type: 'Whitespace', value: ' ' },
       { type: 'Identifier', value: 'n' },
       { type: 'Whitespace', value: ' ' },
-      { type: 'Num', value: '0' },
+      { type: 'Number', value: '0' },
       { type: 'CloseParen', value: ')' },
       { type: 'Whitespace', value: ' ' },
-      { type: 'Num', value: '1' },
+      { type: 'Number', value: '1' },
       { type: 'Whitespace', value: ' ' },
       { type: 'OpenParen', value: '(' },
       { type: 'Identifier', value: '*' },
@@ -108,7 +108,7 @@ describe('tokenizer', () => {
       { type: 'Whitespace', value: ' ' },
       { type: 'Identifier', value: 'n' },
       { type: 'Whitespace', value: ' ' },
-      { type: 'Num', value: '1' },
+      { type: 'Number', value: '1' },
       { type: 'CloseParen', value: ')' },
       { type: 'CloseParen', value: ')' },
       { type: 'CloseParen', value: ')' },
@@ -117,4 +117,41 @@ describe('tokenizer', () => {
     ];
     expect(result).to.deep.equal(expected);
   })
+});
+
+describe('parser', () => {
+  it('should parse this fact function', () => {
+    const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))');
+    const expected = (
+      [
+        { type: 'Identifier', value: 'define' },
+        [ 
+          { type: 'Identifier', value: 'fact' },
+          { type: 'Identifier', value: 'n' }
+        ],
+        [
+          { type: 'Identifier', value: 'if' },
+          [ 
+            { type: 'Identifier', value: '=' },
+            { type: 'Identifier', value: 'n' }, 
+            { type: 'Number', value: '0' }
+          ],
+          { type: 'Number', value: '1' },
+          [
+            { type: 'Identifier', value: '*' },
+            { type: 'Identifier', value: 'n' },
+            [
+              { type: 'Identifier', value: 'fact' },
+              [
+                { type: 'Identifier', value: '-' },
+                { type: 'Identifier', value: 'n' },
+                { type: 'Number', value: '1' }
+              ]
+            ]
+          ] 
+        ]
+      ]
+    );
+    expect(result).to.deep.equal(expected);
+  });
 });
