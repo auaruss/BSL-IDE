@@ -1,6 +1,10 @@
 const { tokenize, parse } = require('../logic/parse.js');
 const { expect } = require('chai');
- 
+
+const [ CP, OP, SPACE ] = [ { type: 'CloseParen', value: ')'},
+                            { type: 'OpenParen', value: '('}, 
+                            { type: 'Whitespace', value: ' '} ]
+
 describe('tokenizer', () => {
   it('should return the empty list for an empty string', () => {  
     const result = tokenize('');
@@ -51,23 +55,25 @@ describe('tokenizer', () => {
     const result = tokenize('(define x 10)');
     const expected = [
       {type: 'OpenParen', value: '('},
-      {type: 'OpenParen', value: 'define'},
-      {type: 'OpenParen', value: ' '},
-      {type: 'OpenParen', value: 'x'},
-      {type: 'OpenParen', value: ' '},
-      {type: 'OpenParen', value: '10'},
-      {type: 'OpenParen', value: ')'},
+      {type: 'Identifier', value: 'define'},
+      {type: 'Whitespace', value: ' '},
+      {type: 'Identifier', value: 'x'},
+      {type: 'Whitespace', value: ' '},
+      {type: 'Number', value: '10'},
+      {type: 'CloseParen', value: ')'},
     ]
     expect(result).to.deep.equal(expected);
-  });s
+  });
 
   it('should parse 123 as an identifier here', () => {
-    const result = tokenize('(123)');
+      const result = tokenize('(123)');
+      const expected = [ OP, { type: 'Number', value: '123' }, CP ];
+      expect(result).to.deep.equal(expected);
   })
 
   it('should handle booleans correctly', () => {
-    // const result = tokenize('#t123');
-    // We should expect this to error?
+      function result() { tokenize('#t123'); }
+      expect(result).to.throw(Error);
   });
 
   it('should tokenize factorial correctly', () => {
