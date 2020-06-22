@@ -1,9 +1,20 @@
 const { tokenize, parse } = require('../logic/parse.js');
 const { expect } = require('chai');
 
-const [ CP, OP, SPACE ] = [ { type: 'CloseParen', value: ')'},
-                            { type: 'OpenParen', value: '('}, 
-                            { type: 'Whitespace', value: ' '} ]
+function Tok(t, v) { return { type: t, value: v} ; }
+
+const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
+      [ { type: 'CloseParen', value: ')'},
+        { type: 'OpenParen', value: '('}, 
+        { type: 'Whitespace', value: ' '},
+        Tok('OpenSquareParen', '['),
+        Tok('CloseSquareParen', ']'),
+        Tok('OpenBraceParen', '{'),
+        Tok('CloseBraceParen', '}'),
+      ];
+
+function Num(v) { return Tok('Number', v.toString()); }
+function Id(v) { return Tok('Identifier', v); }
 
 describe('tokenizer', () => {
   it('should return the empty list for an empty string', () => {  
@@ -14,60 +25,23 @@ describe('tokenizer', () => {
   it('should parse a bunch of parenthesis correctly', () => {
     const result = tokenize('([[[][][][][][])))[][])))){}{}{}');
     const expected = [
-      { type: 'OpenParen', value: '(' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'OpenSquareParen', value: '[' },
-      { type: 'CloseSquareParen', value: ']' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'OpenBraceParen', value: '{' },
-      { type: 'CloseBraceParen', value: '}' },
-      { type: 'OpenBraceParen', value: '{' },
-      { type: 'CloseBraceParen', value: '}' },
-      { type: 'OpenBraceParen', value: '{' },
-      { type: 'CloseBraceParen', value: '}' }
+        OP, OSP, OSP, OSP, CSP, OSP, CSP, OSP, CSP, OSP, CSP, OSP,
+        CSP, OSP, CSP, CP, CP, CP, OSP, CSP, OSP, CSP, CP, CP, CP,
+        CP, OBP, CBP, OBP, CBP, OBP, CBP,
     ];
 
     expect(result).to.deep.equal(expected);
   });
 
   it('should parse a simple variable definition', () => {  
-    const result = tokenize('(define x 10)');
-    const expected = [
-      {type: 'OpenParen', value: '('},
-      {type: 'Identifier', value: 'define'},
-      {type: 'Whitespace', value: ' '},
-      {type: 'Identifier', value: 'x'},
-      {type: 'Whitespace', value: ' '},
-      {type: 'Number', value: '10'},
-      {type: 'CloseParen', value: ')'},
-    ]
-    expect(result).to.deep.equal(expected);
+      const result = tokenize('(define x 10)');
+      const expected = [ OP, Id('define'), SPACE, Id('x'), SPACE, Num(10), CP ];
+      expect(result).to.deep.equal(expected);
   });
 
   it('should parse 123 as an identifier here', () => {
       const result = tokenize('(123)');
-      const expected = [ OP, { type: 'Number', value: '123' }, CP ];
+      const expected = [ OP, Num(123), CP ];
       expect(result).to.deep.equal(expected);
   })
 
@@ -79,47 +53,47 @@ describe('tokenizer', () => {
   it('should tokenize factorial correctly', () => {
     let result = tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')
     let expected = [
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: 'define' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: 'fact' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Identifier', value: 'n' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: 'if' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: '=' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Identifier', value: 'n' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Number', value: '0' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Number', value: '1' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: '*' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Identifier', value: 'n' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: 'fact' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'OpenParen', value: '(' },
-      { type: 'Identifier', value: '-' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Identifier', value: 'n' },
-      { type: 'Whitespace', value: ' ' },
-      { type: 'Number', value: '1' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' },
-      { type: 'CloseParen', value: ')' }
+        OP,
+        Id('define'),
+        SPACE,
+        OP,
+        Id('fact'),
+        SPACE,
+        Id('n'),
+        CP,
+        SPACE,
+        OP,
+        Id('if'),
+        SPACE,
+        OP,
+        Id('='),
+        SPACE,
+        Id('n'),
+        SPACE,
+        Num(0),
+        CP,
+        SPACE,
+        Num(1),
+        SPACE,
+        OP,
+        Id('*'),
+        SPACE,
+        Id('n'),
+        SPACE,
+        OP,
+        Id('fact'),
+        SPACE,
+        OP,
+        Id('-'),
+        SPACE,
+        Id('n'),
+        SPACE,
+        Num(1),
+        CP,
+        CP,
+        CP,
+        CP,
+        CP,
     ];
     expect(result).to.deep.equal(expected);
   })
@@ -129,34 +103,34 @@ describe('parser', () => {
   it('should parse this fact function', () => {
     const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))');
     const expected = (
-      [
-        { type: 'Identifier', value: 'define' },
-        [ 
-          { type: 'Identifier', value: 'fact' },
-          { type: 'Identifier', value: 'n' }
-        ],
         [
-          { type: 'Identifier', value: 'if' },
-          [ 
-            { type: 'Identifier', value: '=' },
-            { type: 'Identifier', value: 'n' }, 
-            { type: 'Number', value: '0' }
-          ],
-          { type: 'Number', value: '1' },
-          [
-            { type: 'Identifier', value: '*' },
-            { type: 'Identifier', value: 'n' },
+            Id('define'),
+            [ 
+                Id('fact'),
+                Id('n'),
+            ],
             [
-              { type: 'Identifier', value: 'fact' },
-              [
-                { type: 'Identifier', value: '-' },
-                { type: 'Identifier', value: 'n' },
-                { type: 'Number', value: '1' }
-              ]
+                Id('if'),
+                [ 
+                    Id('='),
+                    Id('n'), 
+                    Num(0),
+                ],
+                Num(1),
+                [
+                    Id('*'),
+                    Id('n'),
+                    [
+                        Id('fact'),
+                        [
+                            Id('-'),
+                            Id('n'),
+                            Num(1)
+                        ]
+                    ]
+                ] 
             ]
-          ] 
         ]
-      ]
     );
     expect(result).to.deep.equal(expected);
   });
