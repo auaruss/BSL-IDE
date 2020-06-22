@@ -51,15 +51,15 @@ describe('tokenizer', () => {
     const result = tokenize('(define x 10)');
     const expected = [
       {type: 'OpenParen', value: '('},
-      {type: 'OpenParen', value: 'define'},
-      {type: 'OpenParen', value: ' '},
-      {type: 'OpenParen', value: 'x'},
-      {type: 'OpenParen', value: ' '},
-      {type: 'OpenParen', value: '10'},
-      {type: 'OpenParen', value: ')'},
+      {type: 'Identifier', value: 'define'},
+      {type: 'Whitespace', value: ' '},
+      {type: 'Identifier', value: 'x'},
+      {type: 'Whitespace', value: ' '},
+      {type: 'Number', value: '10'},
+      {type: 'CloseParen', value: ')'},
     ]
     expect(result).to.deep.equal(expected);
-  });s
+  });
 
   it('should parse 123 as an identifier here', () => {
     const result = tokenize('(123)');
