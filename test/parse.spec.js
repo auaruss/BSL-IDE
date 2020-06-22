@@ -70,10 +70,10 @@ describe('tokenizer', () => {
         SPACE,
         Id('n'),
         SPACE,
-        Num('0'),
+        Num(0),
         CP,
         SPACE,
-        Num('1'),
+        Num(1),
         SPACE,
         OP,
         Id('*'),
@@ -88,7 +88,7 @@ describe('tokenizer', () => {
         SPACE,
         Id('n'),
         SPACE,
-        Num('1'),
+        Num(1),
         CP,
         CP,
         CP,
@@ -114,9 +114,9 @@ describe('parser', () => {
                 [ 
                     Id('='),
                     Id('n'), 
-                    Num('0'),
+                    Num(0),
                 ],
-                Num('1'),
+                Num(1),
                 [
                     Id('*'),
                     Id('n'),
@@ -125,7 +125,7 @@ describe('parser', () => {
                         [
                             Id('-'),
                             Id('n'),
-                            Num('1')
+                            Num(1)
                         ]
                     ]
                 ] 
