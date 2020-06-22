@@ -107,14 +107,14 @@ describe('parser', () => {
             Id('define'),
             [ 
                 Id('fact'),
-                Id('n' }
+                Id('n'),
             ],
             [
                 Id('if'),
                 [ 
                     Id('='),
                     Id('n'), 
-                    Num('0' }
+                    Num('0'),
                 ],
                 Num('1'),
                 [
