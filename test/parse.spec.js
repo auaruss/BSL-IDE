@@ -47,6 +47,10 @@ describe('tokenizer', () => {
 
   it('should handle booleans correctly', () => {
       function result() { tokenize('#t123'); }
+      expect(tokenize("#t")).to.deep.equal([Tok('Boolean', '#t')]);
+      expect(tokenize("#f")).to.deep.equal([Tok('Boolean', '#f')]);
+      expect(tokenize("#true")).to.deep.equal([Tok('Boolean', '#true')]);
+      expect(tokenize("#false")).to.deep.equal([Tok('Boolean', '#false')]);
       expect(result).to.throw(Error);
   });
 
