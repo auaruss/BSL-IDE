@@ -4,9 +4,9 @@ const { expect } = require('chai');
 function Tok(t, v) { return { type: t, value: v} ; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
-      [ { type: 'CloseParen', value: ')'},
-        { type: 'OpenParen', value: '('}, 
-        { type: 'Whitespace', value: ' '},
+      [ Tok('CloseParen', ')'),
+        Tok('OpenParen', '('), 
+        Tok('Whitespace', ' '),
         Tok('OpenSquareParen', '['),
         Tok('CloseSquareParen', ']'),
         Tok('OpenBraceParen', '{'),
