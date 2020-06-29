@@ -67,68 +67,68 @@ describe('tokenize', () => {
         checkExpect(result, expected);
     });
 
-    // it('should tokenize booleans correctly', () => {
-    //     const result = ['#t', '#f', '#true', '#false'];
-    //     const expected = [
-    //         [Tok('Boolean', '#t')],
-    //         [Tok('Boolean', '#f')],
-    //         [Tok('Boolean', '#true')],
-    //         [Tok('Boolean', '#false')]
-    //     ];
-    //     checkExpectMultiple(
-    //         tokenize, invalidBoolean, expected
-    //     );
-    //     function invalidBoolean() { tokenize('#t123'); }
-    //     expect(invalidBoolean).to.throw(Error);
-    // });
+    it('should tokenize booleans correctly', () => {
+        const result = ['#t', '#f', '#true', '#false'];
+        const expected = [
+            [Tok('Boolean', '#t')],
+            [Tok('Boolean', '#f')],
+            [Tok('Boolean', '#true')],
+            [Tok('Boolean', '#false')]
+        ];
+        checkExpectMultiple(
+            tokenize, result, expected
+        );
+        function invalidBoolean() { tokenize('#t123'); }
+        expect(invalidBoolean).to.throw(Error);
+    });
 
-    // it('should tokenize factorial correctly', () => {
-    //     let result = tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')
-    //     let expected = [
-    //         OP,
-    //         Id('define'),
-    //         SPACE,
-    //         OP,
-    //         Id('fact'),
-    //         SPACE,
-    //         Id('n'),
-    //         CP,
-    //         SPACE,
-    //         OP,
-    //         Id('if'),
-    //         SPACE,
-    //         OP,
-    //         Id('='),
-    //         SPACE,
-    //         Id('n'),
-    //         SPACE,
-    //         Num(0),
-    //         CP,
-    //         SPACE,
-    //         Num(1),
-    //         SPACE,
-    //         OP,
-    //         Id('*'),
-    //         SPACE,
-    //         Id('n'),
-    //         SPACE,
-    //         OP,
-    //         Id('fact'),
-    //         SPACE,
-    //         OP,
-    //         Id('-'),
-    //         SPACE,
-    //         Id('n'),
-    //         SPACE,
-    //         Num(1),
-    //         CP,
-    //         CP,
-    //         CP,
-    //         CP,
-    //         CP,
-    //     ];
-    //     checkExpect(result, expected);
-    // });
+    it('should tokenize factorial correctly', () => {
+        let result = tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')
+        let expected = [
+            OP,
+            Id('define'),
+            SPACE,
+            OP,
+            Id('fact'),
+            SPACE,
+            Id('n'),
+            CP,
+            SPACE,
+            OP,
+            Id('if'),
+            SPACE,
+            OP,
+            Id('='),
+            SPACE,
+            Id('n'),
+            SPACE,
+            Num(0),
+            CP,
+            SPACE,
+            Num(1),
+            SPACE,
+            OP,
+            Id('*'),
+            SPACE,
+            Id('n'),
+            SPACE,
+            OP,
+            Id('fact'),
+            SPACE,
+            OP,
+            Id('-'),
+            SPACE,
+            Id('n'),
+            SPACE,
+            Num(1),
+            CP,
+            CP,
+            CP,
+            CP,
+            CP,
+        ];
+        checkExpect(result, expected);
+    });
 
     // it('should tokenize strings correctly', () => {
     //     const result = [
