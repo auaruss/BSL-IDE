@@ -65,7 +65,7 @@ var parseSexp = function (tokens) {
         case TokenType.OpenBraceParen:
             var partsOfSexp = parseSexps(tokens.slice(1));
             if (isSuccess(partsOfSexp)) {
-                if (partsOfSexp.thing[0] && isClosingParen(partsOfSexp.thing[0])) {
+                if (isClosingParen(partsOfSexp.remain[0])) {
                     return ({
                         thing: partsOfSexp.thing,
                         remain: partsOfSexp.remain.slice(1)
@@ -113,7 +113,10 @@ var parseSexps = function (tokens) {
     } // else handle failure here
 };
 var parse = function (exp) {
-    return parseSexps(tokenize(exp).filter(function (x) { return x.type !== TokenType.Whitespace; })).thing;
+    var parsed = parseSexps(tokenize(exp).filter(function (x) { return x.type !== TokenType.Whitespace; }));
+    if (isSuccess(parsed)) {
+        return parsed.thing;
+    }
 };
 var isClosingParen = function (t) {
     if (t.type) {

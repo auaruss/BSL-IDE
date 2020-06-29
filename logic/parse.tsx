@@ -71,8 +71,8 @@ type ResultFailure<T>
     remain: Token[]
   };
 
-const isSuccess = (result: Result<T>): result is ResultSuccess<T> => {
-  return (result as ResultSuccess<T>).thing !== undefined;
+const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
+  return (result as ResultSuccess<any>).thing !== undefined;
 }
 
 enum TokenType {
@@ -146,7 +146,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
     case TokenType.OpenBraceParen:
       const partsOfSexp = parseSexps(tokens.slice(1));
       if (isSuccess(partsOfSexp)) {
-        if (partsOfSexp.thing[0] && isClosingParen(partsOfSexp.thing[0])) {
+        if (isClosingParen(partsOfSexp.remain[0])) {
           return ({
             thing: partsOfSexp.thing,
             remain: partsOfSexp.remain.slice(1)
@@ -197,10 +197,13 @@ const parseSexps = (tokens: Token[]): Result<SExp[]> => {
 }
 
 const parse = (exp:string): SExp[] => {
-  return parseSexps(tokenize(exp).filter(x => x.type !== TokenType.Whitespace)).thing;
+  const parsed = parseSexps(tokenize(exp).filter(x => x.type !== TokenType.Whitespace));
+  if (isSuccess(parsed)) { 
+    return parsed.thing;
+  }
 }
 
-const isClosingParen = (t: SExp): boolean => {
+const isClosingParen = (t: any): boolean => {
   if ((t as Token).type) {
     return (
          (t as Token).type === TokenType.CloseParen
