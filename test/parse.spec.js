@@ -147,10 +147,10 @@ describe('tokenize', () => {
 describe('parseSexp', () => {
     it('', () => {
         const result = [
-            ') (hello)',
-            '(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))',
-            'define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))',
-            '(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'
+            tokenize(') (hello)'),
+            tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
+            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
+            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))')
         ];
         const expected = [
             ResultFailure('Found an unmatched closing parenthesis', tokenize(') (hello)')),
@@ -204,8 +204,8 @@ describe('parseSexp', () => {
 describe('parseSexps', () => {
     it('', () => {
         const result = [
-            'define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))',
-            '(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'
+            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
+            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))')
         ];
         const expected = [
             ResultSuccess(
