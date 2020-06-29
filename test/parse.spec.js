@@ -24,10 +24,8 @@ const checkExpect = (res, expected) => {
     expect(res).to.deep.equal(expected);
 }
 
-const checkExpectMultiple = (f, res, expected) => {
-    for (let tuple of res.map((x, y) => [x, expected[y]])) {
-        checkExpect(f(tuple[0]), tuple[1]);
-    }
+function checkExpectMultiple(f, res, expected) {
+    res.map((input, idx) => checkExpect(f(input), expected[idx]));
 }
 
 describe('checkExpectMultiple', () => {
