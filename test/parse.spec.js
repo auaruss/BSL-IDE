@@ -278,9 +278,9 @@ describe('parse', () => {
     it('', () => {
         const result = [
             '',
-            // '(',
-            // '[',
-            // '{',
+            '(',
+            '[',
+            '{',
             ')',
             ']',
             '}',
@@ -288,13 +288,13 @@ describe('parse', () => {
             '"hello"',
             'x',
             '#true',
-            // '(define x 10)'
+            '(define x 10)'
         ];
         const expected = [
             tokenize(''),
-            // tokenize('('),
-            // tokenize('['),
-            // tokenize('{'),
+            tokenize('('),
+            tokenize('['),
+            tokenize('{'),
             tokenize(')'),
             tokenize(']'),
             tokenize('}'),
@@ -302,7 +302,7 @@ describe('parse', () => {
             tokenize('"hello"'),
             tokenize('x'),
             tokenize('#true'),
-            // [Id('define'), Id('x'), Num('10')]
+            [Id('define'), Id('x'), Num('10')]
         ];
         checkExpectMultiple(parse, result, expected);
     });
