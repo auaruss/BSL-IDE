@@ -146,6 +146,8 @@ describe('tokenize', () => {
 
 describe('parseSexp', () => {
     it('', () => {
+        checkExpect(parseSexp([CP]),    {error: "unexpected closing paren", remain: [CP] });
+        checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
         const result = [
             tokenize(') (hello)'),
             tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
@@ -203,6 +205,7 @@ describe('parseSexp', () => {
 
 describe('parseSexps', () => {
     it('', () => {
+        checkExpect(parseSexps([CP]), {thing: [], remain: [CP] });
         const result = [
             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))')

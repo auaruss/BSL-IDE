@@ -1,7 +1,7 @@
 'use strict';
-var isSuccess = function (result) {
+function isSuccess(result) {
     return result.thing !== undefined;
-};
+}
 var TokenType;
 (function (TokenType) {
     TokenType["Error"] = "Error";
@@ -82,7 +82,7 @@ var parseSexp = function (tokens) {
         case TokenType.CloseParen:
         case TokenType.CloseSquareParen:
         case TokenType.CloseBraceParen:
-        // return {thing: [], remain: tokens};
+            return { error: "unexpected closing paren", remain: tokens };
         case TokenType.Number:
         case TokenType.String:
         case TokenType.Identifier:
@@ -110,13 +110,20 @@ var parseSexps = function (tokens) {
                 remain: nextParse.remain
             });
         }
-    } // else handle failure here
+        else {
+            return { thing: [result.thing], remain: result.remain };
+        }
+    }
+    else {
+        return result;
+    }
 };
 var parse = function (exp) {
     var parsed = parseSexps(tokenize(exp).filter(function (x) { return x.type !== TokenType.Whitespace; }));
     if (isSuccess(parsed)) {
         return parsed.thing;
     }
+    throw new Error('parse failure');
 };
 var isClosingParen = function (t) {
     if (t.type) {

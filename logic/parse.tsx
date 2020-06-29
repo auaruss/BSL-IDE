@@ -71,7 +71,7 @@ type ResultFailure<T>
     remain: Token[]
   };
 
-const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
+function isSuccess(result: Result<any>): result is ResultSuccess<any> {
   return (result as ResultSuccess<any>).thing !== undefined;
 }
 
@@ -162,7 +162,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
     case TokenType.CloseParen:
     case TokenType.CloseSquareParen:
     case TokenType.CloseBraceParen:
-      // return {thing: [], remain: tokens};
+      return { error: "unexpected closing paren", remain: tokens };
     case TokenType.Number:
     case TokenType.String:
     case TokenType.Identifier:
@@ -192,8 +192,12 @@ const parseSexps = (tokens: Token[]): Result<SExp[]> => {
           thing: [result.thing].concat(nextParse.thing),
           remain: nextParse.remain
         });
+      } else {
+          return { thing: [result.thing], remain: result.remain };
       }
-  }  // else handle failure here
+  } else {
+      return result;
+  }
 }
 
 const parse = (exp:string): SExp[] => {
@@ -201,9 +205,10 @@ const parse = (exp:string): SExp[] => {
   if (isSuccess(parsed)) { 
     return parsed.thing;
   }
+    throw new Error('parse failure');
 }
 
-const isClosingParen = (t: any): boolean => {
+const isClosingParen = (t: Token): boolean => {
   if ((t as Token).type) {
     return (
          (t as Token).type === TokenType.CloseParen
