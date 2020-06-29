@@ -1,4 +1,7 @@
 'use strict';
+var isSuccess = function (result) {
+    return result.thing !== undefined;
+};
 var TokenType;
 (function (TokenType) {
     TokenType["Error"] = "Error";
@@ -55,26 +58,31 @@ var tokenize = function (exp) {
 // };
 var parseSexp = function (tokens) {
     if (tokens.length === 0)
-        return { thing: [], remain: tokens };
+        return { thing: [], remain: [] };
     switch (tokens[0].type) {
         case TokenType.OpenParen:
         case TokenType.OpenSquareParen:
         case TokenType.OpenBraceParen:
-            var lookForMatchingParenIndex = matchParens(tokens);
-            if (lookForMatchingParenIndex === -1) {
-                return { error: 'Too few parens in prefix Sexp.', remain: tokens };
-            }
-            if (!parensMatching(tokens[0].type, tokens[lookForMatchingParenIndex].type)) {
-                return { error: 'The wrong type of paren is matching your prefix paren.', remain: tokens };
-            }
-            return {
-                thing: parseSexps(tokens.slice(1, lookForMatchingParenIndex)),
-                remain: tokens.slice(lookForMatchingParenIndex + 1)
-            };
+            var partsOfSexp = parseSexps(tokens.slice(1));
+            if (isSuccess(partsOfSexp)) {
+                if (partsOfSexp.thing[0] && isClosingParen(partsOfSexp.thing[0])) {
+                    return ({
+                        thing: partsOfSexp.thing,
+                        remain: partsOfSexp.remain.slice(1)
+                    });
+                }
+                else {
+                    return ({
+                        thing: [],
+                        remain: tokens
+                    });
+                }
+            } // else handle failure here
+            break;
         case TokenType.CloseParen:
         case TokenType.CloseSquareParen:
         case TokenType.CloseBraceParen:
-            return { error: 'Found a close paren with no match.', remain: tokens };
+        // return {thing: [], remain: tokens};
         case TokenType.Number:
         case TokenType.String:
         case TokenType.Identifier:
@@ -84,53 +92,40 @@ var parseSexp = function (tokens) {
                 remain: tokens.slice(1)
             };
     }
-    return {
-        error: 'dunno?',
-        remain: tokens
-    };
+    throw new Error('dunno?');
+    // return {
+    //   : 'dunno?',
+    //   remain: tokens
+    // };
 };
 var parseSexps = function (tokens) {
-    var result = parseSexp(tokens);
     if (tokens.length === 0)
-        return [];
-    if (result.thing) {
-        return [result.thing].concat(parseSexps(result.remain));
-    }
-    else {
-        throw new Error(result.error);
-    }
+        return { thing: [], remain: [] };
+    var result = parseSexp(tokens);
+    if (isSuccess(result)) {
+        var nextParse = parseSexps(result.remain);
+        if (isSuccess(nextParse)) {
+            return ({
+                thing: [result.thing].concat(nextParse.thing),
+                remain: nextParse.remain
+            });
+        }
+    } // else handle failure here
 };
 var parse = function (exp) {
-    return parseSexps(tokenize(exp).filter(function (x) { return x.type !== TokenType.Whitespace; }));
+    return parseSexps(tokenize(exp).filter(function (x) { return x.type !== TokenType.Whitespace; })).thing;
 };
-// This function can ONLY be guaranteed to work when tokens[0] is a left paren!
-var matchParens = function (tokens) {
-    var leftParens = 1, i = 1;
-    while (leftParens > 0 && i < tokens.length) {
-        if (tokens[i].type === TokenType.OpenParen
-            || tokens[i].type === TokenType.OpenSquareParen
-            || tokens[i].type === TokenType.OpenBraceParen) {
-            leftParens += 1;
-        }
-        else if (tokens[i].type === TokenType.CloseParen
-            || tokens[i].type === TokenType.CloseSquareParen
-            || tokens[i].type === TokenType.CloseBraceParen) {
-            leftParens -= 1;
-        }
-        i++;
+var isClosingParen = function (t) {
+    if (t.type) {
+        return (t.type === TokenType.CloseParen
+            || t.type === TokenType.CloseSquareParen
+            || t.type === TokenType.CloseBraceParen);
     }
-    return (leftParens > 0) ? -1 : i - 1;
-};
-var parensMatching = function (p1, p2) {
-    if (p1 === TokenType.OpenParen)
-        return p2 === TokenType.CloseParen;
-    if (p1 === TokenType.OpenSquareParen)
-        return p2 === TokenType.CloseSquareParen;
-    if (p1 === TokenType.OpenBraceParen)
-        return p2 === TokenType.CloseBraceParen;
     return false;
 };
 module.exports = {
     'tokenize': tokenize,
-    'parse': parse
+    'parse': parse,
+    'parseSexp': parseSexp,
+    'parseSexps': parseSexps
 };

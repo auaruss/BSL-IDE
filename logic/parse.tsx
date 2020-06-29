@@ -71,6 +71,10 @@ type ResultFailure<T>
     remain: Token[]
   };
 
+const isSuccess = (result: Result<T>): result is ResultSuccess<T> => {
+  return (result as ResultSuccess<T>).thing !== undefined;
+}
+
 enum TokenType {
   Error='Error',
   OpenParen='OpenParen',
@@ -134,27 +138,31 @@ const tokenize = (exp: string): Token[] => {
 // };
 
 const parseSexp = (tokens: Token[]): Result<SExp> => {
-  if (tokens.length === 0) return {thing: [], remain: tokens};
+  if (tokens.length === 0) return {thing: [], remain: []};
 
   switch(tokens[0].type) {
     case TokenType.OpenParen:
     case TokenType.OpenSquareParen:
     case TokenType.OpenBraceParen:
-      let lookForMatchingParenIndex: number = matchParens(tokens);
-      if (lookForMatchingParenIndex === -1) {
-        return {error: 'Too few parens in prefix Sexp.', remain: tokens};
-      }
-      if (! parensMatching(tokens[0].type, tokens[lookForMatchingParenIndex].type)) {
-        return {error: 'The wrong type of paren is matching your prefix paren.', remain: tokens};
-      }
-      return {
-        thing: parseSexps(tokens.slice(1, lookForMatchingParenIndex)),
-        remain: tokens.slice(lookForMatchingParenIndex+1)
-      };
+      const partsOfSexp = parseSexps(tokens.slice(1));
+      if (isSuccess(partsOfSexp)) {
+        if (partsOfSexp.thing[0] && isClosingParen(partsOfSexp.thing[0])) {
+          return ({
+            thing: partsOfSexp.thing,
+            remain: partsOfSexp.remain.slice(1)
+          });
+        } else { 
+          return ({
+            thing: [],
+            remain: tokens
+          });
+        }
+      } // else handle failure here
+      break;
     case TokenType.CloseParen:
     case TokenType.CloseSquareParen:
     case TokenType.CloseBraceParen:
-      return {error: 'Found a close paren with no match.', remain: tokens};
+      // return {thing: [], remain: tokens};
     case TokenType.Number:
     case TokenType.String:
     case TokenType.Identifier:
@@ -165,53 +173,47 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
       };
   }
 
-  return {
-    error: 'dunno?',
-    remain: tokens
-  };
+  throw new Error('dunno?');
+  // return {
+  //   : 'dunno?',
+  //   remain: tokens
+  // };
 }
 
-const parseSexps = (tokens: Token[]): SExp[] => {
-  if (tokens.length === 0) return [];
+const parseSexps = (tokens: Token[]): Result<SExp[]> => {
+  if (tokens.length === 0) return {thing: [], remain: []};
   let result = parseSexp(tokens);
-  if ((result as ResultSuccess<SExp>).thing) {
-    return [(result as ResultSuccess<SExp>).thing].concat(parseSexps(result.remain));
-  } else {
-    throw new Error((result as ResultFailure<SExp>).error);
-  }
+  if (isSuccess(result)) {
+    
+      const nextParse = parseSexps(result.remain);
+
+      if (isSuccess(nextParse)) {
+        return ({
+          thing: [result.thing].concat(nextParse.thing),
+          remain: nextParse.remain
+        });
+      }
+  }  // else handle failure here
 }
 
 const parse = (exp:string): SExp[] => {
-  return parseSexps(tokenize(exp).filter(x => x.type !== TokenType.Whitespace));
+  return parseSexps(tokenize(exp).filter(x => x.type !== TokenType.Whitespace)).thing;
 }
 
-// This function can ONLY be guaranteed to work when tokens[0] is a left paren!
-const matchParens = (tokens: Token[]): number => {
-  let leftParens: number = 1, i:number = 1;
-  while (leftParens > 0 && i < tokens.length) {
-    if (tokens[i].type === TokenType.OpenParen
-        || tokens[i].type === TokenType.OpenSquareParen
-        || tokens[i].type === TokenType.OpenBraceParen) {
-      leftParens += 1;
-    }
-    else if (tokens[i].type === TokenType.CloseParen
-      || tokens[i].type === TokenType.CloseSquareParen
-      || tokens[i].type === TokenType.CloseBraceParen) {
-      leftParens -= 1;
-    }
-    i++;
+const isClosingParen = (t: SExp): boolean => {
+  if ((t as Token).type) {
+    return (
+         (t as Token).type === TokenType.CloseParen
+      || (t as Token).type === TokenType.CloseSquareParen
+      || (t as Token).type === TokenType.CloseBraceParen
+    );
   }
-  return (leftParens > 0) ? -1 : i-1;
-}
-
-const parensMatching = (p1: TokenType, p2: TokenType): boolean => {
-  if (p1 === TokenType.OpenParen) return p2 === TokenType.CloseParen;
-  if (p1 === TokenType.OpenSquareParen) return p2 === TokenType.CloseSquareParen;
-  if (p1 === TokenType.OpenBraceParen) return p2 === TokenType.CloseBraceParen;
   return false;
 }
 
 module.exports =  {
   'tokenize': tokenize,
-  'parse': parse
+  'parse': parse,
+  'parseSexp': parseSexp,
+  'parseSexps': parseSexps
 };
