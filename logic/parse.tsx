@@ -71,8 +71,13 @@ type ResultFailure<T>
     remain: Token[]
   };
 
-function isSuccess(result: Result<any>): result is ResultSuccess<any> {
+// Determines whether a Result is a ResultSuccess.
+const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
   return (result as ResultSuccess<any>).thing !== undefined;
+}
+
+const isFailure = (result: Result<any>): result is ResultFailure<any> => {
+  return (result as ResultFailure<any>).error !== undefined;
 }
 
 enum TokenType {
@@ -111,6 +116,7 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
 
+// Transforms a string into a list of tokens.
 const tokenize = (exp: string): Token[] => {
   if (exp == '') {
     return [];
@@ -127,42 +133,61 @@ const tokenize = (exp: string): Token[] => {
     .concat(tokenize(exp.slice(1)));
 };
 
-// type SExp = string | SExp[];
-// type Result<T>
-//   = {
-//   thing: T,
-//   remain: Token[]
-// } | {
-//   error: string,
-//   remain: Token[]
-// };
-
+// Attempts to parse the first SExp from a list of tokens.
+// A failure is produced when no starting SExp is found.
+// Note that this function does not deal with whitespace as we expect to always be calling parse
+// first and we deal with the whitespace completely in there.
 const parseSexp = (tokens: Token[]): Result<SExp> => {
-  if (tokens.length === 0) return {thing: [], remain: []};
+  if (tokens.length === 0) return {error: 'Reached the end without finding an SExpression.', remain: []};
 
   switch(tokens[0].type) {
     case TokenType.OpenParen:
     case TokenType.OpenSquareParen:
     case TokenType.OpenBraceParen:
-      const partsOfSexp = parseSexps(tokens.slice(1));
-      if (isSuccess(partsOfSexp)) {
-        if (isClosingParen(partsOfSexp.remain[0])) {
-          return ({
-            thing: partsOfSexp.thing,
-            remain: partsOfSexp.remain.slice(1)
-          });
-        } else { 
-          return ({
-            thing: [],
+      const parseRest = parseSexps(tokens.slice(1));
+      // this means parseRest is the rest of the current SExp. so for
+      // '(define hello 1) (define x 10)'
+      // parseRest should be equal to
+      // {
+      //   thing: [Id('define'), Id('hello'), Num('1').
+      //   remain: tokenize(') (define x 10)')
+      // } (ignoring whitespace in the tokenization)
+      if (isSuccess(parseRest)) {
+        // Note that parseRest returning a success means we can assume that an SExp exists at the
+        // start of the expression if and only if the remain from parsing the rest starts with a closing paren
+        // which matches our current open paren.
+
+        // This also means if the remain is empty we return a failure.
+        if (parseRest.remain.length === 0) {
+          return {
+            error: 'Found an opening parenthesis with no matching closing parenthesis.',
             remain: tokens
-          });
+          };
+        } else if (parensMatch(tokens[0], parseRest.remain[0])) {
+          return {
+            thing: [parseRest.thing],
+            remain: parseRest.remain.slice(1)
+          };
+        } else {
+          return {
+            error: 'Found an opening parenthesis with no matching closing parenthesis.',
+            remain: tokens
+          };
         }
-      } // else handle failure here
-      break;
+      } else if (isFailure(parseRest)) {
+        // Is there ever a case which parseSexps returns a failure?\
+      } else {
+        // This else case exists so we can use isFailure to process 
+        // ResultFailures from parseSexps correctly.
+        return {error:'An unknown error occurred in parseSexp.', remain: tokens};
+      }
     case TokenType.CloseParen:
     case TokenType.CloseSquareParen:
     case TokenType.CloseBraceParen:
-      return { error: "unexpected closing paren", remain: tokens };
+      return {
+        error: "Found a closing parenthesis with no matching opening parenthesis.",
+        remain: tokens
+      };
     case TokenType.Number:
     case TokenType.String:
     case TokenType.Identifier:
@@ -173,30 +198,19 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
       };
   }
 
-  throw new Error('dunno?');
-  // return {
-  //   : 'dunno?',
-  //   remain: tokens
-  // };
+  throw new Error('dunno? parseSexp');
 }
 
+// Parses as many SExp as possible from the start of the list of tokens.
 const parseSexps = (tokens: Token[]): Result<SExp[]> => {
-  if (tokens.length === 0) return {thing: [], remain: []};
+  if (tokens.length === 0) return { thing: [], remain: []};
   let result = parseSexp(tokens);
   if (isSuccess(result)) {
-    
-      const nextParse = parseSexps(result.remain);
 
-      if (isSuccess(nextParse)) {
-        return ({
-          thing: [result.thing].concat(nextParse.thing),
-          remain: nextParse.remain
-        });
-      } else {
-          return { thing: [result.thing], remain: result.remain };
-      }
+  } else if (isFailure(result)) {
+
   } else {
-      return result;
+    throw new Error('dunno? parseSexps')
   }
 }
 
@@ -208,13 +222,16 @@ const parse = (exp:string): SExp[] => {
     throw new Error('parse failure');
 }
 
-const isClosingParen = (t: Token): boolean => {
-  if ((t as Token).type) {
-    return (
-         (t as Token).type === TokenType.CloseParen
-      || (t as Token).type === TokenType.CloseSquareParen
-      || (t as Token).type === TokenType.CloseBraceParen
-    );
+// Given two tokens, if the first is an opening paren token and the second a closing paren token,
+// determines whether they are matching paren types.
+// False if given any other tokens, or given the tokens in the wrong order.
+const parensMatch = (op: Token, cp: Token): boolean => {
+  if (op.type === TokenType.OpenParen) {
+    return cp.type === TokenType.CloseParen;
+  } else if (op.type === TokenType.OpenSquareParen) {
+    return cp.type === TokenType.CloseSquareParen;
+  } else if (op.type === TokenType.OpenBraceParen) {
+    return cp.type === TokenType.CloseBraceParen;
   }
   return false;
 }
