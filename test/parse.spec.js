@@ -1,8 +1,8 @@
 const { tokenize, parse, parseSexp, parseSexps} = require('../logic/parse.js');
 const { expect } = require('chai');
 
-function Tok(t, v) { return { type: t, value: v} ; }
-function Atom(t, v) { return Tok(t, v); }
+function Tok(t, v) { return { type: t, value: v}; }
+function Atom(t, v) { return { type: t, value: v}; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
       [ Tok('CloseParen', ')'),
@@ -34,13 +34,15 @@ function IdTok(v) { return Tok('Identifier', v); }
 function StringTok(v) { return Tok('String', '"' + v + '"'); }
 function BooleanTok(v) { return Tok('Boolean', v); }
 
+function ResultSuccess(t, r) { return {thing: t, remain: r} }
+function ResultFailure(e, r) { return {error: e, remain: r} }
+
 function NumAtom(v) { return Atom('Number', v); }
 function IdAtom(v) { return Atom('Identifier', v); }
 function StringAtom(v) { return Atom('String', '"' + v + '"'); }
 function BooleanAtom(v) { return Atom('Boolean', whichBool(v)); }
 
-function ResultSuccess(t, r) { return {thing: t, remain: r} }
-function ResultFailure(e, r) { return {error: e, remain: r} }
+
 
 
 const checkExpect = (res, expected) => {

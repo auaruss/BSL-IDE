@@ -2,6 +2,8 @@
 // SExpr Parser in TS
 // Alice Russell, Sam Soucie
 
+// TODO: The tokenizer and parser must handle '().
+
 enum TokenType {
   Error='Error',
   OpenParen='OpenParen',
@@ -61,20 +63,31 @@ enum AtomType {
   Identifier='Identifier'
 }
 
-type Atom
+type Str
   = {
     type: AtomType.String,
     value: string
-  } | {
+  };
+
+type Num
+  = {
     type: AtomType.Number,
     value: number
-  } | {
+  };
+
+type Id
+  = {
     type: AtomType.Identifier,
     value: string
-  } | {
-    type: AtomType.Boolean,
-    value: boolean
   };
+
+type Bool = {
+  type: AtomType.Boolean,
+  value: boolean
+};
+
+type Atom
+  = Str | Num | Id | Bool;
 
 type SExp
   = Atom | SExp[];
