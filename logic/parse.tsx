@@ -2,84 +2,6 @@
 // SExpr Parser in TS
 // Alice Russell, Sam Soucie
 
-type Identifier = string;
-
-// BSL Grammar
-type Program = DefOrExpr[];
-
-type DefOrExpr
-  = Definition
-  | Expr
-  | TestCase
-  | LibraryRequire;
-
-type Definition
-  = ['define', [Identifier, Identifier, Identifier[]?], Expr]
-  | ['define', Identifier, Expr]
-  | ['define', Identifier, ['lambda'|'λ', Identifier[], Expr]]
-  | ['define-struct', Identifier, Identifier[]]
-
-type Cond = ['cond', [Expr, Expr][], ['else', Expr]?]
-
-type Expr
-  = symbol
-  | number
-  | boolean
-  | string
-  | Identifier
-  | []
-  | [Identifier, Expr[]]
-  | Cond
-  | ['if', Expr, Expr, Expr]
-  | ['and', Expr[]]
-  | ['or', Expr[]];
-
-type TestCase
-  = ['check-expect', Expr, Expr]
-  | ['check-random', Expr, Expr]
-  | ['check-within', Expr, Expr, Expr]
-  | ['check-member-of', Expr[]]
-  | ['check-range', Expr, Expr, Expr]
-  | ['check-satisfied', Expr, Identifier]
-  | ['check-error', Expr, Expr?];
-  
-type LibraryRequire
-  = ['require', string]
-  | ['require', ['lib', string[]]]
-  | ['require', ['planet', string, Package]];
-
-type Package
-  = [string, string, number, number];
-
-type SExp
-  = 
-  | { 
-    type: TokenType.String|TokenType.Number|TokenType.Boolean|TokenType.Identifier,
-    value: string
-  }
-  | SExp[];
-
-type Result<T> = ResultSuccess<T> | ResultFailure<T>;
-type ResultSuccess<T>
-  = {
-    thing: T,
-    remain: Token[]
-  };
-type ResultFailure<T>
-  = {
-    error: string,
-    remain: Token[]
-  };
-
-// Determines whether a Result is a ResultSuccess.
-const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
-  return (result as ResultSuccess<any>).thing !== undefined;
-}
-
-const isFailure = (result: Result<any>): result is ResultFailure<any> => {
-  return (result as ResultFailure<any>).error !== undefined;
-}
-
 enum TokenType {
   Error='Error',
   OpenParen='OpenParen',
@@ -132,6 +54,54 @@ const tokenize = (exp: string): Token[] => {
   throw new Error('Found a substring with no valid prefix token.');
 };
 
+enum AtomType {
+  String='String',
+  Number='Number',
+  Boolean='Boolean',
+  Identifier='Identifier'
+}
+
+type Atom
+  = {
+    type: AtomType.String,
+    value: string
+  } | {
+    type: AtomType.Number,
+    value: number
+  } | {
+    type: AtomType.Identifier,
+    value: string
+  } | {
+    type: AtomType.Boolean,
+    value: boolean
+  };
+
+type SExp
+  = Atom | SExp[];
+
+type Result<T> = ResultSuccess<T> | ResultFailure<T>;
+type ResultSuccess<T>
+  = {
+    thing: T,
+    remain: Token[]
+  };
+type ResultFailure<T>
+  = {
+    error: string,
+    remain: Token[]
+  };
+
+// Determines whether a Result is a ResultSuccess.
+const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
+  return (result as ResultSuccess<any>).thing !== undefined;
+}
+
+// Determines whether a Result is a ResultFailure.
+const isFailure = (result: Result<any>): result is ResultFailure<any> => {
+  return (result as ResultFailure<any>).error !== undefined;
+}
+
+
 // Attempts to parse the first SExp from a list of tokens.
 // A failure is produced when no starting SExp is found.
 // Note that this function does not deal with whitespace as we expect to always be calling parse
@@ -181,11 +151,35 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
         remain: tokens
       };
     case TokenType.Number:
+      return {
+        thing: {
+          type: AtomType.Number,
+          value: Number(tokens[0].value)
+        },
+        remain: tokens.slice(1)
+      };
     case TokenType.String:
+      return {
+        thing: {
+          type: AtomType.String,
+          value: tokens[0].value
+        },
+        remain: tokens.slice(1)
+      };
     case TokenType.Identifier:
+      return {
+        thing: {
+          type: AtomType.Identifier,
+          value: tokens[0].value
+        },
+        remain: tokens.slice(1)
+      };
     case TokenType.Boolean:
       return {
-        thing: tokens[0] as SExp,
+        thing: {
+          type: AtomType.Boolean,
+          value: whichBool(tokens[0])
+        },
         remain: tokens.slice(1)
       };
   }
@@ -228,6 +222,21 @@ const parensMatch = (op: Token, cp: Token): boolean => {
     return cp.type === TokenType.CloseBraceParen;
   }
   return false;
+}
+
+const whichBool = (t: Token): boolean => {
+  switch (t.value) {
+    case '#T':
+    case '#t':
+    case '#true':
+      return true;
+    case '#F':
+    case '#f':
+    case '#false':
+      return false;
+    default:
+      throw new Error("Called whichBool on a non-boolean token.");
+  }
 }
 
 module.exports =  {

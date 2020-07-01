@@ -1,11 +1,6 @@
 'use strict';
-// Determines whether a Result is a ResultSuccess.
-var isSuccess = function (result) {
-    return result.thing !== undefined;
-};
-var isFailure = function (result) {
-    return result.error !== undefined;
-};
+// SExpr Parser in TS
+// Alice Russell, Sam Soucie
 var TokenType;
 (function (TokenType) {
     TokenType["Error"] = "Error";
@@ -50,6 +45,21 @@ var tokenize = function (exp) {
         }
     }
     throw new Error('Found a substring with no valid prefix token.');
+};
+var AtomType;
+(function (AtomType) {
+    AtomType["String"] = "String";
+    AtomType["Number"] = "Number";
+    AtomType["Boolean"] = "Boolean";
+    AtomType["Identifier"] = "Identifier";
+})(AtomType || (AtomType = {}));
+// Determines whether a Result is a ResultSuccess.
+var isSuccess = function (result) {
+    return result.thing !== undefined;
+};
+// Determines whether a Result is a ResultFailure.
+var isFailure = function (result) {
+    return result.error !== undefined;
 };
 // Attempts to parse the first SExp from a list of tokens.
 // A failure is produced when no starting SExp is found.
@@ -100,11 +110,35 @@ var parseSexp = function (tokens) {
                 remain: tokens
             };
         case TokenType.Number:
+            return {
+                thing: {
+                    type: AtomType.Number,
+                    value: Number(tokens[0].value)
+                },
+                remain: tokens.slice(1)
+            };
         case TokenType.String:
+            return {
+                thing: {
+                    type: AtomType.String,
+                    value: tokens[0].value
+                },
+                remain: tokens.slice(1)
+            };
         case TokenType.Identifier:
+            return {
+                thing: {
+                    type: AtomType.Identifier,
+                    value: tokens[0].value
+                },
+                remain: tokens.slice(1)
+            };
         case TokenType.Boolean:
             return {
-                thing: tokens[0],
+                thing: {
+                    type: AtomType.Boolean,
+                    value: whichBool(tokens[0])
+                },
                 remain: tokens.slice(1)
             };
     }
@@ -150,6 +184,20 @@ var parensMatch = function (op, cp) {
         return cp.type === TokenType.CloseBraceParen;
     }
     return false;
+};
+var whichBool = function (t) {
+    switch (t.value) {
+        case '#T':
+        case '#t':
+        case '#true':
+            return true;
+        case '#F':
+        case '#f':
+        case '#false':
+            return false;
+        default:
+            throw new Error("Called whichBool on a non-boolean token.");
+    }
 };
 module.exports = {
     'tokenize': tokenize,
