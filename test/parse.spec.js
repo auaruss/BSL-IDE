@@ -2,6 +2,7 @@ const { tokenize, parse, parseSexp, parseSexps} = require('../logic/parse.js');
 const { expect } = require('chai');
 
 function Tok(t, v) { return { type: t, value: v} ; }
+function Atom(t, v) { return Tok(t, v); }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
       [ Tok('CloseParen', ')'),
@@ -13,9 +14,31 @@ const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
         Tok('CloseBraceParen', '}'),
       ];
 
-function Num(v) { return Tok('Number', v.toString()); }
-function Id(v) { return Tok('Identifier', v); }
-function String(v) { return Tok('String', '"' + v + '"'); }
+const whichBool = (t) => {
+    switch (t) {
+        case '#T':
+        case '#t':
+        case '#true':
+            return true;
+        case '#F':
+        case '#f':
+        case '#false':
+            return false;
+        default:
+            throw new Error("Called whichBool on a non-boolean.");
+    }
+}
+
+function NumTok(v) { return Tok('Number', v.toString()); }
+function IdTok(v) { return Tok('Identifier', v); }
+function StringTok(v) { return Tok('String', '"' + v + '"'); }
+function BooleanTok(v) { return Tok('Boolean', v); }
+
+function NumAtom(v) { return Atom('Number', v); }
+function IdAtom(v) { return Atom('Identifier', v); }
+function StringAtom(v) { return Atom('String', '"' + v + '"'); }
+function BooleanAtom(v) { return Atom('Boolean', whichBool(v)); }
+
 function ResultSuccess(t, r) { return {thing: t, remain: r} }
 function ResultFailure(e, r) { return {error: e, remain: r} }
 
@@ -55,25 +78,31 @@ describe('tokenize', () => {
         checkExpect(result, expected);
     });
 
+    it('should tokenize the plus symbol', () => {
+        const result = tokenize('+');
+        const expected = [IdTok('+')];
+        checkExpect(result, expected);
+    });
+
     it('should tokenize a simple variable definition', () => {  
         const result = tokenize('(define x 10)');
-        const expected = [ OP, Id('define'), SPACE, Id('x'), SPACE, Num(10), CP ];
+        const expected = [ OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok(10), CP ];
         checkExpect(result, expected);
     });
 
     it('should tokenize 123 as an number here', () => {
         const result = tokenize('(123)');
-        const expected = [ OP, Num(123), CP ];
+        const expected = [ OP, NumTok(123), CP ];
         checkExpect(result, expected);
     });
 
     it('should tokenize booleans correctly', () => {
         const result = ['#t', '#f', '#true', '#false'];
         const expected = [
-            [Tok('Boolean', '#t')],
-            [Tok('Boolean', '#f')],
-            [Tok('Boolean', '#true')],
-            [Tok('Boolean', '#false')]
+            [BooleanTok('#t')],
+            [BooleanTok('#f')],
+            [BooleanTok('#true')],
+            [BooleanTok('#false')]
         ];
         checkExpectMultiple(
             tokenize, result, expected
@@ -86,41 +115,41 @@ describe('tokenize', () => {
         let result = tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')
         let expected = [
             OP,
-            Id('define'),
+            IdTok('define'),
             SPACE,
             OP,
-            Id('fact'),
+            IdTok('fact'),
             SPACE,
-            Id('n'),
+            IdTok('n'),
             CP,
             SPACE,
             OP,
-            Id('if'),
+            IdTok('if'),
             SPACE,
             OP,
-            Id('='),
+            IdTok('='),
             SPACE,
-            Id('n'),
+            IdTok('n'),
             SPACE,
-            Num(0),
+            NumTok('0'),
             CP,
             SPACE,
-            Num(1),
+            NumTok('1'),
             SPACE,
             OP,
-            Id('*'),
+            IdTok('*'),
             SPACE,
-            Id('n'),
-            SPACE,
-            OP,
-            Id('fact'),
+            IdTok('n'),
             SPACE,
             OP,
-            Id('-'),
+            IdTok('fact'),
             SPACE,
-            Id('n'),
+            OP,
+            IdTok('-'),
             SPACE,
-            Num(1),
+            IdTok('n'),
+            SPACE,
+            NumTok('1'),
             CP,
             CP,
             CP,
@@ -130,56 +159,59 @@ describe('tokenize', () => {
         checkExpect(result, expected);
     });
 
-    // it('should tokenize strings correctly', () => {
-    //     const result = [
-    //         '"abc" def "ghi"',
-    //         '"abc"def"ghi"'
-    //     ];
-    //     const expected = [
-    //         [String('abc'), SPACE, Id('def'), SPACE, String('ghi')],
-    //         [String('abc'), Id('def'), String('ghi')]
-    //     ];
+    it('should tokenize strings correctly', () => {
+        const result = [
+            '"abc" def "ghi"',
+            '"abc"def"ghi"'
+        ];
+        const expected = [
+            [StringTok('abc'), SPACE, IdTok('def'), SPACE, StringTok('ghi')],
+            [StringTok('abc'), IdTok('def'), StringTok('ghi')]
+        ];
 
-    //     checkExpectMultiple(tokenize, result, expected);
-    // });
+        checkExpectMultiple(tokenize, result, expected);
+    });
 });
 
 describe('parseSexp', () => {
     it('', () => {
-        checkExpect(parseSexp([CP]),    {error: "unexpected closing paren", remain: [CP] });
+        checkExpect(parseSexp([CP]),    {error: 'Found a closing parenthesis with no matching opening parenthesis.', remain: [CP] });
         checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
         const result = [
-            tokenize(') (hello)'),
-            tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
-            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
-            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))')
+            tokenize(') (hello)').filter(x => x.type !== SPACE),
+            tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
+            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
+            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
         ];
         const expected = [
-            ResultFailure('Found an unmatched closing parenthesis', tokenize(') (hello)')),
+            ResultFailure(
+                'Found a closing parenthesis with no matching opening parenthesis.',
+                tokenize(') (hello)').filter(x => x.type !== SPACE)
+            ),
             ResultSuccess(
                 [
-                    Id('define'),
+                    IdAtom('define'),
                     [ 
-                        Id('fact'),
-                        Id('n'),
+                        IdAtom('fact'),
+                        IdAtom('n'),
                     ],
                     [
-                        Id('if'),
+                        IdAtom('if'),
                         [ 
-                            Id('='),
-                            Id('n'), 
-                            Num(0),
+                            IdAtom('='),
+                            IdAtom('n'), 
+                            NumAtom(0),
                         ],
-                        Num(1),
+                        NumAtom(1),
                         [
-                            Id('*'),
-                            Id('n'),
+                            IdAtom('*'),
+                            IdAtom('n'),
                             [
-                                Id('fact'),
+                                IdAtom('fact'),
                                 [
-                                    Id('-'),
-                                    Id('n'),
-                                    Num(1)
+                                    IdAtom('-'),
+                                    IdAtom('n'),
+                                    NumAtom(1)
                                 ]
                             ]
                         ] 
@@ -188,15 +220,15 @@ describe('parseSexp', () => {
                 []
             ),
             ResultSuccess(
-                Id('define'),
-                tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))').filter(x => x.type !== SPACE)
+                IdAtom('define'),
+                tokenize(' (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             ),
             ResultSuccess(
                 [
-                    Id('fact'),
-                    Id('n')
+                    IdAtom('fact'),
+                    IdAtom('n')
                 ],
-                tokenize('(if (= n 0) 1 (* n (fact (- 1 n)))))')
+                tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             )
         ];
         checkExpectMultiple(parseSexp, result, expected);
@@ -207,34 +239,39 @@ describe('parseSexps', () => {
     it('', () => {
         checkExpect(parseSexps([CP]), {thing: [], remain: [CP] });
         const result = [
-            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))'),
-            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))')
+            tokenize(') (hello)'),
+            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
+            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
         ];
         const expected = [
             ResultSuccess(
+                [],
+                tokenize(') (hello)')
+            ),
+            ResultSuccess(
                 [
-                    Id('define'),
+                    IdAtom('define'),
                     [
-                        Id('fact'),
-                        Id('n')
+                        IdAtom('fact'),
+                        IdAtom('n')
                     ],
                     [
-                        Id('if'),
+                        IdAtom('if'),
                         [
-                            Id('='),
-                            Id('n'),
-                            Num('0'),
+                            IdAtom('='),
+                            IdAtom('n'),
+                            NumAtom(0),
                         ],
-                        Num(1),
+                        NumAtom(1),
                         [
-                            Id('*'),
-                            Id('n'),
+                            IdAtom('*'),
+                            IdAtom('n'),
                             [
-                                Id('fact'),
+                                IdAtom('fact'),
                                 [
-                                    Id('-'),
-                                    Num('1'),
-                                    Id('n')
+                                    IdAtom('-'),
+                                    IdAtom('n'),
+                                    NumAtom(1)
                                 ]
                             ]
                         ]
@@ -245,26 +282,26 @@ describe('parseSexps', () => {
             ResultSuccess(
                 [
                     [
-                        Id('fact'),
-                        Id('n')
+                        IdAtom('fact'),
+                        IdAtom('n')
                     ],
                     [
-                        Id('if'),
+                        IdAtom('if'),
                         [
-                            Id('='),
-                            Id('n'),
-                            Num('0'),
+                            IdAtom('='),
+                            IdAtom('n'),
+                            NumAtom(0),
                         ],
-                        Num(1),
+                        NumAtom(1),
                         [
-                            Id('*'),
-                            Id('n'),
+                            IdAtom('*'),
+                            IdAtom('n'),
                             [
-                                Id('fact'),
+                                IdAtom('fact'),
                                 [
-                                    Id('-'),
-                                    Num('1'),
-                                    Id('n')
+                                    IdAtom('-'),
+                                    IdAtom('n'),
+                                    NumAtom(1)
                                 ]
                             ]
                         ]
@@ -278,7 +315,7 @@ describe('parseSexps', () => {
 });
 
 describe('parse', () => {
-    it('', () => {
+    it('should parse these simpler things', () => {
         const result = [
             '',
             '(',
@@ -294,106 +331,128 @@ describe('parse', () => {
             '(define x 10)'
         ];
         const expected = [
-            tokenize(''),
-            tokenize('('),
-            tokenize('['),
-            tokenize('{'),
-            tokenize(')'),
-            tokenize(']'),
-            tokenize('}'),
-            tokenize('123'),
-            tokenize('"hello"'),
-            tokenize('x'),
-            tokenize('#true'),
-            [Id('define'), Id('x'), Num('10')]
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [NumAtom(123)],
+            [StringAtom('hello')],
+            [IdAtom('x')],
+            [BooleanAtom('#true')],
+            [[IdAtom('define'), IdAtom('x'), NumAtom(10)]]
         ];
         checkExpectMultiple(parse, result, expected);
     });
 
-    // it('should parse this fact function', () => {
-    //     const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- 1 n)))))');
-    //     const expected = (
-    //         [
-    //             Id('define'),
-    //             [ 
-    //                 Id('fact'),
-    //                 Id('n'),
-    //             ],
-    //             [
-    //                 Id('if'),
-    //                 [ 
-    //                     Id('='),
-    //                     Id('n'),
-    //                     Num(0),
-    //                 ],
-    //                 Num(1),
-    //                 [
-    //                     Id('*'),
-    //                     Id('n'),
-    //                     [
-    //                         Id('fact'),
-    //                         [
-    //                             Id('-'),
-    //                             Id('n'),
-    //                             Num(1)
-    //                         ]
-    //                     ]
-    //                 ] 
-    //             ]
-    //         ]
-    //     );
-    //     checkExpect(result, expected);
-    // });
+    it('should parse this fact function', () => {
+        const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))');
+        const expected = [
+            [
+                IdAtom('define'),
+                [ 
+                    IdAtom('fact'),
+                    IdAtom('n'),
+                ],
+                [
+                    IdAtom('if'),
+                    [ 
+                        IdAtom('='),
+                        IdAtom('n'),
+                        NumAtom(0),
+                    ],
+                    NumAtom(1),
+                    [
+                        IdAtom('*'),
+                        IdAtom('n'),
+                        [
+                            IdAtom('fact'),
+                            [
+                                IdAtom('-'),
+                                IdAtom('n'),
+                                NumAtom(1)
+                            ]
+                        ]
+                    ] 
+                ]
+            ]
+        ];
+        checkExpect(result, expected);
+    });
+
+    it('should parse this fib function', () => {
+        const result = parse('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))');
+        const expected = [
+            [
+                IdAtom('define'),
+                [
+                    IdAtom('fib'),
+                    IdAtom('n')
+                ],
+                [
+                    IdAtom('if'),
+                    [
+                        IdAtom('or'),
+                        [
+                            IdAtom('='),
+                            IdAtom('n'),
+                            NumAtom(0)
+                        ],
+                        [
+                            IdAtom('='),
+                            IdAtom('n'),
+                            NumAtom(1)
+                        ]
+                    ],
+                    IdAtom('n'),
+                    [
+                        IdAtom('+'),
+                        [
+                            IdAtom('fib'),
+                            [
+                                IdAtom('-'),
+                                IdAtom('n'),
+                                NumAtom(1)
+                            ]
+                        ],
+                        [
+                            IdAtom('fib'),
+                            [
+                                IdAtom('-'),
+                                IdAtom('n'),
+                                NumAtom(2)
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+    });
+
+    it('should parse some nonsense like this', () => {
+        const result = parse('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
+        const expected = [
+            [
+                StringAtom('hello'),
+                IdAtom('world'),
+                [
+                    IdAtom('this'),
+                    StringAtom('is'),
+                    StringAtom('some non'),
+                    IdAtom('sense'),
+                    [
+                        IdAtom('which'),
+                        IdAtom('should'),
+                        IdAtom('be')
+                    ],
+                    BooleanAtom('#t'),
+                    NumAtom(10),
+                    IdAtom('parsable')
+                ]
+            ]
+        ];
+        checkExpect(result, expected);
+    })
 });
-
-// parseSExp(tokenize(“(  define x 10) blah )”))
-// parseSExp(tokenize(“(  define x 10\n) blah )”))
-// parseSExp(tokenize(“(  define x 10 ; hello \n) blah )”))
-// parseSExp(tokenize(“\n\n(  define x 10) blah )”))
-// parseSExp(filterOutWhitespace(tokenize(“\n\n(  define x 10) blah )”)))
-
-
-// tokenize('(define x 10)')
-// [
-//   { type: 'op', value: '(' },
-//   { type: 'id', value: 'define' },
-//   { type: 'id', value: 'x' },
-//   { type: 'num', value: '10' },
-//   { type: 'op', value: ')' }
-// ]
-// > tokenize('(define x "define")')
-// [
-//   { type: 'op', value: '(' },
-//   { type: 'id', value: 'define' },
-//   { type: 'id', value: 'x' },
-//   { type: 'id', value: '"define"' },
-//   { type: 'op', value: ')' }
-// ]
-
-// parseSExp(tokenize(“(  define x 10) blah )”))
-
-// [
-//   { type: 'op', value: '(' },
-//   { type: 'id', value: 'define' },
-//   { type: 'num', value: '0' },
-//   { type: 'id', value: '+' },
-//   { type: 'id', value: '"define"' },
-//   { type: 'op', value: ')' }
-// ]
-
-// parseSExp : list of tokens -> Result
-
-// > tokenize('(define x 1);hello')
-// [
-//   { type: 'op', value: '(' },
-//   { type: 'id', value: 'define' },
-//   { type: 'id', value: 'x' },
-//   { type: 'num', value: '1' },
-//   { type: 'op', value: ')' },
-//   { type: 'id', value: ';hello' }
-// ]
-
-
-// tokenize
-// parseSExps
-// parseSexp
