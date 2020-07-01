@@ -110,7 +110,7 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.CloseSquareParen, /^]/],
   [TokenType.CloseBraceParen, /^}/],
   [TokenType.Number, /^\d+/],
-  [TokenType.String, /^".*"/],
+  [TokenType.String, /^"[^"]*"/],
   [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
   [TokenType.Whitespace, /^\s+/],
   [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
@@ -129,8 +129,7 @@ const tokenize = (exp: string): Token[] => {
     }
   }
 
-  return [{type: TokenType.Error, value: exp[0]}]
-    .concat(tokenize(exp.slice(1)));
+  throw new Error('Found a substring with no valid prefix token.');
 };
 
 // Attempts to parse the first SExp from a list of tokens.
