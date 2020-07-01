@@ -82,7 +82,7 @@ const isIdArray = (x: any): x is Id[] => {
   return Array.isArray(x) && x.reduce((acc, elem) => acc && isId(elem), true);
 }
 
-// Checks to make sure the parsed SExps have the proper structure of a BSL program.
+// Checks to make sure the parsed SExps have the proper structure of an Expr.
 // Note: This function makes some adjustments to the structure of its input, namely separating
 //       the first identifier in a valid expression call from the rest of them.
 const syntaxCheckExpr = (sexp: SExp): Expr => {
@@ -108,6 +108,7 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
   throw new Error('Invalid expression: Unknown error.');
 }
 
+// Checks to make sure the parsed SExps have the proper structure of a Definition.
 const syntaxCheckDefinition = (sexp: SExp): Definition => {
   if (Array.isArray(sexp) && sexp.length !== 0 && isId(sexp[0]) && sexp[0].value === 'define') {
     if (sexp.length === 3 && Array.isArray(sexp[1])) {
@@ -128,6 +129,7 @@ const syntaxCheckDefinition = (sexp: SExp): Definition => {
   }
 }
 
+// Checks to make sure the parsed SExps have the proper structure of a Single BSL DefOrExpr.
 const syntaxCheckDefOrExpr = (sexp: SExp): DefOrExpr => {
   if (Array.isArray(sexp)) {
     if (sexp.length === 0) { 
