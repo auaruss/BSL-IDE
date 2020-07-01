@@ -1,5 +1,3 @@
-
-
 enum AtomType {
   String='String',
   Number='Number',
@@ -49,6 +47,7 @@ type Expr
   = Atom
   | [Id, Expr[]]
 
+// Tells whether x is an Atom.
 const isAtom = (x: any): x is Atom  => {
   return (
        ((x as Atom).type === AtomType.String && (typeof (x as Atom).value === "string"))
@@ -58,24 +57,29 @@ const isAtom = (x: any): x is Atom  => {
   );
 }
 
-// Tells whether an Atom is a Str.
+// Tells whether x is a Str.
 const isStr = (x: any): x is Str => {
   return isAtom(x) && x.type === AtomType.String;
 }
 
-// Tells whether an Atom is a Num.
+// Tells whether x is a Num.
 const isNum = (x: any): x is Num => {
   return isAtom(x) && x.type === AtomType.Number;
 }
 
-// Tells whether an Atom is a Id.
+// Tells whether x is an Id.
 const isId = (x: any): x is Id => {
   return isAtom(x) && x.type === AtomType.Identifier;
 }
 
-// Tells whether an Atom is a Bool.
+// Tells whether x is a Bool.
 const isBool = (x: any): x is Bool => {
   return isAtom(x) && x.type === AtomType.Boolean;
+}
+
+// Tells whether x is an Id[].
+const isIdArray = (x: any): x is Id[] => {
+  return Array.isArray(x) && x.reduce((acc, elem) => acc && isId(elem), true);
 }
 
 // Checks to make sure the parsed SExps have the proper structure of a BSL program.
@@ -104,6 +108,43 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
   throw new Error('Invalid expression: Unknown error.');
 }
 
+const syntaxCheckDefinition = (sexp: SExp): Definition => {
+  if (Array.isArray(sexp) && sexp.length !== 0 && isId(sexp[0]) && sexp[0].value === 'define') {
+    if (sexp.length === 3 && Array.isArray(sexp[1])) {
+      if (sexp[1].length === 2 && isIdArray(sexp[1])) {
+        // I wanted to put sexp[1] here instead of [sexp[1][0], sexp[1][1],
+        // because I think they should be identical. The typechecker seems to disagree for some reason.
+        return ['define', [sexp[1][0], sexp[1].slice(1)], syntaxCheckExpr(sexp[2])]
+      } else {
+        throw new Error ('Invalid Definition: The defintion provided matches no case of Definition');
+      }
+    } else if (sexp.length === 3 && isId(sexp[1])) {
+      return ['define', sexp[1], syntaxCheckExpr(sexp[2])];
+    } else {
+      throw new Error ('Invalid Definition: The defintion provided matches no case of Definition');
+    }
+  } else {
+    throw new Error('Invalid Definition: Tried to syntax-check a non-definition.');
+  }
+}
+
+const syntaxCheckDefOrExpr = (sexp: SExp): DefOrExpr => {
+  if (Array.isArray(sexp)) {
+    if (sexp.length === 0) { 
+      throw new Error('Invalid Expression: Found an empty expression.');
+    } else if (isId(sexp[0]) && sexp[0].value === 'define') {
+      return syntaxCheckDefinition(sexp);
+    } else {
+      return syntaxCheckExpr(sexp);
+    }
+  } else {
+    // We know the only non-array values allowed in a DefOrExpr is the Atom case of Expr.
+    return syntaxCheckExpr(sexp);
+  }
+}
+
 module.exports = {
-  'syntaxCheckExpr': syntaxCheckExpr
+  'syntaxCheckExpr': syntaxCheckExpr,
+  'syntaxCheckDefinition': syntaxCheckDefinition,
+  'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr
 };
