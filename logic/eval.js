@@ -60,18 +60,11 @@ var syntaxCheckExpr = function (sexp) {
     throw new Error('Invalid expression: Unknown error.');
 };
 var syntaxCheckDefinition = function (sexp) {
-    if (Array.isArray(sexp) && sexp.length !== 0 && isId(sexp[0]) && sexp[0].value === 'define') {
-        if (sexp.length === 3 && Array.isArray(sexp[1])) {
-            if (sexp[1].length === 2 && isIdArray(sexp[1])) {
-                // I wanted to put sexp[1] here instead of [sexp[1][0], sexp[1][1],
-                // because I think they should be identical. The typechecker seems to disagree for some reason.
-                return ['define', [sexp[1][0], sexp[1].slice(1)], syntaxCheckExpr(sexp[2])];
-            }
-            else {
-                throw new Error('Invalid Definition: The defintion provided matches no case of Definition');
-            }
+    if (Array.isArray(sexp) && sexp.length === 3 && isId(sexp[0]) && sexp[0].value === 'define') {
+        if (isIdArray(sexp[1]) && sexp[1].length >= 2) {
+            return ['define', [sexp[1][0], sexp[1].slice(1)], syntaxCheckExpr(sexp[2])];
         }
-        else if (sexp.length === 3 && isId(sexp[1])) {
+        else if (isId(sexp[1])) {
             return ['define', sexp[1], syntaxCheckExpr(sexp[2])];
         }
         else {

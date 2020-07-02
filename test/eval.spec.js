@@ -94,10 +94,29 @@ describe('syntaxCheckDefinition', () => {
     it('should syntax check these definitions properly', () => {
        const examples = [
             parse('(define x 10)')[0],
+            parse('(define (mn x y) (if (< x y) x y))')[0],
             parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
        ];
        const expected = [
             ['define', Id('x'), Num(10)],
+            [
+                'define',
+                [Id('mn'), [Id('x'), Id('y')]],
+                [
+                    Id('if'),
+                    [
+                        [
+                            Id('<'),
+                            [
+                                Id('x'),
+                                Id('y')
+                            ]
+                        ],
+                        Id('x'),
+                        Id('y')
+                    ]
+                ]
+            ],
             [
                 'define',
                 [Id('fact'), [Id('n')]],
@@ -205,10 +224,29 @@ describe('syntaxCheckDefOrExpr', () => {
     it('should parse all the Definitions that syntaxCheckDefinition does', () => {
         const examples = [
             parse('(define x 10)')[0],
+            parse('(define (mn x y) (if (< x y) x y))')[0],
             parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
         ];
         const expected = [
             ['define', Id('x'), Num(10)],
+            [
+                'define',
+                [Id('mn'), [Id('x'), Id('y')]],
+                [
+                    Id('if'),
+                    [
+                        [
+                            Id('<'),
+                            [
+                                Id('x'),
+                                Id('y')
+                            ]
+                        ],
+                        Id('x'),
+                        Id('y')
+                    ]
+                ]
+            ],
             [
                 'define',
                 [Id('fact'), [Id('n')]],
