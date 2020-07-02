@@ -6,7 +6,7 @@ function Atom(t, v) { return { type: t, value: v}; }
 
 function Num(v) { return Atom('Number', v); }
 function Id(v) { return Atom('Identifier', v); }
-function Str(v) { return Atom('String', '"' + v + '"'); }
+function Str(v) { return Atom('String', v); }
 function Bool(v) { return Atom('Boolean', v); }
 
 const checkExpect = (res, expected) => {
