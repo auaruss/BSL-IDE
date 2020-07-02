@@ -175,7 +175,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
       return {
         thing: {
           type: AtomType.String,
-          value: tokens[0].value
+          value: tokens[0].value.slice(1,-1)
         },
         remain: tokens.slice(1)
       };

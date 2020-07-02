@@ -1,6 +1,7 @@
 'use strict';
 // SExpr Parser in TS
 // Alice Russell, Sam Soucie
+// TODO: The tokenizer and parser must handle '().
 var TokenType;
 (function (TokenType) {
     TokenType["Error"] = "Error";
@@ -121,7 +122,7 @@ var parseSexp = function (tokens) {
             return {
                 thing: {
                     type: AtomType.String,
-                    value: tokens[0].value
+                    value: tokens[0].value.slice(1, -1)
                 },
                 remain: tokens.slice(1)
             };

@@ -39,7 +39,7 @@ function ResultFailure(e, r) { return {error: e, remain: r} }
 
 function NumAtom(v) { return Atom('Number', v); }
 function IdAtom(v) { return Atom('Identifier', v); }
-function StringAtom(v) { return Atom('String', '"' + v + '"'); }
+function StringAtom(v) { return Atom('String', v); }
 function BooleanAtom(v) { return Atom('Boolean', whichBool(v)); }
 
 
