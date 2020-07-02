@@ -17,134 +17,122 @@ function checkExpectMultiple(f, res, expected) {
     res.map((input, idx) => checkExpect(f(input), expected[idx]));
 }
 
-describe('syntaxCheckExpr', () => {
-    it('should syntax check single atoms.', () => {
-        const result = [
-            Num(123),
-            Id('hello'),
-            Str('hello'),
-            Bool(true)
-        ];
-        const expected = [
-            Num(123),
-            Id('hello'),
-            Str('hello'),
-            Bool(true)
-        ];
-        checkExpectMultiple(syntaxCheckExpr, result, expected);
-    });
-
-    it ('should syntax check and transform larger expressions', () => {
-        const examples = [
-            parse('(+ 2 3 (- 4 6))')[0],
-            parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
-        ];
-        const expected = [
+const exampleExprs = [
+    Num(123),
+    Id('hello'),
+    Str('hello'),
+    Bool(true),
+    parse('(+ 2 3 (- 4 6))')[0],
+    parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
+];
+const expectedExprs = [
+    Num(123),
+    Id('hello'),
+    Str('hello'),
+    Bool(true),
+    [
+        Id('+'),
+        [
+            Num(2),
+            Num(3),
             [
-                Id('+'),
+                Id('-'),
                 [
-                    Num(2),
-                    Num(3),
-                    [
-                        Id('-'),
-                        [
-                            Num(4),
-                            Num(6)
-                        ]
-                    ]
+                    Num(4),
+                    Num(6)
+                ]
+            ]
+        ]
+    ],
+    [
+        Id('if'),
+        [
+            [
+                Id('='),
+                [
+                    Id('n'),
+                    Num(0)
                 ]
             ],
+            Num(1),
             [
-                Id('if'),
+                Id('*'),
                 [
+                    Id('n'),
                     [
-                        Id('='),
+                        Id('fact'),
                         [
-                            Id('n'),
-                            Num(0)
-                        ]
-                    ],
-                    Num(1),
-                    [
-                        Id('*'),
-                        [
-                            Id('n'),
                             [
-                                Id('fact'),
+                                Id('-'),
                                 [
-                                    [
-                                        Id('-'),
-                                        [
-                                            Id('n'),
-                                            Num(1)
-                                        ]
-                                    ]
+                                    Id('n'),
+                                    Num(1)
                                 ]
                             ]
                         ]
                     ]
                 ]
             ]
-        ];
-        checkExpectMultiple(syntaxCheckExpr, examples, expected);
+        ]
+    ]
+];
+describe('syntaxCheckExpr', () => {
+    it ('should syntax check expressions', () => {
+        checkExpectMultiple(syntaxCheckExpr, exampleExprs, expectedExprs);
     });
 });
 
-describe('syntaxCheckDefinition', () => {
-    it('should syntax check these definitions properly', () => {
-       const examples = [
-            parse('(define x 10)')[0],
-            parse('(define (mn x y) (if (< x y) x y))')[0],
-            parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
-       ];
-       const expected = [
-            ['define', Id('x'), Num(10)],
+const exampleDefns = [
+    parse('(define x 10)')[0],
+    parse('(define (mn x y) (if (< x y) x y))')[0],
+    parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
+];
+const expectedDefns = [
+    ['define', Id('x'), Num(10)],
+    [
+        'define',
+        [Id('mn'), [Id('x'), Id('y')]],
+        [
+            Id('if'),
             [
-                'define',
-                [Id('mn'), [Id('x'), Id('y')]],
                 [
-                    Id('if'),
+                    Id('<'),
                     [
-                        [
-                            Id('<'),
-                            [
-                                Id('x'),
-                                Id('y')
-                            ]
-                        ],
                         Id('x'),
                         Id('y')
                     ]
-                ]
-            ],
+                ],
+                Id('x'),
+                Id('y')
+            ]
+        ]
+    ],
+    [
+        'define',
+        [Id('fact'), [Id('n')]],
+        [
+            Id('if'),
             [
-                'define',
-                [Id('fact'), [Id('n')]],
                 [
-                    Id('if'),
+                    Id('='),
                     [
+                        Id('n'),
+                        Num(0)
+                    ]
+                ],
+                Num(1),
+                [
+                    Id('*'),
+                    [
+                        Id('n'),
                         [
-                            Id('='),
+                            Id('fact'),
                             [
-                                Id('n'),
-                                Num(0)
-                            ]
-                        ],
-                        Num(1),
-                        [
-                            Id('*'),
-                            [
-                                Id('n'),
                                 [
-                                    Id('fact'),
+                                    Id('-'),
                                     [
-                                        [
-                                            Id('-'),
-                                            [
-                                                Id('n'),
-                                                Num(1)
-                                            ]
-                                        ]
+                                        Id('n'),
+                                        Num(1)
                                     ]
                                 ]
                             ]
@@ -152,137 +140,20 @@ describe('syntaxCheckDefinition', () => {
                     ]
                 ]
             ]
-       ];
-       checkExpectMultiple(syntaxCheckDefinition, examples, expected);
+        ]
+    ]
+];
+describe('syntaxCheckDefinition', () => {
+    it('should syntax check definitions', () => {
+       checkExpectMultiple(syntaxCheckDefinition, exampleDefns, expectedDefns);
     });
 });
 
 describe('syntaxCheckDefOrExpr', () => {
     it('should parse all the Exprs that syntaxCheckExpr does', () => {
-        const examples = [
-            Num(123),
-            Id('hello'),
-            Str('hello'),
-            Bool(true),
-            parse('(+ 2 3 (- 4 6))')[0],
-            parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
-        ];
-        const expected = [
-            Num(123),
-            Id('hello'),
-            Str('hello'),
-            Bool(true),
-            [
-                Id('+'),
-                [
-                    Num(2),
-                    Num(3),
-                    [
-                        Id('-'),
-                        [
-                            Num(4),
-                            Num(6)
-                        ]
-                    ]
-                ]
-            ],
-            [
-                Id('if'),
-                [
-                    [
-                        Id('='),
-                        [
-                            Id('n'),
-                            Num(0)
-                        ]
-                    ],
-                    Num(1),
-                    [
-                        Id('*'),
-                        [
-                            Id('n'),
-                            [
-                                Id('fact'),
-                                [
-                                    [
-                                        Id('-'),
-                                        [
-                                            Id('n'),
-                                            Num(1)
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-        checkExpectMultiple(syntaxCheckDefOrExpr, examples, expected);
+        checkExpectMultiple(syntaxCheckDefOrExpr, exampleExprs, expectedExprs);
     });
-
     it('should parse all the Definitions that syntaxCheckDefinition does', () => {
-        const examples = [
-            parse('(define x 10)')[0],
-            parse('(define (mn x y) (if (< x y) x y))')[0],
-            parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
-        ];
-        const expected = [
-            ['define', Id('x'), Num(10)],
-            [
-                'define',
-                [Id('mn'), [Id('x'), Id('y')]],
-                [
-                    Id('if'),
-                    [
-                        [
-                            Id('<'),
-                            [
-                                Id('x'),
-                                Id('y')
-                            ]
-                        ],
-                        Id('x'),
-                        Id('y')
-                    ]
-                ]
-            ],
-            [
-                'define',
-                [Id('fact'), [Id('n')]],
-                [
-                    Id('if'),
-                    [
-                        [
-                            Id('='),
-                            [
-                                Id('n'),
-                                Num(0)
-                            ]
-                        ],
-                        Num(1),
-                        [
-                            Id('*'),
-                            [
-                                Id('n'),
-                                [
-                                    Id('fact'),
-                                    [
-                                        [
-                                            Id('-'),
-                                            [
-                                                Id('n'),
-                                                Num(1)
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-        checkExpectMultiple(syntaxCheckDefOrExpr, examples, expected);
+        checkExpectMultiple(syntaxCheckDefOrExpr, exampleDefns, expectedDefns);
     });
 });
