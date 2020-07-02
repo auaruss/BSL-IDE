@@ -79,7 +79,7 @@ const isBool = (x: any): x is Bool => {
 
 // Tells whether x is an Id[].
 const isIdArray = (x: any): x is Id[] => {
-  return Array.isArray(x) && x.reduce((acc, elem) => acc && isId(elem), true);
+  return Array.isArray(x) && x.every(isId);
 }
 
 // Checks to make sure the parsed SExps have the proper structure of an Expr.
@@ -99,7 +99,7 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
         // that called this was not a definition itself, which is the only valid location for a definition in BSL.
         throw new Error('Invalid Expression: Found a definition inside an expression.');
       }
-      const restOfExprs = sexp.slice(1).map(x => syntaxCheckExpr(x));
+      const restOfExprs = sexp.slice(1).map(syntaxCheckExpr);
       return [sexp[0], restOfExprs];
     } else {
       throw new Error('Invalid expression: Expression missing a starting identifier.')
@@ -127,16 +127,9 @@ const syntaxCheckDefinition = (sexp: SExp): Definition => {
 
 // Checks to make sure the parsed SExps have the proper structure of a Single BSL DefOrExpr.
 const syntaxCheckDefOrExpr = (sexp: SExp): DefOrExpr => {
-  if (Array.isArray(sexp)) {
-    if (sexp.length === 0) { 
-      throw new Error('Invalid Expression: Found an empty expression.');
-    } else if (isId(sexp[0]) && sexp[0].value === 'define') {
-      return syntaxCheckDefinition(sexp);
-    } else {
-      return syntaxCheckExpr(sexp);
-    }
+  if (Array.isArray(sexp) && sexp.length > 0 && isId(sexp[0]) && sexp[0].value === 'define') {
+    return syntaxCheckDefinition(sexp);
   } else {
-    // We know the only non-array values allowed in a DefOrExpr is the Atom case of Expr.
     return syntaxCheckExpr(sexp);
   }
 }
