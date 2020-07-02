@@ -83,7 +83,7 @@ const isIdArray = (x: any): x is Id[] => {
 }
 
 // Checks to make sure the parsed SExps have the proper structure of an Expr.
-// Note: This function makes some adjustments to the structure of its input, namely separating
+// Note: This function changes the input SExp to an Expr, by separating
 //       the first identifier in a valid expression call from the rest of them.
 const syntaxCheckExpr = (sexp: SExp): Expr => {
   if (isAtom(sexp)) {
@@ -109,7 +109,7 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
 }
 
 // Checks to make sure the parsed SExps have the proper structure of a Definition.
-// Note: This function makes some adjustments to the structure of its input, namely separating
+// Note: This function changes the input SExp to a Definition, namely separating
 //       the first identifier in a function definition from its arguments.
 const syntaxCheckDefinition = (sexp: SExp): Definition => {
   if (Array.isArray(sexp) && sexp.length === 3 && isId(sexp[0]) && sexp[0].value === 'define') {

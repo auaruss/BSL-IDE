@@ -32,8 +32,8 @@ var isBool = function (x) {
 var isIdArray = function (x) {
     return Array.isArray(x) && x.every(isId);
 };
-// Checks to make sure the parsed SExps have the proper structure of a BSL program.
-// Note: This function makes some adjustments to the structure of its input, namely separating
+// Checks to make sure the parsed SExps have the proper structure of an Expr.
+// Note: This function changes the input SExp to an Expr, by separating
 //       the first identifier in a valid expression call from the rest of them.
 var syntaxCheckExpr = function (sexp) {
     if (isAtom(sexp)) {
@@ -59,6 +59,9 @@ var syntaxCheckExpr = function (sexp) {
     }
     throw new Error('Invalid expression: Unknown error.');
 };
+// Checks to make sure the parsed SExps have the proper structure of a Definition.
+// Note: This function changes the input SExp to a Definition, namely separating
+//       the first identifier in a function definition from its arguments.
 var syntaxCheckDefinition = function (sexp) {
     if (Array.isArray(sexp) && sexp.length === 3 && isId(sexp[0]) && sexp[0].value === 'define') {
         if (isIdArray(sexp[1]) && sexp[1].length >= 2) {
@@ -75,6 +78,7 @@ var syntaxCheckDefinition = function (sexp) {
         throw new Error('Invalid Definition: Tried to syntax-check a non-definition.');
     }
 };
+// Checks to make sure the parsed SExps have the proper structure of a Single BSL DefOrExpr.
 var syntaxCheckDefOrExpr = function (sexp) {
     if (Array.isArray(sexp) && sexp.length > 0 && isId(sexp[0]) && sexp[0].value === 'define') {
         return syntaxCheckDefinition(sexp);
