@@ -49,11 +49,13 @@ type Expr
 
 // Tells whether x is an Atom.
 const isAtom = (x: any): x is Atom  => {
+  if (!(typeof x === "object")) return false;
+  if (!(typeof x.type === "string")) return false;
   return (
-       ((x as Atom).type === AtomType.String && (typeof (x as Atom).value === "string"))
-    || ((x as Atom).type === AtomType.Number && (typeof (x as Atom).value === "number"))
-    || ((x as Atom).type === AtomType.Identifier && (typeof (x as Atom).value === "string"))
-    || ((x as Atom).type === AtomType.Boolean && (typeof (x as Atom).value === "boolean"))
+       (x.type === AtomType.String && (typeof x.value === "string"))
+    || (x.type === AtomType.Number && (typeof x.value === "number"))
+    || (x.type === AtomType.Identifier && (typeof x.value === "string"))
+    || (x.type === AtomType.Boolean && (typeof x.value === "boolean"))
   );
 }
 

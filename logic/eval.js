@@ -1,3 +1,4 @@
+"use strict";
 var AtomType;
 (function (AtomType) {
     AtomType["String"] = "String";
@@ -7,6 +8,10 @@ var AtomType;
 })(AtomType || (AtomType = {}));
 // Tells whether x is an Atom.
 var isAtom = function (x) {
+    if (!(typeof x === "object"))
+        return false;
+    if (!(typeof x.type === "string"))
+        return false;
     return ((x.type === AtomType.String && (typeof x.value === "string"))
         || (x.type === AtomType.Number && (typeof x.value === "number"))
         || (x.type === AtomType.Identifier && (typeof x.value === "string"))
