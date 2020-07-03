@@ -1,11 +1,38 @@
 'use strict';
 exports.__esModule = true;
 // TODO: Check for functions-as-values in syntax checker
+var isNumArray = function (x) {
+    return Array.isArray(x) && x.every(function (_) { return typeof _ === 'number'; });
+};
 var builtinEnv = function () {
     var m = new Map();
-    m.set('+', function (args) { return args.reduce(function (x, y) { return x + y; }, 0); });
-    m.set('-', function (args) { return args[0] - args[1]; });
-    m.set('if', function (args) { return (args[0] ? args[1] : args[2]); });
+    m.set('+', function (args, env) {
+        var vals = args.map(function (x) { return valOf(x, env).value; });
+        if (isNumArray(vals)) {
+            return vals.reduce(function (x, y) { return x + y; }, 0);
+        }
+        throw new Error('+: Must be used on numbers and only numbers.');
+    });
+    m.set('-', function (args, env) {
+        var x = valOf(args[0], env).value;
+        var y = valOf(args[1], env).value;
+        if (typeof x === 'number' && typeof y === 'number') {
+            return x - y;
+        }
+        throw new Error('-: Must be used on exactly 2 numbers.');
+    });
+    m.set('if', function (args, env) {
+        var pred = valOf(args[0], env).value;
+        if (typeof pred === 'boolean') {
+            if (pred) {
+                return valOf(args[1], env).value;
+            }
+            else {
+                return valOf(args[2], env).value;
+            }
+        }
+        throw new Error('if: Predicate must be a boolean.');
+    });
     return m;
 };
 var BUILTIN_ENV = builtinEnv();
@@ -109,8 +136,6 @@ var ValueType;
     ValueType["Function"] = "Function";
 })(ValueType || (ValueType = {}));
 ;
-// const isFunction = (x: any): x is Fn => {
-// }
 var valOf = function (exp, env) {
     if (isAtom(exp)) {
         if (isId(exp) && isInEnv(exp.value, env)) {
@@ -120,16 +145,12 @@ var valOf = function (exp, env) {
         return { type: ValueType.NonFunction, value: exp.value };
     }
     else if (isBuiltin(exp[0])) {
-        var vals = exp[1].map(function (e) { return valOf(e, env); });
-        return applyBuiltin(getBuiltIn(exp[0]), vals);
+        // Decided not to evaluate arguments here so that we can control evaluation order for builtins
+        // for things like short circuiting logic. 
+        // const vals = exp[1].map(e => valOf(e, env));
+        return applyBuiltin(getBuiltIn(exp[0]), exp[1], env);
     }
     throw new Error('oops');
-};
-var getVal = function (id, env) {
-    var _ = env.get(id);
-    if (_ !== undefined)
-        return _;
-    throw new Error('Tried to look up a value that doesnt exist in the environment.');
 };
 var isBuiltin = function (id) {
     return BUILTIN_ENV.has(id);
@@ -140,11 +161,8 @@ var getBuiltIn = function (id) {
         return _;
     throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
 };
-var applyBuiltin = function (f, args) {
-    if (args.every(function (x) { return x.type === ValueType.NonFunction; })) {
-        return { type: ValueType.NonFunction, value: f(args.map(function (x) { return x.value; })) };
-    }
-    throw new Error('Tried to pass a function to another function.');
+var applyBuiltin = function (f, args, env) {
+    return { type: ValueType.NonFunction, value: f(args, env) };
 };
 var isInEnv = function (id, env) {
     return env.has(id);

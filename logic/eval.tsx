@@ -4,11 +4,38 @@ import { getByDisplayValue } from "@testing-library/react";
 
 // TODO: Check for functions-as-values in syntax checker
 
+const isNumArray = (x: any): x is number[] => {
+  return Array.isArray(x) && x.every((_: any) => typeof _ === 'number');
+}
+
 const builtinEnv = (): Map<string, Function> => {
   let m = new Map<string, Function>();
-  m.set('+', (args: number[]) => args.reduce((x, y) => x + y, 0));
-  m.set('-', (args: [number, number]) => args[0] - args[1]);
-  m.set('if', (args: [boolean, Value, Value]) => (args[0] ? args[1] : args[2]));
+  m.set('+', (args: Expr[], env: Env) => {
+    const vals = args.map(x => valOf(x, env).value);
+    if (isNumArray(vals)) {
+      return vals.reduce((x, y) => x + y, 0);
+    }
+    throw new Error('+: Must be used on numbers and only numbers.')
+  });
+  m.set('-', (args: [Expr, Expr], env: Env) => {
+    let x = valOf(args[0], env).value;
+    let y = valOf(args[1], env).value;
+    if (typeof x === 'number' && typeof y === 'number') {
+      return x - y;
+    }
+    throw new Error('-: Must be used on exactly 2 numbers.');
+  });
+  m.set('if', (args: [Expr, Expr, Expr], env: Env) => {
+    const pred = valOf(args[0], env).value;
+    if (typeof pred === 'boolean') {
+      if (pred) {
+        return valOf(args[1], env).value;
+      } else {
+        return valOf(args[2], env).value;
+      }
+    }
+    throw new Error('if: Predicate must be a boolean.');
+  });
   return m;
 }
 
@@ -173,15 +200,6 @@ type Value
 
 type Env = Map<String,Value>;
 
-// const emptyEnv = (): Env => {
-//   return new Map<String, Value>();
-// }
-
-// const extendEnv = (env:Env): void => {
-
-// }
-
-
 type Fn
   = {
     type: 'Function',
@@ -189,10 +207,6 @@ type Fn
     env: Env,
     body: Expr
 };
-
-// const isFunction = (x: any): x is Fn => {
-
-// }
 
 const valOf = (exp: Expr, env: Env): Value => {
   if (isAtom(exp)) {
@@ -202,8 +216,10 @@ const valOf = (exp: Expr, env: Env): Value => {
     }
       return { type: ValueType.NonFunction, value: exp.value };
   } else if (isBuiltin(exp[0])) {
-    const vals = exp[1].map(e => valOf(e, env));
-    return applyBuiltin(getBuiltIn(exp[0]), vals);
+    // Decided not to evaluate arguments here so that we can control evaluation order for builtins
+    // for things like short circuiting logic. 
+    // const vals = exp[1].map(e => valOf(e, env));
+    return applyBuiltin(getBuiltIn(exp[0]), exp[1], env);
   } 
   throw new Error('oops');
 }
@@ -218,11 +234,8 @@ const getBuiltIn = (id: string): Function => {
   throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
 }
 
-const applyBuiltin = (f: Function, args: Value[]): Value => {
-  if (args.every(x=> x.type === ValueType.NonFunction)) {
-    return {type: ValueType.NonFunction, value: f(args.map(x => x.value))};
-  }
-  throw new Error('Tried to pass a function to another function.');
+const applyBuiltin = (f: Function, args: Expr[], env: Env): Value => {
+  return {type: ValueType.NonFunction, value: f(args, env)};
 }
 
 const isInEnv = (id: string, env: Env): boolean => {

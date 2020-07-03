@@ -27,6 +27,7 @@ function Fn(args, env, exp) {
 function testEnv() {
     const simpleEnv = new Map();
     simpleEnv.set('hello', NFn(10));
+    simpleEnv.set('fact', Fn(['n'], [], factExpr));
 }
 
 
@@ -37,6 +38,38 @@ const checkExpect = (res, expected) => {
 function checkExpectMultiple(f, res, expected) {
     res.map((input, idx) => checkExpect(f(input), expected[idx]));
 }
+
+const factExpr = [
+    'if',
+    [
+        [
+            '=',
+            [
+                Id('n'),
+                Num(0)
+            ]
+        ],
+        Num(1),
+        [
+            '*',
+            [
+                Id('n'),
+                [
+                    'fact',
+                    [
+                        [
+                            '-',
+                            [
+                                Id('n'),
+                                Num(1)
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+];
 
 const exampleExprs = [
     Num(123),
@@ -65,37 +98,7 @@ const expectedExprs = [
             ]
         ]
     ],
-    [
-        'if',
-        [
-            [
-                '=',
-                [
-                    Id('n'),
-                    Num(0)
-                ]
-            ],
-            Num(1),
-            [
-                '*',
-                [
-                    Id('n'),
-                    [
-                        'fact',
-                        [
-                            [
-                                '-',
-                                [
-                                    Id('n'),
-                                    Num(1)
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-    ]
+    factExpr
 ];
 describe('syntaxCheckExpr', () => {
     it ('should syntax check expressions', () => {
@@ -200,11 +203,11 @@ describe('valOf', () => {
     it('should evaluate these with this env', () => {
         const env = testEnv();
         const examples = [
-
+            // ['fact', [Num(5)]]
         ];
-        // ['fact', [Num(5)]]
-        const expected = [
         
+        const expected = [
+            // NFn(120)
         ];
         checkExpectMultiple(x => valOf(x, env), examples, expected);
     });
