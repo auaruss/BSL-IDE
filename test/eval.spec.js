@@ -184,19 +184,15 @@ describe('valOf', () => {
         const emptyEnv = new Map();
         const example = [
             Num(123),
-            // Id('hello'),
             Str('hello'),
             Bool(true),
-            // expectedExprs[4]
-            // parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
+            expectedExprs[4]
         ]
         const expectedValues = [
             NFn(123),
-            // Id('hello'),
             NFn('hello'),
             NFn(true),
-            // parse('(+ 2 3 (- 4 6))')[0],
-            // parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
+            NFn(3)
         ];
         checkExpectMultiple(x => valOf(x, emptyEnv), example, expectedValues);
     });
@@ -204,31 +200,11 @@ describe('valOf', () => {
     it('should evaluate these with this env', () => {
         const env = testEnv();
         const examples = [
-            [
-                '-',
-                [
-                    Num(4),
-                    Num(6)
-                ]
-            ],
-            [
-                '+',
-                [
-                    Num(2),
-                    Num(3),
-                    [
-                        '-',
-                        [
-                            Num(4),
-                            Num(6)
-                        ]
-                    ]
-                ]
-            ],
+
         ];
+        // ['fact', [Num(5)]]
         const expected = [
-            NFn(-2),
-            NFn(3)
+        
         ];
         checkExpectMultiple(x => valOf(x, env), examples, expected);
     });
