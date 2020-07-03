@@ -1,3 +1,19 @@
+'use strict';
+
+import { getByDisplayValue } from "@testing-library/react";
+
+// TODO: Check for functions-as-values in syntax checker
+
+const builtinEnv = (): Map<string, Function> => {
+  let m = new Map<string, Function>();
+  m.set('+', (args: number[]) => args.reduce((x, y) => x + y, 0));
+  m.set('-', (args: [number, number]) => args[0] - args[1]);
+  m.set('if', (args: [boolean, Value, Value]) => (args[0] ? args[1] : args[2]));
+  return m;
+}
+
+const BUILTIN_ENV: Map<String, Function> = builtinEnv();
+
 enum AtomType {
   String='String',
   Number='Number',
@@ -40,12 +56,12 @@ type DefOrExpr
   = Definition | Expr;
 
 type Definition
-  = ['define', [Id, Id[]], Expr]
-  | ['define', Id, Expr];
+  = ['define', [string, string[]], Expr]
+  | ['define', string, Expr];
 
 type Expr
   = Atom
-  | [Id, Expr[]]
+  | [string, Expr[]];
 
 // Tells whether x is an Atom.
 const isAtom = (x: any): x is Atom  => {
@@ -102,7 +118,7 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
         throw new Error('Invalid Expression: Found a definition inside an expression.');
       }
       const restOfExprs = sexp.slice(1).map(syntaxCheckExpr);
-      return [sexp[0], restOfExprs];
+      return [sexp[0].value, restOfExprs];
     } else {
       throw new Error('Invalid expression: Expression missing a starting identifier.')
     }
@@ -116,9 +132,9 @@ const syntaxCheckExpr = (sexp: SExp): Expr => {
 const syntaxCheckDefinition = (sexp: SExp): Definition => {
   if (Array.isArray(sexp) && sexp.length === 3 && isId(sexp[0]) && sexp[0].value === 'define') {
     if (isIdArray(sexp[1]) && sexp[1].length >= 2) {
-      return ['define', [sexp[1][0], sexp[1].slice(1)], syntaxCheckExpr(sexp[2])]
+      return ['define', [sexp[1][0].value, sexp[1].slice(1).map(x => x.value)], syntaxCheckExpr(sexp[2])]
     } else if (isId(sexp[1])) {
-      return ['define', sexp[1], syntaxCheckExpr(sexp[2])];
+      return ['define', sexp[1].value, syntaxCheckExpr(sexp[2])];
     } else {
       throw new Error ('Invalid Definition: The defintion provided matches no case of Definition');
     }
@@ -136,8 +152,88 @@ const syntaxCheckDefOrExpr = (sexp: SExp): DefOrExpr => {
   }
 }
 
+enum ValueType {
+  NonFunction='NonFunction',
+  BuiltinFunction='BuiltinFunction',
+  Function='Function',
+};
+
+
+type Value
+  = {
+    type: ValueType.NonFunction,
+    value: string | number | boolean
+  } | {
+    type: ValueType.BuiltinFunction,
+    value: string
+  } | {
+    type: ValueType.Function,
+    value: Fn
+  };
+
+type Env = Map<String,Value>;
+
+// const emptyEnv = (): Env => {
+//   return new Map<String, Value>();
+// }
+
+// const extendEnv = (env:Env): void => {
+
+// }
+
+
+type Fn
+  = {
+    type: 'Function',
+    args: string[],
+    env: Env,
+    body: Expr
+};
+
+// const isFunction = (x: any): x is Fn => {
+
+// }
+
+const valOf = (exp: Expr, env: Env): Value => {
+  if (isAtom(exp)) {
+    if (isId(exp) && isInEnv(exp.value, env)) {
+      // getVal(exp, env);
+      throw new Error('');
+    }
+      return { type: ValueType.NonFunction, value: exp.value };
+  } else if (isBuiltin(exp[0])) {
+    const vals = exp[1].map(e => valOf(e, env));
+    return applyBuiltin(getBuiltIn(exp[0]), vals);
+  } 
+  throw new Error('oops');
+}
+
+const isBuiltin = (id: string): boolean => {
+  return BUILTIN_ENV.has(id);
+}
+
+const getBuiltIn = (id: string): Function => {
+  const _ = BUILTIN_ENV.get(id);
+  if (_ !== undefined) return _;
+  throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
+}
+
+const applyBuiltin = (f: Function, args: Value[]): Value => {
+  if (args.every(x=> x.type === ValueType.NonFunction)) {
+    return {type: ValueType.NonFunction, value: f(args.map(x => x.value))};
+  }
+  throw new Error('Tried to pass a function to another function.');
+}
+
+const isInEnv = (id: string, env: Env): boolean => {
+  return env.has(id);
+}
+
+
+
 module.exports = {
   'syntaxCheckExpr': syntaxCheckExpr,
   'syntaxCheckDefinition': syntaxCheckDefinition,
-  'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr
+  'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr,
+  'valOf': valOf
 };

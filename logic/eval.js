@@ -1,4 +1,14 @@
-"use strict";
+'use strict';
+exports.__esModule = true;
+// TODO: Check for functions-as-values in syntax checker
+var builtinEnv = function () {
+    var m = new Map();
+    m.set('+', function (args) { return args.reduce(function (x, y) { return x + y; }, 0); });
+    m.set('-', function (args) { return args[0] - args[1]; });
+    m.set('if', function (args) { return (args[0] ? args[1] : args[2]); });
+    return m;
+};
+var BUILTIN_ENV = builtinEnv();
 var AtomType;
 (function (AtomType) {
     AtomType["String"] = "String";
@@ -56,7 +66,7 @@ var syntaxCheckExpr = function (sexp) {
                 throw new Error('Invalid Expression: Found a definition inside an expression.');
             }
             var restOfExprs = sexp.slice(1).map(syntaxCheckExpr);
-            return [sexp[0], restOfExprs];
+            return [sexp[0].value, restOfExprs];
         }
         else {
             throw new Error('Invalid expression: Expression missing a starting identifier.');
@@ -70,10 +80,10 @@ var syntaxCheckExpr = function (sexp) {
 var syntaxCheckDefinition = function (sexp) {
     if (Array.isArray(sexp) && sexp.length === 3 && isId(sexp[0]) && sexp[0].value === 'define') {
         if (isIdArray(sexp[1]) && sexp[1].length >= 2) {
-            return ['define', [sexp[1][0], sexp[1].slice(1)], syntaxCheckExpr(sexp[2])];
+            return ['define', [sexp[1][0].value, sexp[1].slice(1).map(function (x) { return x.value; })], syntaxCheckExpr(sexp[2])];
         }
         else if (isId(sexp[1])) {
-            return ['define', sexp[1], syntaxCheckExpr(sexp[2])];
+            return ['define', sexp[1].value, syntaxCheckExpr(sexp[2])];
         }
         else {
             throw new Error('Invalid Definition: The defintion provided matches no case of Definition');
@@ -92,8 +102,56 @@ var syntaxCheckDefOrExpr = function (sexp) {
         return syntaxCheckExpr(sexp);
     }
 };
+var ValueType;
+(function (ValueType) {
+    ValueType["NonFunction"] = "NonFunction";
+    ValueType["BuiltinFunction"] = "BuiltinFunction";
+    ValueType["Function"] = "Function";
+})(ValueType || (ValueType = {}));
+;
+// const isFunction = (x: any): x is Fn => {
+// }
+var valOf = function (exp, env) {
+    if (isAtom(exp)) {
+        if (isId(exp) && isInEnv(exp.value, env)) {
+            // getVal(exp, env);
+            throw new Error('');
+        }
+        return { type: ValueType.NonFunction, value: exp.value };
+    }
+    else if (isBuiltin(exp[0])) {
+        var vals = exp[1].map(function (e) { return valOf(e, env); });
+        return applyBuiltin(getBuiltIn(exp[0]), vals);
+    }
+    throw new Error('oops');
+};
+var getVal = function (id, env) {
+    var _ = env.get(id);
+    if (_ !== undefined)
+        return _;
+    throw new Error('Tried to look up a value that doesnt exist in the environment.');
+};
+var isBuiltin = function (id) {
+    return BUILTIN_ENV.has(id);
+};
+var getBuiltIn = function (id) {
+    var _ = BUILTIN_ENV.get(id);
+    if (_ !== undefined)
+        return _;
+    throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
+};
+var applyBuiltin = function (f, args) {
+    if (args.every(function (x) { return x.type === ValueType.NonFunction; })) {
+        return { type: ValueType.NonFunction, value: f(args.map(function (x) { return x.value; })) };
+    }
+    throw new Error('Tried to pass a function to another function.');
+};
+var isInEnv = function (id, env) {
+    return env.has(id);
+};
 module.exports = {
     'syntaxCheckExpr': syntaxCheckExpr,
     'syntaxCheckDefinition': syntaxCheckDefinition,
-    'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr
+    'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr,
+    'valOf': valOf
 };
