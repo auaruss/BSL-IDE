@@ -1,5 +1,6 @@
 const { parse } = require('../logic/parse.js');
-const { syntaxCheckExpr, syntaxCheckDefinition, syntaxCheckDefOrExpr } = require('../logic/eval.js');
+const { syntaxCheckExpr, syntaxCheckDefinition, syntaxCheckDefOrExpr,
+        valOf } = require('../logic/eval.js');
 const { expect } = require('chai');
 
 function Atom(t, v) { return { type: t, value: v}; }
@@ -8,6 +9,26 @@ function Num(v) { return Atom('Number', v); }
 function Id(v) { return Atom('Identifier', v); }
 function Str(v) { return Atom('String', v); }
 function Bool(v) { return Atom('Boolean', v); }
+
+function Value(t, v) { return { type: t, value: v}; }
+
+function NFn(v) { return Value('NonFunction', v); }
+function BFn(v) { return Value('BuiltinFunction', v); }
+
+function Fn(args, env, exp) {
+    return {
+        type: 'Function',
+        args: args,
+        env: env,
+        body: exp
+    };
+}
+
+function testEnv() {
+    const simpleEnv = new Map();
+    simpleEnv.set('hello', NFn(10));
+}
+
 
 const checkExpect = (res, expected) => {
     expect(res).to.deep.equal(expected);
@@ -31,12 +52,12 @@ const expectedExprs = [
     Str('hello'),
     Bool(true),
     [
-        Id('+'),
+        '+',
         [
             Num(2),
             Num(3),
             [
-                Id('-'),
+                '-',
                 [
                     Num(4),
                     Num(6)
@@ -45,10 +66,10 @@ const expectedExprs = [
         ]
     ],
     [
-        Id('if'),
+        'if',
         [
             [
-                Id('='),
+                '=',
                 [
                     Id('n'),
                     Num(0)
@@ -56,14 +77,14 @@ const expectedExprs = [
             ],
             Num(1),
             [
-                Id('*'),
+                '*',
                 [
                     Id('n'),
                     [
-                        Id('fact'),
+                        'fact',
                         [
                             [
-                                Id('-'),
+                                '-',
                                 [
                                     Id('n'),
                                     Num(1)
@@ -88,15 +109,15 @@ const exampleDefns = [
     parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))')[0]
 ];
 const expectedDefns = [
-    ['define', Id('x'), Num(10)],
+    ['define', 'x', Num(10)],
     [
         'define',
-        [Id('mn'), [Id('x'), Id('y')]],
+        ['mn', ['x', 'y']],
         [
-            Id('if'),
+            'if',
             [
                 [
-                    Id('<'),
+                    '<',
                     [
                         Id('x'),
                         Id('y')
@@ -109,12 +130,12 @@ const expectedDefns = [
     ],
     [
         'define',
-        [Id('fact'), [Id('n')]],
+        ['fact', ['n']],
         [
-            Id('if'),
+            'if',
             [
                 [
-                    Id('='),
+                    '=',
                     [
                         Id('n'),
                         Num(0)
@@ -122,14 +143,14 @@ const expectedDefns = [
                 ],
                 Num(1),
                 [
-                    Id('*'),
+                    '*',
                     [
                         Id('n'),
                         [
-                            Id('fact'),
+                            'fact',
                             [
                                 [
-                                    Id('-'),
+                                    '-',
                                     [
                                         Id('n'),
                                         Num(1)
@@ -155,5 +176,60 @@ describe('syntaxCheckDefOrExpr', () => {
     });
     it('should parse all the Definitions that syntaxCheckDefinition does', () => {
         checkExpectMultiple(syntaxCheckDefOrExpr, exampleDefns, expectedDefns);
+    });
+});
+
+describe('valOf', () => {
+    it('should evaluate these with the empty env', () =>{
+        const emptyEnv = new Map();
+        const example = [
+            Num(123),
+            // Id('hello'),
+            Str('hello'),
+            Bool(true),
+            // expectedExprs[4]
+            // parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
+        ]
+        const expectedValues = [
+            NFn(123),
+            // Id('hello'),
+            NFn('hello'),
+            NFn(true),
+            // parse('(+ 2 3 (- 4 6))')[0],
+            // parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]
+        ];
+        checkExpectMultiple(x => valOf(x, emptyEnv), example, expectedValues);
+    });
+
+    it('should evaluate these with this env', () => {
+        const env = testEnv();
+        const examples = [
+            [
+                '-',
+                [
+                    Num(4),
+                    Num(6)
+                ]
+            ],
+            [
+                '+',
+                [
+                    Num(2),
+                    Num(3),
+                    [
+                        '-',
+                        [
+                            Num(4),
+                            Num(6)
+                        ]
+                    ]
+                ]
+            ],
+        ];
+        const expected = [
+            NFn(-2),
+            NFn(3)
+        ];
+        checkExpectMultiple(x => valOf(x, env), examples, expected);
     });
 });
