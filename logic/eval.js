@@ -1,38 +1,7 @@
 'use strict';
-exports.__esModule = true;
 // TODO: Check for functions-as-values in syntax checker
-var isNumArray = function (x) {
-    return Array.isArray(x) && x.every(function (_) { return typeof _ === 'number'; });
-};
 var builtinEnv = function () {
     var m = new Map();
-    m.set('+', function (args, env) {
-        var vals = args.map(function (x) { return valOf(x, env).value; });
-        if (isNumArray(vals)) {
-            return vals.reduce(function (x, y) { return x + y; }, 0);
-        }
-        throw new Error('+: Must be used on numbers and only numbers.');
-    });
-    m.set('-', function (args, env) {
-        var x = valOf(args[0], env).value;
-        var y = valOf(args[1], env).value;
-        if (typeof x === 'number' && typeof y === 'number') {
-            return x - y;
-        }
-        throw new Error('-: Must be used on exactly 2 numbers.');
-    });
-    m.set('if', function (args, env) {
-        var pred = valOf(args[0], env).value;
-        if (typeof pred === 'boolean') {
-            if (pred) {
-                return valOf(args[1], env).value;
-            }
-            else {
-                return valOf(args[2], env).value;
-            }
-        }
-        throw new Error('if: Predicate must be a boolean.');
-    });
     return m;
 };
 var BUILTIN_ENV = builtinEnv();
@@ -136,36 +105,43 @@ var ValueType;
     ValueType["Function"] = "Function";
 })(ValueType || (ValueType = {}));
 ;
+// Computes the value of an expression with respect to an enviroment.
 var valOf = function (exp, env) {
     if (isAtom(exp)) {
         if (isId(exp) && isInEnv(exp.value, env)) {
-            // getVal(exp, env);
-            throw new Error('');
+            getVal(exp.value, env);
         }
         return { type: ValueType.NonFunction, value: exp.value };
     }
-    else if (isBuiltin(exp[0])) {
-        // Decided not to evaluate arguments here so that we can control evaluation order for builtins
-        // for things like short circuiting logic. 
-        // const vals = exp[1].map(e => valOf(e, env));
-        return applyBuiltin(getBuiltIn(exp[0]), exp[1], env);
+    else if (exp[0] === 'if') {
+        if (exp[1].length !== 3) {
+            throw new Error('Invalid invocation of "if".');
+        }
+        var pred = valOf(exp[1][0], env);
+        if (pred.type === ValueType.NonFunction && typeof pred.value === 'boolean') {
+            if (pred.value) {
+                return valOf(exp[1][1], env);
+            }
+            else {
+                return valOf(exp[1][2], env);
+            }
+        }
+        else {
+            throw new Error('Invalid invocation of "if".');
+        }
     }
     throw new Error('oops');
 };
-var isBuiltin = function (id) {
-    return BUILTIN_ENV.has(id);
-};
-var getBuiltIn = function (id) {
-    var _ = BUILTIN_ENV.get(id);
-    if (_ !== undefined)
-        return _;
-    throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
-};
-var applyBuiltin = function (f, args, env) {
-    return { type: ValueType.NonFunction, value: f(args, env) };
-};
+// Checks if an identifier is in an enviroment.
 var isInEnv = function (id, env) {
     return env.has(id);
+};
+// Gets an identifier's value from an environment and fails if it's not there.
+var getVal = function (id, env) {
+    var a = env.get(id);
+    if (a !== undefined)
+        return a;
+    throw new Error(id + ' is not in the current environmnent.');
 };
 module.exports = {
     'syntaxCheckExpr': syntaxCheckExpr,

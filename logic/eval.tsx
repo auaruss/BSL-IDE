@@ -1,45 +1,15 @@
 'use strict';
 
-import { getByDisplayValue } from "@testing-library/react";
-
 // TODO: Check for functions-as-values in syntax checker
 
-const isNumArray = (x: any): x is number[] => {
-  return Array.isArray(x) && x.every((_: any) => typeof _ === 'number');
-}
+const builtinEnv = (): Env => {
+  let m = new Map<String, Value>();
 
-const builtinEnv = (): Map<string, Function> => {
-  let m = new Map<string, Function>();
-  m.set('+', (args: Expr[], env: Env) => {
-    const vals = args.map(x => valOf(x, env).value);
-    if (isNumArray(vals)) {
-      return vals.reduce((x, y) => x + y, 0);
-    }
-    throw new Error('+: Must be used on numbers and only numbers.')
-  });
-  m.set('-', (args: [Expr, Expr], env: Env) => {
-    let x = valOf(args[0], env).value;
-    let y = valOf(args[1], env).value;
-    if (typeof x === 'number' && typeof y === 'number') {
-      return x - y;
-    }
-    throw new Error('-: Must be used on exactly 2 numbers.');
-  });
-  m.set('if', (args: [Expr, Expr, Expr], env: Env) => {
-    const pred = valOf(args[0], env).value;
-    if (typeof pred === 'boolean') {
-      if (pred) {
-        return valOf(args[1], env).value;
-      } else {
-        return valOf(args[2], env).value;
-      }
-    }
-    throw new Error('if: Predicate must be a boolean.');
-  });
+
   return m;
 }
 
-const BUILTIN_ENV: Map<String, Function> = builtinEnv();
+const BUILTIN_ENV: Env = builtinEnv();
 
 enum AtomType {
   String='String',
@@ -192,7 +162,7 @@ type Value
     value: string | number | boolean
   } | {
     type: ValueType.BuiltinFunction,
-    value: string
+    value: Fn
   } | {
     type: ValueType.Function,
     value: Fn
@@ -206,43 +176,45 @@ type Fn
     args: string[],
     env: Env,
     body: Expr
-};
+  };
 
+// Computes the value of an expression with respect to an enviroment.
 const valOf = (exp: Expr, env: Env): Value => {
   if (isAtom(exp)) {
     if (isId(exp) && isInEnv(exp.value, env)) {
-      // getVal(exp, env);
-      throw new Error('');
+      getVal(exp.value, env);
     }
       return { type: ValueType.NonFunction, value: exp.value };
-  } else if (isBuiltin(exp[0])) {
-    // Decided not to evaluate arguments here so that we can control evaluation order for builtins
-    // for things like short circuiting logic. 
-    // const vals = exp[1].map(e => valOf(e, env));
-    return applyBuiltin(getBuiltIn(exp[0]), exp[1], env);
-  } 
+  } else if (exp[0] === 'if') {
+    if (exp[1].length !== 3) {
+      throw new Error('Invalid invocation of "if".');
+    }
+    const pred = valOf(exp[1][0], env);
+    
+    if (pred.type === ValueType.NonFunction && typeof pred.value === 'boolean') {
+      if (pred.value) {
+        return valOf(exp[1][1], env);
+      } else {
+        return valOf(exp[1][2], env);
+      }
+    } else {
+      throw new Error('Invalid invocation of "if".');
+    }
+  }
   throw new Error('oops');
 }
 
-const isBuiltin = (id: string): boolean => {
-  return BUILTIN_ENV.has(id);
-}
-
-const getBuiltIn = (id: string): Function => {
-  const _ = BUILTIN_ENV.get(id);
-  if (_ !== undefined) return _;
-  throw new Error('Tried to look up a function that doesnt exist in the builtin functions.');
-}
-
-const applyBuiltin = (f: Function, args: Expr[], env: Env): Value => {
-  return {type: ValueType.NonFunction, value: f(args, env)};
-}
-
+// Checks if an identifier is in an enviroment.
 const isInEnv = (id: string, env: Env): boolean => {
   return env.has(id);
 }
 
-
+// Gets an identifier's value from an environment and fails if it's not there.
+const getVal = (id: string, env: Env): Value => {
+  const a = env.get(id);
+  if (a !== undefined) return a;
+  throw new Error(id + ' is not in the current environmnent.');
+}
 
 module.exports = {
   'syntaxCheckExpr': syntaxCheckExpr,

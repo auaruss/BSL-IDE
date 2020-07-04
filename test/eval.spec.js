@@ -100,6 +100,14 @@ const expectedExprs = [
     ],
     factExpr
 ];
+
+const exampleExprsValOf = [
+    Num(123),
+    Str('hello'),
+    Bool(true),
+    expectedExprs[4]
+];
+
 describe('syntaxCheckExpr', () => {
     it ('should syntax check expressions', () => {
         checkExpectMultiple(syntaxCheckExpr, exampleExprs, expectedExprs);
@@ -185,29 +193,28 @@ describe('syntaxCheckDefOrExpr', () => {
 describe('valOf', () => {
     it('should evaluate these with the empty env', () =>{
         const emptyEnv = new Map();
-        const example = [
+        const exampleExprsValOf = [
             Num(123),
             Str('hello'),
             Bool(true),
-            expectedExprs[4]
+            ['if', [Bool(true), Num(10), exampleExprs[4]]]
         ]
         const expectedValues = [
             NFn(123),
             NFn('hello'),
             NFn(true),
-            NFn(3)
+            NFn(10)
         ];
-        checkExpectMultiple(x => valOf(x, emptyEnv), example, expectedValues);
+        checkExpectMultiple(x => valOf(x, emptyEnv), exampleExprsValOf, expectedValues);
     });
 
     it('should evaluate these with this env', () => {
         const env = testEnv();
         const examples = [
-            // ['fact', [Num(5)]]
+            
         ];
         
         const expected = [
-            // NFn(120)
         ];
         checkExpectMultiple(x => valOf(x, env), examples, expected);
     });
