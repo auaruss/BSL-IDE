@@ -26,8 +26,10 @@ function Fn(args, env, exp) {
 
 function testEnv() {
     const simpleEnv = new Map();
-    simpleEnv.set('hello', NFn(10));
-    simpleEnv.set('fact', Fn(['n'], [], factExpr));
+    simpleEnv.set('testNum', NFn(10));
+    simpleEnv.set('testBool', NFn(true));
+    simpleEnv.set('testStr', NFn('Hello'));
+    return simpleEnv;
 }
 
 
@@ -211,10 +213,15 @@ describe('valOf', () => {
     it('should evaluate these with this env', () => {
         const env = testEnv();
         const examples = [
-            
+            Id('testNum'),
+            Id('testBool'),
+            Id('testStr')
         ];
         
         const expected = [
+            NFn(10),
+            NFn(true),
+            NFn('Hello')
         ];
         checkExpectMultiple(x => valOf(x, env), examples, expected);
     });

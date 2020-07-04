@@ -109,7 +109,7 @@ var ValueType;
 var valOf = function (exp, env) {
     if (isAtom(exp)) {
         if (isId(exp) && isInEnv(exp.value, env)) {
-            getVal(exp.value, env);
+            return getVal(exp.value, env);
         }
         return { type: ValueType.NonFunction, value: exp.value };
     }

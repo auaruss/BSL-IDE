@@ -182,7 +182,7 @@ type Fn
 const valOf = (exp: Expr, env: Env): Value => {
   if (isAtom(exp)) {
     if (isId(exp) && isInEnv(exp.value, env)) {
-      getVal(exp.value, env);
+      return getVal(exp.value, env);
     }
       return { type: ValueType.NonFunction, value: exp.value };
   } else if (exp[0] === 'if') {
