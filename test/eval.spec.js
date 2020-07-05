@@ -15,12 +15,13 @@ function Value(t, v) { return { type: t, value: v}; }
 function NFn(v) { return Value('NonFunction', v); }
 function BFn(v) { return Value('BuiltinFunction', v); }
 
-function Fn(args, env, exp) {
+function Fn(args, exp) {
     return {
         type: 'Function',
-        args: args,
-        env: env,
-        body: exp
+        value: {
+            args: args,
+            body: exp
+        }
     };
 }
 
@@ -29,6 +30,18 @@ function testEnv() {
     simpleEnv.set('testNum', NFn(10));
     simpleEnv.set('testBool', NFn(true));
     simpleEnv.set('testStr', NFn('Hello'));
+    simpleEnv.set(
+        'simple-choice',
+        Fn(['x', 'y', 'z'], syntaxCheckExpr(parse('(if x y z)')[0]))
+    );
+    simpleEnv.set(
+        '*',
+        Fn(['m', 'n'], syntaxCheckExpr(parse('(if (= n 0) 0 (+ m (* m (- n 1))))')[0]))
+    )
+    simpleEnv.set(
+        'fact',
+        Fn(['n'], syntaxCheckExpr(parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]))
+    );
     return simpleEnv;
 }
 
@@ -207,7 +220,7 @@ describe('valOf', () => {
             NFn(true),
             NFn(10)
         ];
-        checkExpectMultiple(x => valOf(x, emptyEnv), exampleExprsValOf, expectedValues);
+        checkExpectMultiple(x => valOf(x, emptyEnv, []), exampleExprsValOf, expectedValues);
     });
 
     it('should evaluate these with this env', () => {
@@ -215,14 +228,20 @@ describe('valOf', () => {
         const examples = [
             Id('testNum'),
             Id('testBool'),
-            Id('testStr')
+            Id('testStr'),
+            syntaxCheckExpr(parse('(simple-choice #t 10 20)')[0]),
+            syntaxCheckExpr(parse('(* 2 3)')[0]),
+            syntaxCheckExpr(parse('(fact 5)')[0])
         ];
         
         const expected = [
             NFn(10),
             NFn(true),
-            NFn('Hello')
+            NFn('Hello'),
+            NFn(10),
+            NFn(6),
+            NFn(120)
         ];
-        checkExpectMultiple(x => valOf(x, env), examples, expected);
+        checkExpectMultiple(x => valOf(x, env, []), examples, expected);
     });
 });

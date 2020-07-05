@@ -172,35 +172,91 @@ type Env = Map<String,Value>;
 
 type Fn
   = {
-    type: 'Function',
     args: string[],
-    env: Env,
     body: Expr
   };
 
 // Computes the value of an expression with respect to an enviroment.
-const valOf = (exp: Expr, env: Env): Value => {
+// Env is the global environment.
+// fEnvs are all the function envs that could have called this valOf call.
+const valOf = (exp: Expr, env: Env, fEnvs: Env[]): Value => {
   if (isAtom(exp)) {
-    if (isId(exp) && isInEnv(exp.value, env)) {
-      return getVal(exp.value, env);
+    if (isId(exp)) {
+      // Look through the envs (from the end because it's a stack) and see if we can find
+      // the Id.
+      for (let i = fEnvs.length; i > 0; i--) {
+        if (isInEnv(exp.value, fEnvs[i-1])) {
+          return getVal(exp.value, fEnvs[i-1]);
+        }
+      }
+
+      // Then look in the global env for the Id.
+      if (isInEnv(exp.value, env)) {
+        return getVal(exp.value, env);
+      }
     }
-      return { type: ValueType.NonFunction, value: exp.value };
+    return { type: ValueType.NonFunction, value: exp.value };
+
   } else if (exp[0] === 'if') {
     if (exp[1].length !== 3) {
       throw new Error('Invalid invocation of "if".');
     }
-    const pred = valOf(exp[1][0], env);
+    const pred = valOf(exp[1][0], env, fEnvs);
     
     if (pred.type === ValueType.NonFunction && typeof pred.value === 'boolean') {
       if (pred.value) {
-        return valOf(exp[1][1], env);
+        return valOf(exp[1][1], env, fEnvs);
       } else {
-        return valOf(exp[1][2], env);
+        return valOf(exp[1][2], env, fEnvs);
       }
     } else {
       throw new Error('Invalid invocation of "if".');
     }
+  } else if (exp[0] === '+') {
+    if (exp[1].length !== 2) {
+      throw new Error('Invalid invocation of "+" 1.');
+    }
+    let a = valOf(exp[1][0], env, fEnvs).value;
+    let b = valOf(exp[1][1], env, fEnvs).value;
+    if (typeof a === 'number' && typeof b === 'number') {
+      return {type: ValueType.NonFunction, value: a + b};
+    }
+    throw new Error('Invalid invocation of "+" 2.');
+  } else if (exp[0] === '-') {
+    if (exp[1].length !== 2) {
+      throw new Error('Invalid invocation of "-".');
+    }
+    let a = valOf(exp[1][0], env, fEnvs).value;
+    let b = valOf(exp[1][1], env, fEnvs).value;
+    if (typeof a === 'number' && typeof b === 'number') {
+      return {type: ValueType.NonFunction, value: a - b};
+    }
+    throw new Error('Invalid invocation of "-".');
+  } else if (exp[0] === '=') {
+    if (exp[1].length !== 2) {
+      throw new Error('Invalid invocation of "=".');
+    }
+    let a = valOf(exp[1][0], env, fEnvs).value;
+    let b = valOf(exp[1][1], env, fEnvs).value;
+    return {type: ValueType.NonFunction, value: a === b};
+  }else if (isInEnv(exp[0], env)) {
+    const f = getVal(exp[0], env);
+    if (f.type === ValueType.Function) {
+      if (f.value.args.length !== exp[1].length) throw new Error('Arity mismatch.')
+      let e: Env = new Map<String, Value>();
+      let vals = exp[1].map(e => valOf(e, env, fEnvs));
+      
+      for (let i = 0; i < exp[1].length; i++) {
+        extendEnv(f.value.args[i], vals[i], e);
+      }
+
+      fEnvs.push(e);
+      let _ = valOf(f.value.body, env, fEnvs);
+      fEnvs.pop();
+      return _;
+    }
   }
+
   throw new Error('oops');
 }
 
@@ -214,6 +270,10 @@ const getVal = (id: string, env: Env): Value => {
   const a = env.get(id);
   if (a !== undefined) return a;
   throw new Error(id + ' is not in the current environmnent.');
+}
+
+const extendEnv = (id: string, v: Value, env: Env): void => {
+  env.set(id, v);
 }
 
 module.exports = {

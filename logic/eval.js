@@ -106,10 +106,25 @@ var ValueType;
 })(ValueType || (ValueType = {}));
 ;
 // Computes the value of an expression with respect to an enviroment.
-var valOf = function (exp, env) {
+// Env is the global environment.
+// fEnvs are all the function envs that could have called this valOf call.
+var valOf = function (exp, env, fEnvs) {
     if (isAtom(exp)) {
-        if (isId(exp) && isInEnv(exp.value, env)) {
-            return getVal(exp.value, env);
+        if (isId(exp)) {
+            // Look through the envs (from the end because it's a stack) and see if we can find
+            // the Id.
+            // if (fEnvs) { // Not sure why this check is necessary but my second suite of tests dont run if i dont
+            // put it here.
+            for (var i = fEnvs.length; i > 0; i--) {
+                if (isInEnv(exp.value, fEnvs[i - 1])) {
+                    return getVal(exp.value, fEnvs[i - 1]);
+                }
+            }
+            // }
+            // Then look in the global env for the Id.
+            if (isInEnv(exp.value, env)) {
+                return getVal(exp.value, env);
+            }
         }
         return { type: ValueType.NonFunction, value: exp.value };
     }
@@ -117,17 +132,63 @@ var valOf = function (exp, env) {
         if (exp[1].length !== 3) {
             throw new Error('Invalid invocation of "if".');
         }
-        var pred = valOf(exp[1][0], env);
+        var pred = valOf(exp[1][0], env, fEnvs);
         if (pred.type === ValueType.NonFunction && typeof pred.value === 'boolean') {
             if (pred.value) {
-                return valOf(exp[1][1], env);
+                return valOf(exp[1][1], env, fEnvs);
             }
             else {
-                return valOf(exp[1][2], env);
+                return valOf(exp[1][2], env, fEnvs);
             }
         }
         else {
             throw new Error('Invalid invocation of "if".');
+        }
+    }
+    else if (exp[0] === '+') {
+        if (exp[1].length !== 2) {
+            throw new Error('Invalid invocation of "+" 1.');
+        }
+        var a = valOf(exp[1][0], env, fEnvs).value;
+        var b = valOf(exp[1][1], env, fEnvs).value;
+        if (typeof a === 'number' && typeof b === 'number') {
+            return { type: ValueType.NonFunction, value: a + b };
+        }
+        throw new Error('Invalid invocation of "+" 2.');
+    }
+    else if (exp[0] === '-') {
+        if (exp[1].length !== 2) {
+            throw new Error('Invalid invocation of "-".');
+        }
+        var a = valOf(exp[1][0], env, fEnvs).value;
+        var b = valOf(exp[1][1], env, fEnvs).value;
+        if (typeof a === 'number' && typeof b === 'number') {
+            return { type: ValueType.NonFunction, value: a - b };
+        }
+        throw new Error('Invalid invocation of "-".');
+    }
+    else if (exp[0] === '=') {
+        if (exp[1].length !== 2) {
+            throw new Error('Invalid invocation of "=".');
+        }
+        var a = valOf(exp[1][0], env, fEnvs).value;
+        var b = valOf(exp[1][1], env, fEnvs).value;
+        return { type: ValueType.NonFunction, value: a === b };
+    }
+    else if (isInEnv(exp[0], env)) {
+        var f = getVal(exp[0], env);
+        if (f.type === ValueType.Function) {
+            if (f.value.args.length !== exp[1].length)
+                throw new Error('Arity mismatch.');
+            var e = new Map();
+            var vals = exp[1].map(function (e) { return valOf(e, env, fEnvs); });
+            for (var i = 0; i < exp[1].length; i++) {
+                extendEnv(f.value.args[i], vals[i], e);
+            }
+            fEnvs.push(e);
+            var _ = valOf(f.value.body, env, fEnvs);
+            fEnvs.pop();
+            return _;
         }
     }
     throw new Error('oops');
@@ -142,6 +203,9 @@ var getVal = function (id, env) {
     if (a !== undefined)
         return a;
     throw new Error(id + ' is not in the current environmnent.');
+};
+var extendEnv = function (id, v, env) {
+    env.set(id, v);
 };
 module.exports = {
     'syntaxCheckExpr': syntaxCheckExpr,
