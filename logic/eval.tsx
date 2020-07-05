@@ -239,7 +239,7 @@ const valOf = (exp: Expr, env: Env, fEnvs: Env[]): Value => {
     let a = valOf(exp[1][0], env, fEnvs).value;
     let b = valOf(exp[1][1], env, fEnvs).value;
     return {type: ValueType.NonFunction, value: a === b};
-  }else if (isInEnv(exp[0], env)) {
+  } else {
     const f = getVal(exp[0], env);
     if (f.type === ValueType.Function) {
       if (f.value.args.length !== exp[1].length) throw new Error('Arity mismatch.')
@@ -254,10 +254,10 @@ const valOf = (exp: Expr, env: Env, fEnvs: Env[]): Value => {
       let _ = valOf(f.value.body, env, fEnvs);
       fEnvs.pop();
       return _;
+    } else {
+      throw new Error('Tried to invoke a non-function.');
     }
-  }
-
-  throw new Error('oops');
+  } 
 }
 
 // Checks if an identifier is in an enviroment.
