@@ -26,23 +26,36 @@ function Fn(args, exp) {
 }
 
 function testEnv() {
-    const simpleEnv = new Map();
-    simpleEnv.set('testNum', NFn(10));
-    simpleEnv.set('testBool', NFn(true));
-    simpleEnv.set('testStr', NFn('Hello'));
-    simpleEnv.set(
+    const e = new Map();
+    e.set('testNum', NFn(10));
+    e.set('testBool', NFn(true));
+    e.set('testStr', NFn('Hello'));
+    e.set(
         'simple-choice',
         Fn(['x', 'y', 'z'], syntaxCheckExpr(parse('(if x y z)')[0]))
     );
-    simpleEnv.set(
+    e.set(
         '*',
         Fn(['m', 'n'], syntaxCheckExpr(parse('(if (= n 0) 0 (+ m (* m (- n 1))))')[0]))
     )
-    simpleEnv.set(
+    e.set(
         'fact',
         Fn(['n'], syntaxCheckExpr(parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]))
     );
-    return simpleEnv;
+    return e;
+}
+
+function shadowEnv() {
+    const e = new Map();
+    e.set(
+        'f',
+        Fn(['x'], syntaxCheckExpr(parse('(+ x 2)')[0]))
+    );
+    e.set(
+        'g',
+        Fn(['x'], syntaxCheckExpr(parse('(+ (f (+ 2 x)) x)')[0]))
+    );
+    return e;
 }
 
 
@@ -232,6 +245,7 @@ describe('valOf', () => {
             syntaxCheckExpr(parse('(simple-choice #t 10 20)')[0]),
             syntaxCheckExpr(parse('(* 2 3)')[0]),
             syntaxCheckExpr(parse('(fact 5)')[0])
+ 
         ];
         
         const expected = [
@@ -243,5 +257,9 @@ describe('valOf', () => {
             NFn(120)
         ];
         checkExpectMultiple(x => valOf(x, env, []), examples, expected);
+    });
+    
+    it('should shadow correctly', () => {
+        checkExpect(valOf(syntaxCheckExpr(parse('(g 5)')[0]), shadowEnv(), []), NFn(14));
     });
 });

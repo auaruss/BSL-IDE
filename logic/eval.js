@@ -108,20 +108,9 @@ var ValueType;
 // Computes the value of an expression with respect to an enviroment.
 // Env is the global environment.
 // fEnvs are all the function envs that could have called this valOf call.
-var valOf = function (exp, env, fEnvs) {
+var valOf = function (exp, env) {
     if (isAtom(exp)) {
         if (isId(exp)) {
-            // Look through the envs (from the end because it's a stack) and see if we can find
-            // the Id.
-            // if (fEnvs) { // Not sure why this check is necessary but my second suite of tests dont run if i dont
-            // put it here.
-            for (var i = fEnvs.length; i > 0; i--) {
-                if (isInEnv(exp.value, fEnvs[i - 1])) {
-                    return getVal(exp.value, fEnvs[i - 1]);
-                }
-            }
-            // }
-            // Then look in the global env for the Id.
             if (isInEnv(exp.value, env)) {
                 return getVal(exp.value, env);
             }
@@ -132,13 +121,13 @@ var valOf = function (exp, env, fEnvs) {
         if (exp[1].length !== 3) {
             throw new Error('Invalid invocation of "if".');
         }
-        var pred = valOf(exp[1][0], env, fEnvs);
+        var pred = valOf(exp[1][0], env);
         if (pred.type === ValueType.NonFunction && typeof pred.value === 'boolean') {
             if (pred.value) {
-                return valOf(exp[1][1], env, fEnvs);
+                return valOf(exp[1][1], env);
             }
             else {
-                return valOf(exp[1][2], env, fEnvs);
+                return valOf(exp[1][2], env);
             }
         }
         else {
@@ -149,8 +138,8 @@ var valOf = function (exp, env, fEnvs) {
         if (exp[1].length !== 2) {
             throw new Error('Invalid invocation of "+" 1.');
         }
-        var a = valOf(exp[1][0], env, fEnvs).value;
-        var b = valOf(exp[1][1], env, fEnvs).value;
+        var a = valOf(exp[1][0], env).value;
+        var b = valOf(exp[1][1], env).value;
         if (typeof a === 'number' && typeof b === 'number') {
             return { type: ValueType.NonFunction, value: a + b };
         }
@@ -160,8 +149,8 @@ var valOf = function (exp, env, fEnvs) {
         if (exp[1].length !== 2) {
             throw new Error('Invalid invocation of "-".');
         }
-        var a = valOf(exp[1][0], env, fEnvs).value;
-        var b = valOf(exp[1][1], env, fEnvs).value;
+        var a = valOf(exp[1][0], env).value;
+        var b = valOf(exp[1][1], env).value;
         if (typeof a === 'number' && typeof b === 'number') {
             return { type: ValueType.NonFunction, value: a - b };
         }
@@ -171,27 +160,26 @@ var valOf = function (exp, env, fEnvs) {
         if (exp[1].length !== 2) {
             throw new Error('Invalid invocation of "=".');
         }
-        var a = valOf(exp[1][0], env, fEnvs).value;
-        var b = valOf(exp[1][1], env, fEnvs).value;
+        var a = valOf(exp[1][0], env).value;
+        var b = valOf(exp[1][1], env).value;
         return { type: ValueType.NonFunction, value: a === b };
     }
-    else if (isInEnv(exp[0], env)) {
+    else {
         var f = getVal(exp[0], env);
         if (f.type === ValueType.Function) {
             if (f.value.args.length !== exp[1].length)
                 throw new Error('Arity mismatch.');
-            var e = new Map();
-            var vals = exp[1].map(function (e) { return valOf(e, env, fEnvs); });
+            var e = new Map(env);
+            var vals = exp[1].map(function (ex) { return valOf(ex, env); });
             for (var i = 0; i < exp[1].length; i++) {
                 extendEnv(f.value.args[i], vals[i], e);
             }
-            fEnvs.push(e);
-            var _ = valOf(f.value.body, env, fEnvs);
-            fEnvs.pop();
-            return _;
+            return valOf(f.value.body, e);
+        }
+        else {
+            throw new Error('Tried to invoke a non-function.');
         }
     }
-    throw new Error('oops');
 };
 // Checks if an identifier is in an enviroment.
 var isInEnv = function (id, env) {
