@@ -177,8 +177,6 @@ type Fn
   };
 
 // Computes the value of an expression with respect to an enviroment.
-// Env is the global environment.
-// fEnvs are all the function envs that could have called this valOf call.
 const valOf = (exp: Expr, env: Env): Value => {
   if (isAtom(exp)) {
     if (isId(exp)) {
