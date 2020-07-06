@@ -3,6 +3,7 @@
 // Alice Russell, Sam Soucie
 
 // TODO: The tokenizer and parser must handle '().
+// TODO: The tokenizer should handle negative numbers and decimals.
 
 enum TokenType {
   Error='Error',
