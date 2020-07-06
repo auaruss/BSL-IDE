@@ -15,11 +15,12 @@ function Value(t, v) { return { type: t, value: v}; }
 function NFn(v) { return Value('NonFunction', v); }
 function BFn(v) { return Value('BuiltinFunction', v); }
 
-function Fn(args, exp) {
+function Fn(args, e, exp) {
     return {
         type: 'Function',
         value: {
             args: args,
+            env: e,
             body: exp
         }
     };
@@ -32,15 +33,27 @@ function testEnv() {
     e.set('testStr', NFn('Hello'));
     e.set(
         'simple-choice',
-        Fn(['x', 'y', 'z'], syntaxCheckExpr(parse('(if x y z)')[0]))
+        Fn(['x', 'y', 'z'], e, syntaxCheckExpr(parse('(if x y z)')[0]))
     );
     e.set(
         '*',
-        Fn(['m', 'n'], syntaxCheckExpr(parse('(if (= n 0) 0 (+ m (* m (- n 1))))')[0]))
+        Fn(['m', 'n'], e, syntaxCheckExpr(parse('(if (= n 0) 0 (+ m (* m (- n 1))))')[0]))
     )
     e.set(
         'fact',
-        Fn(['n'], syntaxCheckExpr(parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]))
+        Fn(['n'], e, syntaxCheckExpr(parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]))
+    );
+    e.set(
+        'f',
+        Fn(['x'], e, syntaxCheckExpr(parse('(g (+ x 1))')[0]))
+    );
+    e.set(
+        'g',
+        Fn(['y'], e, syntaxCheckExpr(parse('(* y x)')[0]))
+    );
+    e.set(
+        'x',
+        NFn(100)
     );
     return e;
 }
@@ -49,11 +62,11 @@ function shadowEnv() {
     const e = new Map();
     e.set(
         'f',
-        Fn(['x'], syntaxCheckExpr(parse('(+ x 2)')[0]))
+        Fn(['x'], e, syntaxCheckExpr(parse('(+ x 2)')[0]))
     );
     e.set(
         'g',
-        Fn(['x'], syntaxCheckExpr(parse('(+ (f (+ 2 x)) x)')[0]))
+        Fn(['x'], e, syntaxCheckExpr(parse('(+ (f (+ 2 x)) x)')[0]))
     );
     return e;
 }
@@ -244,8 +257,9 @@ describe('valOf', () => {
             Id('testStr'),
             syntaxCheckExpr(parse('(simple-choice #t 10 20)')[0]),
             syntaxCheckExpr(parse('(* 2 3)')[0]),
-            syntaxCheckExpr(parse('(fact 5)')[0])
- 
+            syntaxCheckExpr(parse('(fact 5)')[0]),
+            Id('x'),
+            syntaxCheckExpr(parse('(f 10)')[0])
         ];
         
         const expected = [
@@ -254,7 +268,9 @@ describe('valOf', () => {
             NFn('Hello'),
             NFn(10),
             NFn(6),
-            NFn(120)
+            NFn(120),
+            NFn(100),
+            NFn(1100)
         ];
         checkExpectMultiple(x => valOf(x, env, []), examples, expected);
     });

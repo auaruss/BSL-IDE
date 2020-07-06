@@ -106,8 +106,6 @@ var ValueType;
 })(ValueType || (ValueType = {}));
 ;
 // Computes the value of an expression with respect to an enviroment.
-// Env is the global environment.
-// fEnvs are all the function envs that could have called this valOf call.
 var valOf = function (exp, env) {
     if (isAtom(exp)) {
         if (isId(exp)) {
@@ -166,11 +164,11 @@ var valOf = function (exp, env) {
     }
     else {
         var f = getVal(exp[0], env);
+        var vals = exp[1].map(function (ex) { return valOf(ex, env); });
         if (f.type === ValueType.Function) {
             if (f.value.args.length !== exp[1].length)
                 throw new Error('Arity mismatch.');
-            var e = new Map(env);
-            var vals = exp[1].map(function (ex) { return valOf(ex, env); });
+            var e = new Map(f.value.env);
             for (var i = 0; i < exp[1].length; i++) {
                 extendEnv(f.value.args[i], vals[i], e);
             }

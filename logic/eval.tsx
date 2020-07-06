@@ -173,6 +173,7 @@ type Env = Map<String,Value>;
 type Fn
   = {
     args: string[],
+    env: Env,
     body: Expr
   };
 
@@ -230,10 +231,11 @@ const valOf = (exp: Expr, env: Env): Value => {
     return {type: ValueType.NonFunction, value: a === b};
   } else {
     const f = getVal(exp[0], env);
+    let vals = exp[1].map(ex => valOf(ex, env));
+
     if (f.type === ValueType.Function) {
       if (f.value.args.length !== exp[1].length) throw new Error('Arity mismatch.');
-      let e: Env = new Map<String, Value>(env);
-      let vals = exp[1].map(ex => valOf(ex, env));
+      let e: Env = new Map<String, Value>(f.value.env);
       
       for (let i = 0; i < exp[1].length; i++) {
         extendEnv(f.value.args[i], vals[i], e);
