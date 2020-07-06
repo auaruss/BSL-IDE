@@ -1,10 +1,10 @@
 'use strict';
+var parse = require('./parse').parse;
 // TODO: Check for functions-as-values in syntax checker
 var builtinEnv = function () {
     var m = new Map();
     return m;
 };
-var BUILTIN_ENV = builtinEnv();
 var AtomType;
 (function (AtomType) {
     AtomType["String"] = "String";
@@ -193,9 +193,47 @@ var getVal = function (id, env) {
 var extendEnv = function (id, v, env) {
     env.set(id, v);
 };
+// Populate the env with the definitions in defns.
+var populateEnv = function (defns, env) {
+    for (var _i = 0, defns_1 = defns; _i < defns_1.length; _i++) {
+        var defn = defns_1[_i];
+        if (Array.isArray(defn[1])) {
+            extendEnv(defn[1][0], {
+                type: ValueType.Function,
+                value: {
+                    args: defn[1][1],
+                    env: env,
+                    body: defn[2]
+                }
+            }, env);
+        }
+        else {
+            extendEnv(defn[1], valOf(defn[2], env), env);
+        }
+    }
+    return env;
+};
+var isDefinition = function (x) {
+    if (!(Array.isArray(x)))
+        return false;
+    return x[0] === 'define';
+};
+var defOrExprIsExpr = function (d) {
+    return (!isDefinition(d));
+};
+var evalDefOrExprs = function (p) {
+    var defns = p.filter(isDefinition);
+    var exprs = p.filter(defOrExprIsExpr);
+    var e = populateEnv(defns, new Map());
+    return exprs.map(function (x) { return valOf(x, e); });
+};
+var evaluate = function (s) {
+    return evalDefOrExprs(parse(s).map(syntaxCheckDefOrExpr));
+};
 module.exports = {
     'syntaxCheckExpr': syntaxCheckExpr,
     'syntaxCheckDefinition': syntaxCheckDefinition,
     'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr,
-    'valOf': valOf
+    'valOf': valOf,
+    'evaluate': evaluate
 };

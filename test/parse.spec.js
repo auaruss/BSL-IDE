@@ -4,7 +4,7 @@ const { expect } = require('chai');
 function Tok(t, v) { return { type: t, value: v}; }
 function Atom(t, v) { return { type: t, value: v}; }
 
-const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
+const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
       [ Tok('CloseParen', ')'),
         Tok('OpenParen', '('), 
         Tok('Whitespace', ' '),
@@ -12,6 +12,7 @@ const [ CP, OP, SPACE, OSP, CSP, OBP, CBP ] =
         Tok('CloseSquareParen', ']'),
         Tok('OpenBraceParen', '{'),
         Tok('CloseBraceParen', '}'),
+        Tok('Whitespace', '\n')
       ];
 
 const whichBool = (t) => {
@@ -172,6 +173,27 @@ describe('tokenize', () => {
         ];
 
         checkExpectMultiple(tokenize, result, expected);
+    });
+
+    it('should handle newlines correctly', () =>{
+        const newlineTestStr = (
+            '(define (simple-choice x y z) (if x y z))\n'
+            + '(simple-choice #t 10 20)\n'
+            + '\n'
+            + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
+            + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n'
+        );
+        const expected = (
+            tokenize('(define (simple-choice x y z) (if x y z))')
+              .concat([NL])
+              .concat(tokenize('(simple-choice #t 10 20)'))
+              .concat([{type: 'Whitespace', value: '\n\n'}])
+              .concat(tokenize('(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))'))
+              .concat([NL])
+              .concat(tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
+              .concat([NL])
+        );
+        checkExpect(tokenize(newlineTestStr), expected);
     });
 });
 

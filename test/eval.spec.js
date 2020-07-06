@@ -1,6 +1,6 @@
 const { parse } = require('../logic/parse.js');
 const { syntaxCheckExpr, syntaxCheckDefinition, syntaxCheckDefOrExpr,
-        valOf } = require('../logic/eval.js');
+        valOf, evaluate } = require('../logic/eval.js');
 const { expect } = require('chai');
 
 function Atom(t, v) { return { type: t, value: v}; }
@@ -252,24 +252,24 @@ describe('valOf', () => {
     it('should evaluate these with this env', () => {
         const env = testEnv();
         const examples = [
+            Id('x'),
             Id('testNum'),
             Id('testBool'),
             Id('testStr'),
             syntaxCheckExpr(parse('(simple-choice #t 10 20)')[0]),
             syntaxCheckExpr(parse('(* 2 3)')[0]),
             syntaxCheckExpr(parse('(fact 5)')[0]),
-            Id('x'),
             syntaxCheckExpr(parse('(f 10)')[0])
         ];
         
         const expected = [
+            NFn(100),
             NFn(10),
             NFn(true),
             NFn('Hello'),
             NFn(10),
             NFn(6),
             NFn(120),
-            NFn(100),
             NFn(1100)
         ];
         checkExpectMultiple(x => valOf(x, env, []), examples, expected);
@@ -277,5 +277,42 @@ describe('valOf', () => {
     
     it('should shadow correctly', () => {
         checkExpect(valOf(syntaxCheckExpr(parse('(g 5)')[0]), shadowEnv(), []), NFn(14));
+    });
+});
+
+describe('evaluate', () => {
+    it('should evaluate this.', () => {
+        const program = `(define x 100)
+        (define testNum 10)
+        (define testBool #true)
+        (define testStr "Hello")
+        (define (simple-choice x y z) (if x y z))
+        (simple-choice #t 10 20)
+        
+        (define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))
+        (mul 2 3)
+        
+        
+        (define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))
+        (fact 5)
+        (define (f x) (g (+ x 1)))
+        (define (g y) (mul x y))
+        
+        x
+        testNum
+        testBool
+        testStr`
+
+        const vals = [
+            NFn(10),
+            NFn(6),
+            NFn(120),
+            NFn(100),
+            NFn(10),
+            NFn(true),
+            NFn('Hello')
+        ];
+
+        checkExpect(evaluate(program), vals);
     });
 });

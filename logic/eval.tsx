@@ -1,5 +1,6 @@
 'use strict';
 
+const parse = require('./parse').parse;
 // TODO: Check for functions-as-values in syntax checker
 
 const builtinEnv = (): Env => {
@@ -8,8 +9,6 @@ const builtinEnv = (): Env => {
 
   return m;
 }
-
-const BUILTIN_ENV: Env = builtinEnv();
 
 enum AtomType {
   String='String',
@@ -103,7 +102,7 @@ const isIdArray = (x: any): x is Id[] => {
 const syntaxCheckExpr = (sexp: SExp): Expr => {
   if (isAtom(sexp)) {
     return sexp;
-  } else if (Array.isArray(sexp)){
+  } else if (Array.isArray(sexp)) {
     if (sexp.length === 0) {
       throw new Error('Invalid Expression: Found an empty expression.');
     }
@@ -264,9 +263,55 @@ const extendEnv = (id: string, v: Value, env: Env): void => {
   env.set(id, v);
 }
 
+// Populate the env with the definitions in defns.
+const populateEnv = (defns: Definition[], env: Env): Env => {
+  for (let defn of defns) {
+    if (Array.isArray(defn[1])) {
+      extendEnv(
+        defn[1][0],
+        {
+          type: ValueType.Function,
+          value: {
+            args: defn[1][1],
+            env: env,
+            body: defn[2] 
+          }
+        },
+        env
+      );
+    } else {
+      extendEnv(defn[1], valOf(defn[2], env), env);
+    }
+  }
+
+  return env;
+}
+
+const isDefinition = (x: any): x is Definition => {
+  if (! (Array.isArray(x))) return false;
+  return x[0] === 'define';
+}
+
+const defOrExprIsExpr = (d: DefOrExpr): d is Expr => {
+  return (! isDefinition(d));
+}
+
+const evalDefOrExprs = (p: DefOrExpr[]): Value[] => {
+  let defns = p.filter(isDefinition);
+  let exprs = p.filter(defOrExprIsExpr);
+  let e = populateEnv(defns, new Map<String, Value>());
+
+  return exprs.map(x => valOf(x, e));
+}
+
+const evaluate = (s: string): Value[] => {
+  return evalDefOrExprs(parse(s).map(syntaxCheckDefOrExpr));
+}
+
 module.exports = {
   'syntaxCheckExpr': syntaxCheckExpr,
   'syntaxCheckDefinition': syntaxCheckDefinition,
   'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr,
-  'valOf': valOf
+  'valOf': valOf,
+  'evaluate': evaluate
 };
