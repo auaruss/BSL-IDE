@@ -292,10 +292,12 @@ const isDefinition = (x: any): x is Definition => {
   return x[0] === 'define';
 }
 
+// Checks to see if a specific DefOrExpr is an Expr.
 const defOrExprIsExpr = (d: DefOrExpr): d is Expr => {
   return (! isDefinition(d));
 }
 
+// Evaluates a list of DefOrExpr.
 const evalDefOrExprs = (p: DefOrExpr[]): Value[] => {
   let defns = p.filter(isDefinition);
   let exprs = p.filter(defOrExprIsExpr);
@@ -304,6 +306,7 @@ const evalDefOrExprs = (p: DefOrExpr[]): Value[] => {
   return exprs.map(x => valOf(x, e));
 }
 
+// Evaluates a well-formed BSL program.
 const evaluate = (s: string): Value[] => {
   return evalDefOrExprs(parse(s).map(syntaxCheckDefOrExpr));
 }
