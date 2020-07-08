@@ -1,31 +1,21 @@
 'use strict';
-export {};
-// SExpr Parser in TS
-// Alice Russell, Sam Soucie
 
-// TODO: The tokenizer and parser must handle '().
-// TODO: The tokenizer should handle negative numbers and decimals.
+/**
+ * An S-exp parser for the student languages.
+ * @author: Alice Russell, Sam Soucie 
+ * 
+ * @todo The tokenizer should handle negative numbers and decimals.
+ * @todo The tokenizer and parser must handle '().
+ */
 
-enum TokenType {
-  Error='Error',
-  OpenParen='OpenParen',
-  OpenSquareParen='OpenSquareParen',
-  OpenBraceParen='OpenBraceParen',
-  CloseParen='CloseParen',
-  CloseSquareParen='CloseSquareParen',
-  CloseBraceParen='CloseBraceParen',
-  Number='Number',
-  String='String',
-  Identifier='Identifier',
-  Whitespace='Whitespace',
-  Boolean='Boolean'
-};
+import {
+  AtomType, ResultFailure, ResultSuccess, Result,
+  SExp, Token, TokenType
+} from './types';
 
-type Token
-  = {
-    type: TokenType
-    value: string
-  };
+import {
+  isSuccess, isFailure, isDefinition
+} from './predicates';
 
 // Regexp Definitions.
 const tokenExpressions: [TokenType, RegExp][] = [
@@ -42,7 +32,11 @@ const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
 
-// Transforms a string into a list of tokens.
+/**
+ * Transforms a string into a list of tokens.
+ * @param exp expression as a string
+ * @throws error when the input cannot be parsed into any defined tokens.
+ */
 const tokenize = (exp: string): Token[] => {
   if (exp == '') {
     return [];
@@ -58,69 +52,14 @@ const tokenize = (exp: string): Token[] => {
   throw new Error('Found a substring with no valid prefix token.');
 };
 
-enum AtomType {
-  String='String',
-  Number='Number',
-  Boolean='Boolean',
-  Identifier='Identifier'
-}
-
-type Str
-  = {
-    type: AtomType.String,
-    value: string
-  };
-
-type Num
-  = {
-    type: AtomType.Number,
-    value: number
-  };
-
-type Id
-  = {
-    type: AtomType.Identifier,
-    value: string
-  };
-
-type Bool = {
-  type: AtomType.Boolean,
-  value: boolean
-};
-
-type Atom
-  = Str | Num | Id | Bool;
-
-type SExp
-  = Atom | SExp[];
-
-type Result<T> = ResultSuccess<T> | ResultFailure<T>;
-type ResultSuccess<T>
-  = {
-    thing: T,
-    remain: Token[]
-  };
-type ResultFailure<T>
-  = {
-    error: string,
-    remain: Token[]
-  };
-
-// Determines whether a Result is a ResultSuccess.
-const isSuccess = (result: Result<any>): result is ResultSuccess<any> => {
-  return (result as ResultSuccess<any>).thing !== undefined;
-}
-
-// Determines whether a Result is a ResultFailure.
-const isFailure = (result: Result<any>): result is ResultFailure<any> => {
-  return (result as ResultFailure<any>).error !== undefined;
-}
-
-
-// Attempts to parse the first SExp from a list of tokens.
-// A failure is produced when no starting SExp is found.
-// Note that this function does not deal with whitespace as we expect to always be calling parse
-// first and we deal with the whitespace completely in there.
+/**
+ * Attempts to parse the first SExp from a list of tokens.
+ * @remark A failure is produced when no starting SExp is found.
+ * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
+ *         first and we deal with the whitespace completely in there.
+ * @param tokens
+ * @throws error if a non-token is in the Token[].
+ */
 const parseSexp = (tokens: Token[]): Result<SExp> => {
   if (tokens.length === 0) return {error: 'Reached the end without finding an SExpression.', remain: []};
 
@@ -197,12 +136,16 @@ const parseSexp = (tokens: Token[]): Result<SExp> => {
         },
         remain: tokens.slice(1)
       };
+    default:
+      throw new Error('Somehow a non-token was passed to parseSExp.');
   }
-
-  throw new Error('dunno? parseSexp');
 }
 
-// Parses as many SExp as possible from the start of the list of tokens.
+/**
+ * Parses as many SExp as possible from the start of the list of tokens.
+ * @param tokens
+ * @throws error when the Result is neither a ResultSuccess nor ResultFailure
+ */
 const parseSexps = (tokens: Token[]): ResultSuccess<SExp[]> => {
   if (tokens.length === 0) return { thing: [], remain: []};
   if (tokens[0].type === TokenType.Whitespace) { return parseSexps(tokens.slice(1)); }
@@ -216,18 +159,28 @@ const parseSexps = (tokens: Token[]): ResultSuccess<SExp[]> => {
   } else if (isFailure(parseFirst)) {
   return { thing: [], remain: tokens }
   } else {
-    throw new Error('dunno? parseSexps');
+    throw new Error('Not a ResultSuccess or ResultFailure somehow.');
   }
 }
 
-const parse = (exp:string): SExp[] => {
+/**
+ * Parses as many SExp as possible from the start of an expression.
+ * @param exp an expression as a string
+ */
+export const parse = (exp:string): SExp[] => {
   const parsed = parseSexps(tokenize(exp)).thing;
   return parsed;
 }
 
-// Given two tokens, if the first is an opening paren token and the second a closing paren token,
-// determines whether they are matching paren types.
-// False if given any other tokens, or given the tokens in the wrong order.
+/**
+ * Given two tokens, if the first is an opening paren token and the second a closing paren token,
+ * determines whether they are matching paren types.
+ * 
+ * @param op open paren token
+ * @param cp close paren token
+ * @return True if the tokens match in the correct order,
+ *         False if given any other tokens, or given the tokens in the wrong order.
+ */
 const parensMatch = (op: Token, cp: Token): boolean => {
   if (op.type === TokenType.OpenParen) {
     return cp.type === TokenType.CloseParen;
@@ -239,6 +192,11 @@ const parensMatch = (op: Token, cp: Token): boolean => {
   return false;
 }
 
+/**
+ * Checks whether a given boolean token is true or false.
+ * @param t token
+ * @throws error when called on non-boolean token
+ */
 const whichBool = (t: Token): boolean => {
   switch (t.value) {
     case '#T':

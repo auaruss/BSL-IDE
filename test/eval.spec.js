@@ -1,6 +1,6 @@
-const { parse } = require('../logic/parse.js');
+const { parse } = require('../src/logic/parse.js');
 const { syntaxCheckExpr, syntaxCheckDefinition, syntaxCheckDefOrExpr,
-        valOf, evaluate } = require('../logic/eval.js');
+        valOf, evaluate, builtinEnv } = require('../src/logic/eval.js');
 const { expect } = require('chai');
 
 function Atom(t, v) { return { type: t, value: v}; }
@@ -27,7 +27,7 @@ function Fn(args, e, exp) {
 }
 
 function testEnv() {
-    const e = new Map();
+    const e = builtinEnv();
     e.set('testNum', NFn(10));
     e.set('testBool', NFn(true));
     e.set('testStr', NFn('Hello'));
@@ -35,10 +35,6 @@ function testEnv() {
         'simple-choice',
         Fn(['x', 'y', 'z'], e, syntaxCheckExpr(parse('(if x y z)')[0]))
     );
-    e.set(
-        '*',
-        Fn(['m', 'n'], e, syntaxCheckExpr(parse('(if (= n 0) 0 (+ m (* m (- n 1))))')[0]))
-    )
     e.set(
         'fact',
         Fn(['n'], e, syntaxCheckExpr(parse('(if (= n 0) 1 (* n (fact (- n 1))))')[0]))
@@ -59,7 +55,7 @@ function testEnv() {
 }
 
 function shadowEnv() {
-    const e = new Map();
+    const e = builtinEnv();
     e.set(
         'f',
         Fn(['x'], e, syntaxCheckExpr(parse('(+ x 2)')[0]))
@@ -281,6 +277,12 @@ describe('valOf', () => {
 });
 
 describe('evaluate', () => {
+    it('should work on a single definition', () => {
+        const program = '(define x 100)';
+        const expected = [];
+        checkExpect(evaluate(program), expected);
+    });
+
     it('should evaluate this.', () => {
         const program = `(define x 100)
         (define testNum 10)
@@ -301,7 +303,10 @@ describe('evaluate', () => {
         x
         testNum
         testBool
-        testStr`
+        testStr
+        (* 2 3)
+        (/ 2 2)
+        (- 3 2)`
 
         const vals = [
             NFn(10),
@@ -310,7 +315,10 @@ describe('evaluate', () => {
             NFn(100),
             NFn(10),
             NFn(true),
-            NFn('Hello')
+            NFn('Hello'),
+            NFn(6),
+            NFn(1),
+            NFn(1)
         ];
 
         checkExpect(evaluate(program), vals);

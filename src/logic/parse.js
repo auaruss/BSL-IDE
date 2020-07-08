@@ -1,40 +1,33 @@
 'use strict';
 exports.__esModule = true;
-// SExpr Parser in TS
-// Alice Russell, Sam Soucie
-// TODO: The tokenizer and parser must handle '().
-// TODO: The tokenizer should handle negative numbers and decimals.
-var TokenType;
-(function (TokenType) {
-    TokenType["Error"] = "Error";
-    TokenType["OpenParen"] = "OpenParen";
-    TokenType["OpenSquareParen"] = "OpenSquareParen";
-    TokenType["OpenBraceParen"] = "OpenBraceParen";
-    TokenType["CloseParen"] = "CloseParen";
-    TokenType["CloseSquareParen"] = "CloseSquareParen";
-    TokenType["CloseBraceParen"] = "CloseBraceParen";
-    TokenType["Number"] = "Number";
-    TokenType["String"] = "String";
-    TokenType["Identifier"] = "Identifier";
-    TokenType["Whitespace"] = "Whitespace";
-    TokenType["Boolean"] = "Boolean";
-})(TokenType || (TokenType = {}));
-;
+/**
+ * An S-exp parser for the student languages.
+ * @author: Alice Russell, Sam Soucie
+ *
+ * @todo The tokenizer should handle negative numbers and decimals.
+ * @todo The tokenizer and parser must handle '().
+ */
+var types_1 = require("./types");
+var predicates_1 = require("./predicates");
 // Regexp Definitions.
 var tokenExpressions = [
-    [TokenType.OpenParen, /^\(/],
-    [TokenType.OpenSquareParen, /^\[/],
-    [TokenType.OpenBraceParen, /^\{/],
-    [TokenType.CloseParen, /^\)/],
-    [TokenType.CloseSquareParen, /^]/],
-    [TokenType.CloseBraceParen, /^}/],
-    [TokenType.Number, /^\d+/],
-    [TokenType.String, /^"[^"]*"/],
-    [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
-    [TokenType.Whitespace, /^\s+/],
-    [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
+    [types_1.TokenType.OpenParen, /^\(/],
+    [types_1.TokenType.OpenSquareParen, /^\[/],
+    [types_1.TokenType.OpenBraceParen, /^\{/],
+    [types_1.TokenType.CloseParen, /^\)/],
+    [types_1.TokenType.CloseSquareParen, /^]/],
+    [types_1.TokenType.CloseBraceParen, /^}/],
+    [types_1.TokenType.Number, /^\d+/],
+    [types_1.TokenType.String, /^"[^"]*"/],
+    [types_1.TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
+    [types_1.TokenType.Whitespace, /^\s+/],
+    [types_1.TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
-// Transforms a string into a list of tokens.
+/**
+ * Transforms a string into a list of tokens.
+ * @param exp expression as a string
+ * @throws error when the input cannot be parsed into any defined tokens.
+ */
 var tokenize = function (exp) {
     if (exp == '') {
         return [];
@@ -49,32 +42,21 @@ var tokenize = function (exp) {
     }
     throw new Error('Found a substring with no valid prefix token.');
 };
-var AtomType;
-(function (AtomType) {
-    AtomType["String"] = "String";
-    AtomType["Number"] = "Number";
-    AtomType["Boolean"] = "Boolean";
-    AtomType["Identifier"] = "Identifier";
-})(AtomType || (AtomType = {}));
-// Determines whether a Result is a ResultSuccess.
-var isSuccess = function (result) {
-    return result.thing !== undefined;
-};
-// Determines whether a Result is a ResultFailure.
-var isFailure = function (result) {
-    return result.error !== undefined;
-};
-// Attempts to parse the first SExp from a list of tokens.
-// A failure is produced when no starting SExp is found.
-// Note that this function does not deal with whitespace as we expect to always be calling parse
-// first and we deal with the whitespace completely in there.
+/**
+ * Attempts to parse the first SExp from a list of tokens.
+ * @remark A failure is produced when no starting SExp is found.
+ * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
+ *         first and we deal with the whitespace completely in there.
+ * @param tokens
+ * @throws error if a non-token is in the Token[].
+ */
 var parseSexp = function (tokens) {
     if (tokens.length === 0)
         return { error: 'Reached the end without finding an SExpression.', remain: [] };
     switch (tokens[0].type) {
-        case TokenType.OpenParen:
-        case TokenType.OpenSquareParen:
-        case TokenType.OpenBraceParen:
+        case types_1.TokenType.OpenParen:
+        case types_1.TokenType.OpenSquareParen:
+        case types_1.TokenType.OpenBraceParen:
             var parseRest = parseSexps(tokens.slice(1));
             // this means parseRest is the rest of the current SExp. so for
             // '(define hello 1) (define x 10)'
@@ -105,89 +87,109 @@ var parseSexp = function (tokens) {
                     remain: tokens
                 };
             }
-        case TokenType.CloseParen:
-        case TokenType.CloseSquareParen:
-        case TokenType.CloseBraceParen:
+        case types_1.TokenType.CloseParen:
+        case types_1.TokenType.CloseSquareParen:
+        case types_1.TokenType.CloseBraceParen:
             return {
                 error: 'Found a closing parenthesis with no matching opening parenthesis.',
                 remain: tokens
             };
-        case TokenType.Number:
+        case types_1.TokenType.Number:
             return {
                 thing: {
-                    type: AtomType.Number,
+                    type: types_1.AtomType.Number,
                     value: Number(tokens[0].value)
                 },
                 remain: tokens.slice(1)
             };
-        case TokenType.String:
+        case types_1.TokenType.String:
             return {
                 thing: {
-                    type: AtomType.String,
+                    type: types_1.AtomType.String,
                     value: tokens[0].value.slice(1, -1)
                 },
                 remain: tokens.slice(1)
             };
-        case TokenType.Identifier:
+        case types_1.TokenType.Identifier:
             return {
                 thing: {
-                    type: AtomType.Identifier,
+                    type: types_1.AtomType.Identifier,
                     value: tokens[0].value
                 },
                 remain: tokens.slice(1)
             };
-        case TokenType.Boolean:
+        case types_1.TokenType.Boolean:
             return {
                 thing: {
-                    type: AtomType.Boolean,
+                    type: types_1.AtomType.Boolean,
                     value: whichBool(tokens[0])
                 },
                 remain: tokens.slice(1)
             };
+        default:
+            throw new Error('Somehow a non-token was passed to parseSExp.');
     }
-    throw new Error('dunno? parseSexp');
 };
-// Parses as many SExp as possible from the start of the list of tokens.
+/**
+ * Parses as many SExp as possible from the start of the list of tokens.
+ * @param tokens
+ * @throws error when the Result is neither a ResultSuccess nor ResultFailure
+ */
 var parseSexps = function (tokens) {
     if (tokens.length === 0)
         return { thing: [], remain: [] };
-    if (tokens[0].type === TokenType.Whitespace) {
+    if (tokens[0].type === types_1.TokenType.Whitespace) {
         return parseSexps(tokens.slice(1));
     }
     var parseFirst = parseSexp(tokens);
-    if (isSuccess(parseFirst)) {
+    if (predicates_1.isSuccess(parseFirst)) {
         var parseRest = parseSexps(parseFirst.remain);
         return {
             thing: [parseFirst.thing].concat(parseRest.thing),
             remain: parseRest.remain
         };
     }
-    else if (isFailure(parseFirst)) {
+    else if (predicates_1.isFailure(parseFirst)) {
         return { thing: [], remain: tokens };
     }
     else {
-        throw new Error('dunno? parseSexps');
+        throw new Error('Not a ResultSuccess or ResultFailure somehow.');
     }
 };
-var parse = function (exp) {
+/**
+ * Parses as many SExp as possible from the start of an expression.
+ * @param exp an expression as a string
+ */
+exports.parse = function (exp) {
     var parsed = parseSexps(tokenize(exp)).thing;
     return parsed;
 };
-// Given two tokens, if the first is an opening paren token and the second a closing paren token,
-// determines whether they are matching paren types.
-// False if given any other tokens, or given the tokens in the wrong order.
+/**
+ * Given two tokens, if the first is an opening paren token and the second a closing paren token,
+ * determines whether they are matching paren types.
+ *
+ * @param op open paren token
+ * @param cp close paren token
+ * @return True if the tokens match in the correct order,
+ *         False if given any other tokens, or given the tokens in the wrong order.
+ */
 var parensMatch = function (op, cp) {
-    if (op.type === TokenType.OpenParen) {
-        return cp.type === TokenType.CloseParen;
+    if (op.type === types_1.TokenType.OpenParen) {
+        return cp.type === types_1.TokenType.CloseParen;
     }
-    else if (op.type === TokenType.OpenSquareParen) {
-        return cp.type === TokenType.CloseSquareParen;
+    else if (op.type === types_1.TokenType.OpenSquareParen) {
+        return cp.type === types_1.TokenType.CloseSquareParen;
     }
-    else if (op.type === TokenType.OpenBraceParen) {
-        return cp.type === TokenType.CloseBraceParen;
+    else if (op.type === types_1.TokenType.OpenBraceParen) {
+        return cp.type === types_1.TokenType.CloseBraceParen;
     }
     return false;
 };
+/**
+ * Checks whether a given boolean token is true or false.
+ * @param t token
+ * @throws error when called on non-boolean token
+ */
 var whichBool = function (t) {
     switch (t.value) {
         case '#T':
@@ -204,7 +206,7 @@ var whichBool = function (t) {
 };
 module.exports = {
     'tokenize': tokenize,
-    'parse': parse,
+    'parse': exports.parse,
     'parseSexp': parseSexp,
     'parseSexps': parseSexps
 };

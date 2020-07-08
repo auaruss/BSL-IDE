@@ -1,4 +1,4 @@
-const { tokenize, parse, parseSexp, parseSexps} = require('../logic/parse.js');
+const { tokenize, parse, parseSexp, parseSexps} = require('../src/logic/parse.js');
 const { expect } = require('chai');
 
 function Tok(t, v) { return { type: t, value: v}; }
