@@ -8,6 +8,11 @@ export enum AtomType {
   Identifier='Identifier'
 };
 
+export enum EvalError {
+
+}
+
+
 export enum TokenType {
   Error='Error',
   OpenParen='OpenParen',
@@ -23,20 +28,26 @@ export enum TokenType {
   Boolean='Boolean'
 };
 
+export enum ParseError {
+  MismatchedParen='MismatchedParen',
+  CharactersRemain='CharactersRemain'
+}
+
+export enum SyntaxError {
+  
+}
+
+export enum TokenizeError {
+  GenericError='GenericError'
+}
+
 export enum ValueType {
   NonFunction='NonFunction',
   BuiltinFunction='BuiltinFunction',
   Function='Function',
 };
 
-export enum ParseError {
-  MismatchedParen='MismatchedParen',
-  CharactersRemain='CharactersRemain'
-}
 
-export enum TokenizeError {
-  
-}
 
 export type Atom
   = Str | Num | Id | Bool;
@@ -51,13 +62,21 @@ export type Definition
   | ['define', string, Expr];
 
 export type DefOrExpr
-  = Definition | Expr;
+  = {
+    val:Definition | Expr,
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
+  }
 
 export type Env = Map<String,Value>;
 
 export type Error
- = TokenizeError
- | ParseError
+  = TokenizeError
+  | ParseError
+  | SyntaxError
+  | EvalError
 
 export type Expr
   = Atom
@@ -97,8 +116,14 @@ export type ResultSuccess<T>
   };
 
 export type SExp
-  = Atom | SExp[] | ParseError;
-  
+  = {
+    val: Atom | SExp[] | Error,
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
+  };
+
 export type Str
   = {
     type: AtomType.String,
@@ -125,10 +150,18 @@ export type Value
   = {
     type: ValueType.NonFunction,
     value: string | number | boolean
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
   } | {
     type: ValueType.BuiltinFunction,
     value: ((vs: Value[]) => Value)
   } | {
     type: ValueType.Function,
     value: Fn
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
   };
