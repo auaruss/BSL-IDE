@@ -6,7 +6,10 @@ import { evaluate } from './eval';
  */
 
 export const formatEvaluation = (code) => {
-  if (evaluate(code).length > 0)
-    return evaluate(code)[0].value;
-  return 'default';
+  let vals = evaluate(code);
+  let output = '';
+  for (let val of vals) {
+    output += val.value + '\n';
+  }
+  return output;
 }
