@@ -199,6 +199,7 @@ const valOf = (exp: Expr, env: Env): Value => {
       if (isInEnv(exp.value, env)) {
         return getVal(exp.value, env);
       }
+      throw new Error(exp.value + ' is not in the environment.');
     }
     return { type: ValueType.NonFunction, value: exp.value };
 
@@ -313,9 +314,20 @@ const evalDefOrExprs = (p: DefOrExpr[]): Value[] => {
  * Evaluates a well-formed BSL program.
  * @param s program as a string
  */
-const evaluate = (s: string): Value[] => {
+export const evaluate = (s: string): Value[] => {
   return evalDefOrExprs(parse(s).map(syntaxCheckDefOrExpr));
 }
+
+export const valToString = (v: Value): string => {
+  switch (v.type) {
+    case ValueType.BuiltinFunction:
+      return '...';
+    case ValueType.Function:
+      
+    case ValueType.NonFunction:
+      return v.value.toString();
+  }
+} 
 
 module.exports = {
   'builtinEnv': builtinEnv,

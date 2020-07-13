@@ -157,6 +157,7 @@ var valOf = function (exp, env) {
             if (isInEnv(exp.value, env)) {
                 return getVal(exp.value, env);
             }
+            throw new Error(exp.value + ' is not in the environment.');
         }
         return { type: types_1.ValueType.NonFunction, value: exp.value };
     }
@@ -264,12 +265,12 @@ var evalDefOrExprs = function (p) {
  * Evaluates a well-formed BSL program.
  * @param s program as a string
  */
-var evaluate = function (s) {
+exports.evaluate = function (s) {
     return evalDefOrExprs(parse_1.parse(s).map(syntaxCheckDefOrExpr));
 };
 module.exports = {
     'builtinEnv': builtinEnv,
-    'evaluate': evaluate,
+    'evaluate': exports.evaluate,
     'syntaxCheckDefinition': syntaxCheckDefinition,
     'syntaxCheckDefOrExpr': syntaxCheckDefOrExpr,
     'syntaxCheckExpr': syntaxCheckExpr,

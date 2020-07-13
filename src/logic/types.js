@@ -33,3 +33,11 @@ var ValueType;
     ValueType["Function"] = "Function";
 })(ValueType = exports.ValueType || (exports.ValueType = {}));
 ;
+var ParseError;
+(function (ParseError) {
+    ParseError["MismatchedParen"] = "MismatchedParen";
+    ParseError["CharactersRemain"] = "CharactersRemain";
+})(ParseError = exports.ParseError || (exports.ParseError = {}));
+var TokenizeError;
+(function (TokenizeError) {
+})(TokenizeError = exports.TokenizeError || (exports.TokenizeError = {}));

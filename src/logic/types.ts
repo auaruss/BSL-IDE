@@ -29,6 +29,15 @@ export enum ValueType {
   Function='Function',
 };
 
+export enum ParseError {
+  MismatchedParen='MismatchedParen',
+  CharactersRemain='CharactersRemain'
+}
+
+export enum TokenizeError {
+  
+}
+
 export type Atom
   = Str | Num | Id | Bool;
   
@@ -45,6 +54,10 @@ export type DefOrExpr
   = Definition | Expr;
 
 export type Env = Map<String,Value>;
+
+export type Error
+ = TokenizeError
+ | ParseError
 
 export type Expr
   = Atom
@@ -84,7 +97,7 @@ export type ResultSuccess<T>
   };
 
 export type SExp
-  = Atom | SExp[];
+  = Atom | SExp[] | ParseError;
   
 export type Str
   = {
@@ -92,10 +105,20 @@ export type Str
     value: string
   };
 
+export type SourceLocation 
+  = {
+    row: number,
+    col: number
+  };  
+
 export type Token
   = {
     type: TokenType
-    value: string
+    value: string,
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
   };
 
 export type Value

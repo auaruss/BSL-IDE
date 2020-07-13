@@ -2,10 +2,20 @@
 exports.__esModule = true;
 /**
  * An S-exp parser for the student languages.
- * @author: Alice Russell, Sam Soucie
+ * @author Alice Russell
+ * @author Sam Soucie
  *
  * @todo The tokenizer should handle negative numbers and decimals.
  * @todo The tokenizer and parser must handle '().
+ * @todo Add ParseError to SExp.
+ * @todo Something like (... (f 10] ...) should return a ParseError for mismatched
+ *       brackets.
+ * @todo Add check to parser that remain contains nothing but trailing whitespace.
+ *       This should return a ParseError.
+ *
+ * @todo We should propagate source location information.
+ *       We can interpret this as the range of character indices.
+ *       This should use some type such as SourceLocation.
  */
 var types_1 = require("./types");
 var predicates_1 = require("./predicates");
@@ -29,6 +39,9 @@ var tokenExpressions = [
  * @throws error when the input cannot be parsed into any defined tokens.
  */
 var tokenize = function (exp) {
+    return tokenizeAcc(exp, 0, 0);
+};
+var tokenizeAcc = function (exp, row, col) {
     if (exp == '') {
         return [];
     }
@@ -36,11 +49,26 @@ var tokenize = function (exp) {
         var _a = tokenExpressions_1[_i], tokenType = _a[0], expression = _a[1];
         if (expression.test(exp)) {
             var result = expression.exec(exp);
-            return [{ type: tokenType, value: result ? result[0] : '' }]
-                .concat(tokenize(result ? result.input.slice(result[0].length) : ''));
+            return [{
+                    type: tokenType,
+                    value: result ? result[0] : '',
+                    loc: {
+                        start: { row: row, col: col },
+                        end: result ? { row: row + result[0].length, col: col } : { row: row, col: col }
+                    }
+                }]
+                .concat(tokenizeAcc(result ? result.input.slice(result[0].length) : '', (result && result[0] === '\n') ? row + result[0].length : row + 1, (result && result[0] === '\n') ? col + 1 : col));
         }
     }
-    throw new Error('Found a substring with no valid prefix token.');
+    return [{
+            type: types_1.TokenType.Error,
+            value: exp[0],
+            loc: {
+                start: { row: row, col: col },
+                end: { row: row + 1, col: col }
+            }
+        }]
+        .concat(tokenize(exp.slice(1)));
 };
 /**
  * Attempts to parse the first SExp from a list of tokens.
@@ -53,6 +81,7 @@ var tokenize = function (exp) {
 var parseSexp = function (tokens) {
     if (tokens.length === 0)
         return { error: 'Reached the end without finding an SExpression.', remain: [] };
+    // if (tokens[0].type === TokenType.Error) return { error}
     switch (tokens[0].type) {
         case types_1.TokenType.OpenParen:
         case types_1.TokenType.OpenSquareParen:
