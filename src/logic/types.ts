@@ -8,11 +8,6 @@ export enum AtomType {
   Identifier='Identifier'
 };
 
-export enum EvalError {
-
-}
-
-
 export enum TokenType {
   OpenParen='OpenParen',
   OpenSquareParen='OpenSquareParen',
@@ -27,26 +22,11 @@ export enum TokenType {
   Boolean='Boolean'
 };
 
-export enum ParseError {
-  MismatchedParen='MismatchedParen',
-  CharactersRemain='CharactersRemain'
-}
-
-export enum SyntaxError {
-  
-}
-
-export enum TokenizeError {
-  GenericError='GenericError',
-}
-
 export enum ValueType {
   NonFunction='NonFunction',
   BuiltinFunction='BuiltinFunction',
   Function='Function',
 };
-
-
 
 export type Atom
   = Str | Num | Id | Bool;
@@ -58,11 +38,12 @@ export type Bool = {
 
 export type Definition
   = ['define', [string, string[]], Expr]
-  | ['define', string, Expr];
+  | ['define', string, Expr]
+  | SyntaxError
 
 export type DefOrExpr
   = {
-    val: Definition | Expr | Error,
+    val: Definition | Expr,
     loc: {
       start: SourceLocation
       end: SourceLocation
@@ -71,15 +52,17 @@ export type DefOrExpr
 
 export type Env = Map<String,Value>;
 
-export type Error
-  = TokenizeError
-  | ParseError
-  | SyntaxError
-  | EvalError
+type Error
+  = SyntaxError
+  | {
+    error: "Id Not in Env"
+    id: string
+  } // ...
 
 export type Expr
   = Atom
-  | [string, Expr[]];
+  | [string, Expr[]]
+  | SyntaxError;
 
 export type Fn
   = {
@@ -116,11 +99,35 @@ export type ResultSuccess<T>
 
 export type SExp
   = {
-    val: Atom | SExp[] | Error,
+    val: Atom
+        | SExp[]
+        | SExpError,
     loc: {
       start: SourceLocation
       end: SourceLocation
     }
+  };
+
+export type SExpError
+  = TokenError
+  | {
+    error: 'No Closing Paren',
+    remain: Token[]
+  } | {
+    error: 'No Open Paren',
+    remain: Token[]
+  } | {
+    error: 'Mismatched Parens',
+    remain: Token[]
+  } | {
+    error: 'Parsed non-token (should never be seen)'
+    remain: Token[];
+  } | {
+    error: 'Parsed non-result (should never be seen)',
+    remain: Token[]
+  } | {
+    error: 'Non-boolean was processed as a boolean (should never be seen)',
+    remain: Token[]
   };
 
 export type Str
@@ -133,7 +140,12 @@ export type SourceLocation
   = {
     row: number,
     col: number
-  };  
+  };
+
+export type SyntaxError
+  = {
+    error: 'Empty Expr'
+  }; //...
 
 export type Token
   = {
@@ -143,12 +155,19 @@ export type Token
       start: SourceLocation
       end: SourceLocation
     }
+  } 
+  | TokenError;
+
+export type TokenError
+  = {
+    error: 'Unidentified Token',
+    value: string
   };
 
 export type Value
   = {
     type: ValueType.NonFunction,
-    value: string | number | boolean
+    value: string | number | boolean | Error
     loc: {
       start: SourceLocation
       end: SourceLocation
