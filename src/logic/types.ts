@@ -14,7 +14,6 @@ export enum EvalError {
 
 
 export enum TokenType {
-  Error='Error',
   OpenParen='OpenParen',
   OpenSquareParen='OpenSquareParen',
   OpenBraceParen='OpenBraceParen',
@@ -38,7 +37,7 @@ export enum SyntaxError {
 }
 
 export enum TokenizeError {
-  GenericError='GenericError'
+  GenericError='GenericError',
 }
 
 export enum ValueType {
@@ -63,7 +62,7 @@ export type Definition
 
 export type DefOrExpr
   = {
-    val:Definition | Expr,
+    val: Definition | Expr | Error,
     loc: {
       start: SourceLocation
       end: SourceLocation
