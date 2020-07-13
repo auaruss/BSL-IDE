@@ -1,6 +1,11 @@
 import React from 'react';
-const formatEvaluation = require('../logic/eval-bridge.js');
+import { formatEvaluation } from '../logic/eval-bridge';
 
+/**
+ * @todo Long term idea for code spacing on the right:
+ *       The right area (maybe the left area as well) will be a more complicated
+ *       bit of HTML.
+ */
 function Evaluations(props) {
   return (
     <div class="column">
