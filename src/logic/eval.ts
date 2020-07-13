@@ -78,6 +78,7 @@ const builtinEnv = (): Env => {
         let ns = vs.map(v => v.value);
         if (isNumberArray(ns)) {
           if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
+          if (ns.length === 1) return NFn(-ns[0]);
           return NFn(
             ns.slice(1).reduce((acc: number, elem: number) => acc - elem, ns[0])
           );
@@ -94,6 +95,7 @@ const builtinEnv = (): Env => {
         let ns = vs.map(v => v.value);
         if (isNumberArray(ns)) {
           if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
+          if (ns.length === 1) return NFn(1/ns[0]);
           return NFn(
             ns.slice(1).reduce((acc: number, elem: number) => acc / elem, ns[0])
           );

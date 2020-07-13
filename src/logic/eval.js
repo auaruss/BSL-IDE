@@ -49,6 +49,8 @@ var builtinEnv = function () {
         if (predicates_1.isNumberArray(ns)) {
             if (ns.length === 0)
                 throw new Error('-: expects at least 1 argument, but found none');
+            if (ns.length === 1)
+                return NFn(-ns[0]);
             return NFn(ns.slice(1).reduce(function (acc, elem) { return acc - elem; }, ns[0]));
         }
         else {
@@ -60,6 +62,8 @@ var builtinEnv = function () {
         if (predicates_1.isNumberArray(ns)) {
             if (ns.length === 0)
                 throw new Error('-: expects at least 1 argument, but found none');
+            if (ns.length === 1)
+                return NFn(1 / ns[0]);
             return NFn(ns.slice(1).reduce(function (acc, elem) { return acc / elem; }, ns[0]));
         }
         else {

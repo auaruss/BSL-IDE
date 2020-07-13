@@ -306,7 +306,11 @@ describe('evaluate', () => {
         testStr
         (* 2 3)
         (/ 2 2)
-        (- 3 2)`
+        (- 3 2)
+        (+ 2)
+        (- 2)
+        (* 2)
+        (/ 2)`
 
         const vals = [
             NFn(10),
@@ -318,7 +322,11 @@ describe('evaluate', () => {
             NFn('Hello'),
             NFn(6),
             NFn(1),
-            NFn(1)
+            NFn(1),
+            NFn(2),
+            NFn(-2),
+            NFn(2),
+            NFn(1/2)
         ];
 
         checkExpect(evaluate(program), vals);
