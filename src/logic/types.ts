@@ -162,6 +162,10 @@ export type TokenError
   = {
     error: 'Unidentified Token',
     value: string
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
   };
 
 export type Value
