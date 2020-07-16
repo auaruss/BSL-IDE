@@ -1,22 +1,10 @@
 // Types, enums and related predicates used in the student language evaluator.
 // Sorted alphabetically.
 
-export type SourceLocation 
-  = {
-    row: number,
-    col: number
-  };
-
-// ----------------------------------------------------------------------------
-
 export type Token
   = {
     type: TokenType
     value: string,
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
   } 
   | TokenError;
 
@@ -38,10 +26,6 @@ export type TokenError
   = {
     error: 'Unidentified Token',
     value: string
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
   };
 
 // ----------------------------------------------------------------------------
@@ -96,15 +80,7 @@ export type ResultSuccess<T>
   };
 
 export type SExp
-  = {
-    val: Atom
-        | SExp[]
-        | SExpError,
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
-  };
+  = Atom | SExp[] | SExpError;
 
 export type SExpError
   = TokenError
@@ -131,23 +107,16 @@ export type SExpError
 // ----------------------------------------------------------------------------
 
 export type DefOrExpr
-  = {
-    val: Definition | Expr,
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
-  }
+  = Definition | Expr | SyntaxError;
 
 export type Definition
   = ['define', [string, string[]], Expr]
-  | ['define', string, Expr]
-  | SyntaxError
+  | ['define', string, Expr];
+
 
 export type Expr
   = Atom
   | [string, Expr[]]
-  | SyntaxError;
 
 export type SyntaxError
   = {
@@ -160,20 +129,12 @@ export type Value
   = {
     type: ValueType.NonFunction,
     value: string | number | boolean | Error
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
   } | {
     type: ValueType.BuiltinFunction,
     value: ((vs: Value[]) => Value)
   } | {
     type: ValueType.Function,
     value: Fn
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
   };
 
 export enum ValueType {
