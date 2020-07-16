@@ -1,24 +1,10 @@
-// A file to bridge between Sam Soucie's evaluator and the React Evaluations component.
+import { evaluate } from './eval';
 
-const { evaluate } = require("./eval").evaluate;
-
-const formatEvaluation = (code) => {
-  try {
-    const evals = evaluate(code);
-    let output = '';
-    for (let elem of evals) {
-      output += String(elem) + '\n';
-    }
-    return output;
-  } catch(err) { console.log(err); return 'hewwo'; }
+export const formatEvaluation = (code) => {
+  let vals = evaluate(code);
+  let output = '';
+  for (let val of vals) {
+    output += val.value + '\n';
+  }
+  return output;
 }
-
-
-// const formatEvaluation = (code) => {
-//   try {
-
-//   } catch (err) { return 'hewwo';}
-// }
-
-module.exports = formatEvaluation;
-
