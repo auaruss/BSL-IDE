@@ -1,12 +1,24 @@
 // Types, enums and related predicates used in the student language evaluator.
 // Sorted alphabetically.
 
-export enum AtomType {
-  String='String',
-  Number='Number',
-  Boolean='Boolean',
-  Identifier='Identifier'
-};
+export type SourceLocation 
+  = {
+    row: number,
+    col: number
+  };
+
+// ----------------------------------------------------------------------------
+
+export type Token
+  = {
+    type: TokenType
+    value: string,
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
+  } 
+  | TokenError;
 
 export enum TokenType {
   OpenParen='OpenParen',
@@ -22,58 +34,31 @@ export enum TokenType {
   Boolean='Boolean'
 };
 
-export enum ValueType {
-  NonFunction='NonFunction',
-  BuiltinFunction='BuiltinFunction',
-  Function='Function',
-};
-
-export type Atom
-  = Str | Num | Id | Bool;
-  
-export type Bool = {
-    type: AtomType.Boolean,
-    value: boolean
-  };
-
-export type Definition
-  = ['define', [string, string[]], Expr]
-  | ['define', string, Expr]
-  | SyntaxError
-
-export type DefOrExpr
+export type TokenError
   = {
-    val: Definition | Expr,
+    error: 'Unidentified Token',
+    value: string
     loc: {
       start: SourceLocation
       end: SourceLocation
     }
-  }
-
-export type Env = Map<String,Value>;
-
-type Error
-  = SyntaxError
-  | {
-    error: "Id Not in Env"
-    id: string
-  } // ...
-
-export type Expr
-  = Atom
-  | [string, Expr[]]
-  | SyntaxError;
-
-export type Fn
-  = {
-    args: string[],
-    env: Env,
-    body: Expr
   };
 
-export type Id
+// ----------------------------------------------------------------------------
+
+export enum AtomType {
+  String='String',
+  Number='Number',
+  Boolean='Boolean',
+  Identifier='Identifier'
+};
+
+export type Atom
+  = Str | Num | Id | Bool;
+
+export type Str
   = {
-    type: AtomType.Identifier,
+    type: AtomType.String,
     value: string
   };
 
@@ -82,6 +67,19 @@ export type Num
     type: AtomType.Number,
     value: number
   };
+
+export type Id
+  = {
+    type: AtomType.Identifier,
+    value: string
+  };
+
+export type Bool = {
+    type: AtomType.Boolean,
+    value: boolean
+  };
+
+// ----------------------------------------------------------------------------
 
 export type Result<T> = ResultSuccess<T> | ResultFailure<T>;
 
@@ -130,43 +128,33 @@ export type SExpError
     remain: Token[]
   };
 
-export type Str
-  = {
-    type: AtomType.String,
-    value: string
-  };
+// ----------------------------------------------------------------------------
 
-export type SourceLocation 
+export type DefOrExpr
   = {
-    row: number,
-    col: number
-  };
+    val: Definition | Expr,
+    loc: {
+      start: SourceLocation
+      end: SourceLocation
+    }
+  }
+
+export type Definition
+  = ['define', [string, string[]], Expr]
+  | ['define', string, Expr]
+  | SyntaxError
+
+export type Expr
+  = Atom
+  | [string, Expr[]]
+  | SyntaxError;
 
 export type SyntaxError
   = {
     error: 'Empty Expr'
   }; //...
 
-export type Token
-  = {
-    type: TokenType
-    value: string,
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
-  } 
-  | TokenError;
-
-export type TokenError
-  = {
-    error: 'Unidentified Token',
-    value: string
-    loc: {
-      start: SourceLocation
-      end: SourceLocation
-    }
-  };
+// ----------------------------------------------------------------------------
 
 export type Value
   = {
@@ -187,3 +175,25 @@ export type Value
       end: SourceLocation
     }
   };
+
+export enum ValueType {
+  NonFunction='NonFunction',
+  BuiltinFunction='BuiltinFunction',
+  Function='Function',
+};
+
+export type Fn
+  = {
+    args: string[],
+    env: Env,
+    body: Expr
+  };
+
+export type Env = Map<String,Value>;
+
+type Error
+  = SyntaxError
+  | {
+    error: "Id Not in Env"
+    id: string
+  } // ...
