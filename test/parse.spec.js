@@ -1,30 +1,19 @@
 const { tokenize, parse, parseSexp, parseSexps} = require('../src/logic/parse.js');
 const { expect } = require('chai');
 
-function Loc([startRow, endRow, startCol, endCol]) {
-    return {
-        start: {
-            row: startRow,
-            col: startCol
-        },
-        end: {
-            row: endRow,
-            col: endCol
-        }
-    };
-}
-
-function Tok(t, v, loc) { return { type: t, value: v, loc: loc}; }
+function Tok(t, v) { return { type: t, value: v}; }
 function Atom(t, v) { return { type: t, value: v}; }
 
-function CP(loc)    { return Tok('CloseParen', ')', Loc(loc))}
-function OP(loc)    { return Tok('OpenParen', '(', Loc(loc))}
-function SPACE(loc) { return Tok('Whitespace', ' ', Loc(loc))}
-function OSP(loc)   { return Tok('OpenSquareParen', '[', Loc(loc))}
-function CSP(loc)   { return Tok('CloseSquareParen', ']', Loc(loc))}
-function OBP(loc)   { return Tok('OpenBraceParen', '{', Loc(loc))}
-function CBP(loc)   { return Tok('CloseBraceParen', '}', Loc(loc))}
-function NL(loc)    { return Tok('Whitespace', '\n', Loc(loc))}
+const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
+      [ Tok('CloseParen', ')'),
+        Tok('OpenParen', '('), 
+        Tok('Whitespace', ' '),
+        Tok('OpenSquareParen', '['),
+        Tok('CloseSquareParen', ']'),
+        Tok('OpenBraceParen', '{'),
+        Tok('CloseBraceParen', '}'),
+        Tok('Whitespace', '\n')
+      ];
 
 const whichBool = (t) => {
     switch (t) {
@@ -41,10 +30,10 @@ const whichBool = (t) => {
     }
 }
 
-function NumTok(v, loc)     { return Tok('Number',       v.toString(), loc); }
-function IdTok(v, loc)      { return Tok('Identifier',   v,            loc); }
-function StringTok(v, loc)  { return Tok('String', '"' + v + '"',      loc); }
-function BooleanTok(v, loc) { return Tok('Boolean',      v,            loc); }
+function NumTok(v) { return Tok('Number', v.toString()); }
+function IdTok(v) { return Tok('Identifier', v); }
+function StringTok(v) { return Tok('String', '"' + v + '"'); }
+function BooleanTok(v) { return Tok('Boolean', v); }
 
 function ResultSuccess(t, r) { return {thing: t, remain: r} }
 function ResultFailure(e, r) { return {error: e, remain: r} }
@@ -84,38 +73,9 @@ describe('tokenize', () => {
     it('should tokenize parenthesis correctly', () => {
         const result = tokenize('([[[][][][][][])))[][])))){}{}{}');
         const expected = [
-            OP([0,1,0,0]),
-            OSP([1,2,0,0]),
-            OSP([2,3,0,0]),
-            OSP([3,4,0,0]),
-            CSP([4,5,0,0]),
-            OSP([5,6,0,0]),
-            CSP([6,7,0,0]),
-            OSP([7,8,0,0]),
-            CSP([8,9,0,0]),
-            OSP([9,10,0,0]),
-            CSP([10,11,0,0]),
-            OSP([11,12,0,0]),
-            CSP([12,13,0,0]),
-            OSP([13,14,0,0]),
-            CSP([14,15,0,0]),
-            CP([15,16,0,0]),
-            CP([16,17,0,0]),
-            CP([17,18,0,0]),
-            OSP([18,19,0,0]),
-            CSP([19,20,0,0]),
-            OSP([20,21,0,0]),
-            CSP([21,22,0,0]),
-            CP([22,23,0,0]),
-            CP([23,24,0,0]),
-            CP([24,25,0,0]),
-            CP([25,26,0,0]),
-            OBP([26,27,0,0]),
-            CBP([27,28,0,0]),
-            OBP([28,29,0,0]),
-            CBP([29,30,0,0]),
-            OBP([30,31,0,0]),
-            CBP([31,32,0,0])
+            OP, OSP, OSP, OSP, CSP, OSP, CSP, OSP, CSP, OSP, CSP, OSP,
+            CSP, OSP, CSP, CP, CP, CP, OSP, CSP, OSP, CSP, CP, CP, CP,
+            CP, OBP, CBP, OBP, CBP, OBP, CBP,
         ];
 
         checkExpect(result, expected);
@@ -123,46 +83,35 @@ describe('tokenize', () => {
 
     it('should tokenize the plus symbol', () => {
         const result = tokenize('+');
-        const expected = [IdTok('+', [0,1,0,0])];
+        const expected = [IdTok('+')];
         checkExpect(result, expected);
     });
 
     it('should tokenize a simple variable definition', () => {  
         const result = tokenize('(define x 10)');
-        const expected = [
-            OP([0,1,0,0]),
-            IdTok('define', [1,7,0,0]),
-            SPACE([7,8,0,0]),
-            IdTok('x', [8,9,0,0]),
-            SPACE([9,10,0,0]),
-            NumTok(10, [10,12,0,0]),
-            CP([12,13,0,0])
-        ];
+        const expected = [ OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok(10), CP ];
         checkExpect(result, expected);
     });
 
     it('should tokenize 123 as an number here', () => {
         const result = tokenize('(123)');
-        const expected = [ OP([0,1,0,0]), NumTok(123, [1,4,0,0]), CP([4,5,0,0]) ];
+        const expected = [ OP, NumTok(123), CP ];
         checkExpect(result, expected);
     });
 
     it('should tokenize booleans correctly', () => {
         const result = ['#t', '#f', '#true', '#false'];
         const expected = [
-            [BooleanTok('#t', [0,1,0,0])],
-            [BooleanTok('#f', [0,1,0,0])],
-            [BooleanTok('#true', [0,1,0,0])],
-            [BooleanTok('#false', [0,1,0,0])]
+            [BooleanTok('#t')],
+            [BooleanTok('#f')],
+            [BooleanTok('#true')],
+            [BooleanTok('#false')]
         ];
         checkExpectMultiple(
             tokenize, result, expected
         );
-        checkExpect(
-            tokenize('#t123'),
-            ErrorTok('#t123', [0,1,0,0])
-        );
-        
+        function invalidBoolean() { tokenize('#t123'); }
+        expect(invalidBoolean).to.throw(Error);
     });
 
     it('should tokenize factorial correctly', () => {
