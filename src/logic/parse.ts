@@ -39,7 +39,7 @@ const TOKEN_EXPRESSIONS: [TokenType, RegExp][] = [
   [TokenType.String, /^"[^"]*"/],
   [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
   [TokenType.Whitespace, /^\s+/],
-  [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
+  [TokenType.Boolean, /^#t\b|^#T\b|^#f\b|^#F\b|^#true\b|^#false\b/]
 ];
 
 /**
