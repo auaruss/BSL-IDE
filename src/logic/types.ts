@@ -29,59 +29,31 @@ export type TokenError
 
 // ----------------------------------------------------------------------------
 
-export enum AtomType {
-  String='String',
-  Number='Number',
-  Boolean='Boolean',
-  Identifier='Identifier'
-};
-
 export type Atom
-  = Str | Num | Id | Bool;
-
-export type Str
   = {
-    type: AtomType.String,
+    type: 'String'
     value: string
-  };
-
-export type Num
-  = {
-    type: AtomType.Number,
+  } | {
+    type: 'Num'
     value: number
-  };
-
-export type Id
-  = {
-    type: AtomType.Identifier,
+  } | {
+    type: 'Id',
     value: string
-  };
-
-export type Bool = {
-    type: AtomType.Boolean,
+  } | {
+    type: 'Bool',
     value: boolean
   };
 
-// ----------------------------------------------------------------------------
-
-export type Result<T> = ResultSuccess<T> | ResultFailure<T>;
-
-export type ResultFailure<T>
-  = {
-    error: string,
-    remain: Token[]
-  };
-
-export type ResultSuccess<T>
+export type Result<T>
   = {
     thing: T,
     remain: Token[]
   };
 
 export type SExp
-  = Atom | SExp[] | SExpError;
+  = Atom | SExp[] | ParseError;
 
-export type SExpError
+export type ParseError
   = TokenError
   | {
     error: 'No Closing Paren',
