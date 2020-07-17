@@ -1,15 +1,7 @@
 "use strict";
-// Types, enums and related predicates used in the student language evaluator.
-// Sorted alphabetically.
+// Types used in the student language evaluator.
 exports.__esModule = true;
-var AtomType;
-(function (AtomType) {
-    AtomType["String"] = "String";
-    AtomType["Number"] = "Number";
-    AtomType["Boolean"] = "Boolean";
-    AtomType["Identifier"] = "Identifier";
-})(AtomType = exports.AtomType || (exports.AtomType = {}));
-;
+// | TokenError;
 var TokenType;
 (function (TokenType) {
     TokenType["OpenParen"] = "OpenParen";
@@ -24,6 +16,15 @@ var TokenType;
     TokenType["Whitespace"] = "Whitespace";
     TokenType["Boolean"] = "Boolean";
 })(TokenType = exports.TokenType || (exports.TokenType = {}));
+;
+// ----------------------------------------------------------------------------
+var AtomType;
+(function (AtomType) {
+    AtomType["String"] = "String";
+    AtomType["Number"] = "Number";
+    AtomType["Boolean"] = "Boolean";
+    AtomType["Identifier"] = "Identifier";
+})(AtomType = exports.AtomType || (exports.AtomType = {}));
 ;
 var ValueType;
 (function (ValueType) {

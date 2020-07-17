@@ -5,7 +5,7 @@ export type Token
     type: TokenType
     value: string,
   } 
-  | TokenError;
+  // | TokenError;
 
 export enum TokenType {
   OpenParen='OpenParen',
