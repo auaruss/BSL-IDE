@@ -56,23 +56,14 @@ export type SExp
 export type ParseError
   = TokenError
   | {
-    error: 'No Closing Paren',
-    remain: Token[]
-  } | {
-    error: 'No Open Paren',
-    remain: Token[]
-  } | {
-    error: 'Mismatched Parens',
-    remain: Token[]
-  } | {
-    error: 'Parsed non-token (should never be seen)'
-    remain: Token[];
-  } | {
-    error: 'Parsed non-result (should never be seen)',
-    remain: Token[]
-  } | {
-    error: 'Non-boolean was processed as a boolean (should never be seen)',
-    remain: Token[]
+    error: 'No Valid SExp'
+         | 'No Closing Paren'
+         | 'No Open Paren'
+         | 'Mismatched Parens'
+         | 'Parsed non-token (should never be seen)'
+         | 'Parsed non-result (should never be seen)'
+         | 'Non-boolean was processed as a boolean (should never be seen)',
+    remain : Token[]
   };
 
 // ----------------------------------------------------------------------------
