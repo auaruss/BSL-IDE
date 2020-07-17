@@ -1,8 +1,9 @@
 const { tokenize, /* parse, parseSexp, parseSexps */} = require('../src/logic/parse.js');
 const { expect } = require('chai');
 
-function Tok(t, v) { return { type: t, value: v}; }
-function Atom(t, v) { return { type: t, value: v}; }
+function Tok(t, v)   { return { type:  t, value: v }; }
+function Atom(t, v)  { return { type:  t, value: v }; }
+function Err(e, v) { return { error: e, value: v }; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
       [
@@ -27,21 +28,23 @@ const whichBool = (t) => {
         case '#false':
             return false;
         default:
-            throw new Error("Called whichBool on a non-boolean.");
+            throw new Err("Called whichBool on a non-boolean.");
     }
 }
 
-function NumTok(v) { return Tok('Number', v.toString()); }
-function IdTok(v) { return Tok('Identifier', v); }
-function StringTok(v) { return Tok('String', '"' + v + '"'); }
-function BooleanTok(v) { return Tok('Boolean', v); }
+function NumTok(v)     { return Tok('Number',       v.toString()); }
+function IdTok(v)      { return Tok('Identifier',   v);            }
+function StringTok(v)  { return Tok('String', '"' + v + '"');      }
+function BooleanTok(v) { return Tok('Boolean',      v);            }
+
+function TokErr(v) { return { error: 'Unidentified Token', value: v }; }
 
 function ResultSuccess(t, r) { return {thing: t, remain: r} }
 function ResultFailure(e, r) { return {error: e, remain: r} }
 
-function NumAtom(v) { return Atom('Number', v); }
-function IdAtom(v) { return Atom('Identifier', v); }
-function StringAtom(v) { return Atom('String', v); }
+function NumAtom(v)     { return Atom('Number',            v);  }
+function IdAtom(v)      { return Atom('Identifier',        v);  }
+function StringAtom(v)  { return Atom('String',            v);  }
 function BooleanAtom(v) { return Atom('Boolean', whichBool(v)); }
 
 
@@ -111,8 +114,6 @@ describe('tokenize', () => {
         checkExpectMultiple(
             tokenize, result, expected
         );
-        function invalidBoolean() { tokenize('#t123'); }
-        expect(invalidBoolean).to.throw(Error);
     });
 
     it('should tokenize factorial correctly', () => {
@@ -178,7 +179,7 @@ describe('tokenize', () => {
 
     it('should handle newlines correctly', () =>{
         const newlineTestStr = (
-            '(define (simple-choice x y z) (if x y z))\n'
+              '(define (simple-choice x y z) (if x y z))\n'
             + '(simple-choice #t 10 20)\n'
             + '\n'
             + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
@@ -196,6 +197,13 @@ describe('tokenize', () => {
         );
         checkExpect(tokenize(newlineTestStr), expected);
     });
+
+    it('should handle errors consistently', () => {
+        const errorInput = tokenize('#t123');
+        const errorExpected = [TokErr('#'), IdTok('t123')];
+
+        checkExpect(errorInput, errorExpected);
+    })
 });
 
 // describe('parseSexp', () => {
