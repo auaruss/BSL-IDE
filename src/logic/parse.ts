@@ -10,7 +10,7 @@
 
 import {
   AtomType, ResultFailure, ResultSuccess, Result,
-  SExp, Token, TokenType
+  SExp, Token, TokenError, TokenType
 } from './types';
 
 import {
@@ -45,13 +45,15 @@ const tokenize = (exp: string): Token[] => {
     let result = expression.exec(exp);
     if (result) {
       let firstToken: Token[] = [{type: tokenType, value: result[0]}];
-      let restString: string = result.input.slice(result[0].length);
+      let restString: string = exp.slice(result[0].length);
       return firstToken.concat(tokenize(restString));
     }
   }
 
-  throw new Error('Found a substring with no valid prefix token.');
-};
+  let firstToken: Token[] = [{error: 'Unidentified Token', value:exp[0]}];
+  let restString = exp.slice(1);
+  return firstToken.concat(tokenize(restString));
+}
 
 // /**
 //  * Attempts to parse the first SExp from a list of tokens.

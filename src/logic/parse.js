@@ -35,12 +35,14 @@ var tokenize = function (exp) {
         var _a = tokenExpressions_1[_i], tokenType = _a[0], expression = _a[1];
         var result = expression.exec(exp);
         if (result) {
-            var firstToken = [{ type: tokenType, value: result[0] }];
-            var restString = result.input.slice(result[0].length);
-            return firstToken.concat(tokenize(restString));
+            var firstToken_1 = [{ type: tokenType, value: result[0] }];
+            var restString_1 = exp.slice(result[0].length);
+            return firstToken_1.concat(tokenize(restString_1));
         }
     }
-    throw new Error('Found a substring with no valid prefix token.');
+    var firstToken = [{ error: 'Unidentified Token', value: exp[0] }];
+    var restString = exp.slice(1);
+    return firstToken.concat(tokenize(restString));
 };
 // /**
 //  * Attempts to parse the first SExp from a list of tokens.
