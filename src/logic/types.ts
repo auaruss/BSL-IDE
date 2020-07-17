@@ -1,5 +1,4 @@
-// Types, enums and related predicates used in the student language evaluator.
-// Sorted alphabetically.
+// Types used in the student language evaluator.
 
 export type Token
   = {
