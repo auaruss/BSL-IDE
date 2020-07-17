@@ -2,33 +2,23 @@
 
 /**
  * An S-exp parser for the student languages.
- * @author Alice Russell
- * @author Sam Soucie 
+ * @author: Alice Russell, Sam Soucie 
  * 
  * @todo The tokenizer should handle negative numbers and decimals.
  * @todo The tokenizer and parser must handle '().
- * @todo Add ParseError to SExp.
- * @todo Something like (... (f 10] ...) should return a ParseError for mismatched
- *       brackets.
- * @todo Add check to parser that remain contains nothing but trailing whitespace.
- *       This should return a ParseError.
- * 
- * @todo We should propagate source location information.
- *       We can interpret this as the range of character indices.
- *       This should use some type such as SourceLocation.
  */
 
 import {
   AtomType, ResultFailure, ResultSuccess, Result,
-  SExp, Token, TokenType, TokenError
+  SExp, Token, TokenType
 } from './types';
 
-// import {
-//   isSuccess, isFailure, isDefinition
-// } from './predicates';
+import {
+  isSuccess, isFailure, isDefinition
+} from './predicates';
 
 // Regexp Definitions.
-const TOKEN_EXPRESSIONS: [TokenType, RegExp][] = [
+const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.OpenParen, /^\(/],
   [TokenType.OpenSquareParen, /^\[/],
   [TokenType.OpenBraceParen, /^\{/],
@@ -39,7 +29,7 @@ const TOKEN_EXPRESSIONS: [TokenType, RegExp][] = [
   [TokenType.String, /^"[^"]*"/],
   [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
   [TokenType.Whitespace, /^\s+/],
-  [TokenType.Boolean, /^#t\b|^#T\b|^#f\b|^#F\b|^#true\b|^#false\b/]
+  [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
 ];
 
 /**
@@ -48,45 +38,20 @@ const TOKEN_EXPRESSIONS: [TokenType, RegExp][] = [
  * @throws error when the input cannot be parsed into any defined tokens.
  */
 const tokenize = (exp: string): Token[] => {
-  return tokenizeAcc(exp, 0, 0);
-}
-
-const tokenizeAcc = (exp: string, row: number, col: number): Token[] => {
   if (exp == '') {
     return [];
   }
-  for (let [tokenType, expression] of TOKEN_EXPRESSIONS) {
-    if (expression.test(exp)) {
-      let result = expression.exec(exp);
-      let t: Token[] = [{
-        type: tokenType,
-        value: result ? result[0]: '',
-        loc: {
-          start: {row: row, col: col},
-          end: result ? { row: row + result[0].length, col: col } : { row: row, col: col}
-        }
-      }];
-
-      return t.concat(tokenizeAcc(
-        result ? result.input.slice(result[0].length) : '',
-       (result && result[0] === '\n') ? result[0].length: row + 1,
-       (result && result[0] === '\n') ? col + 1: col,
-      ));
+  for (let [tokenType, expression] of tokenExpressions) {
+    let result = expression.exec(exp);
+    if (result) {
+      let firstToken: Token[] = [{type: tokenType, value: result[0]}];
+      let restString: string = result.input.slice(result[0].length);
+      return firstToken.concat(tokenize(restString));
     }
   }
 
-  let e: Token[] = [{
-    error: 'Unidentified Token',
-    value: exp[0],
-    loc: {
-      start: {row: row, col: col},
-      end: {row: row + 1, col: col}
-    }
-  }];
-
-  return e.concat(tokenizeAcc(exp.slice(1), row + 1, col));
-}
-
+  throw new Error('Found a substring with no valid prefix token.');
+};
 
 /**
  * Attempts to parse the first SExp from a list of tokens.
@@ -98,7 +63,6 @@ const tokenizeAcc = (exp: string, row: number, col: number): Token[] => {
  */
 const parseSexp = (tokens: Token[]): Result<SExp> => {
   if (tokens.length === 0) return {error: 'Reached the end without finding an SExpression.', remain: []};
-  // if (tokens[0].type === TokenType.Error) return { error}
 
   switch(tokens[0].type) {
     case TokenType.OpenParen:
