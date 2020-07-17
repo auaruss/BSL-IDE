@@ -5,7 +5,8 @@ function Tok(t, v) { return { type: t, value: v}; }
 function Atom(t, v) { return { type: t, value: v}; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
-      [ Tok('CloseParen', ')'),
+      [
+        Tok('CloseParen', ')'),
         Tok('OpenParen', '('), 
         Tok('Whitespace', ' '),
         Tok('OpenSquareParen', '['),
