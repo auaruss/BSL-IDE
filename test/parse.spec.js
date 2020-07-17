@@ -1,4 +1,4 @@
-const { tokenize, parse, parseSexp, parseSexps} = require('../src/logic/parse.js');
+const { tokenize, /* parse, parseSexp, parseSexps */} = require('../src/logic/parse.js');
 const { expect } = require('chai');
 
 function Tok(t, v) { return { type: t, value: v}; }
@@ -198,286 +198,286 @@ describe('tokenize', () => {
     });
 });
 
-describe('parseSexp', () => {
-    it('', () => {
-        checkExpect(parseSexp([CP]),    {error: 'Found a closing parenthesis with no matching opening parenthesis.', remain: [CP] });
-        checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
-        const result = [
-            tokenize(') (hello)').filter(x => x.type !== SPACE),
-            tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
-            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
-            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
-        ];
-        const expected = [
-            ResultFailure(
-                'Found a closing parenthesis with no matching opening parenthesis.',
-                tokenize(') (hello)').filter(x => x.type !== SPACE)
-            ),
-            ResultSuccess(
-                [
-                    IdAtom('define'),
-                    [ 
-                        IdAtom('fact'),
-                        IdAtom('n'),
-                    ],
-                    [
-                        IdAtom('if'),
-                        [ 
-                            IdAtom('='),
-                            IdAtom('n'), 
-                            NumAtom(0),
-                        ],
-                        NumAtom(1),
-                        [
-                            IdAtom('*'),
-                            IdAtom('n'),
-                            [
-                                IdAtom('fact'),
-                                [
-                                    IdAtom('-'),
-                                    IdAtom('n'),
-                                    NumAtom(1)
-                                ]
-                            ]
-                        ] 
-                    ]
-                ],
-                []
-            ),
-            ResultSuccess(
-                IdAtom('define'),
-                tokenize(' (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
-            ),
-            ResultSuccess(
-                [
-                    IdAtom('fact'),
-                    IdAtom('n')
-                ],
-                tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
-            )
-        ];
-        checkExpectMultiple(parseSexp, result, expected);
-    })
-});
+// describe('parseSexp', () => {
+//     it('', () => {
+//         checkExpect(parseSexp([CP]),    {error: 'Found a closing parenthesis with no matching opening parenthesis.', remain: [CP] });
+//         checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
+//         const result = [
+//             tokenize(') (hello)').filter(x => x.type !== SPACE),
+//             tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
+//             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
+//             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
+//         ];
+//         const expected = [
+//             ResultFailure(
+//                 'Found a closing parenthesis with no matching opening parenthesis.',
+//                 tokenize(') (hello)').filter(x => x.type !== SPACE)
+//             ),
+//             ResultSuccess(
+//                 [
+//                     IdAtom('define'),
+//                     [ 
+//                         IdAtom('fact'),
+//                         IdAtom('n'),
+//                     ],
+//                     [
+//                         IdAtom('if'),
+//                         [ 
+//                             IdAtom('='),
+//                             IdAtom('n'), 
+//                             NumAtom(0),
+//                         ],
+//                         NumAtom(1),
+//                         [
+//                             IdAtom('*'),
+//                             IdAtom('n'),
+//                             [
+//                                 IdAtom('fact'),
+//                                 [
+//                                     IdAtom('-'),
+//                                     IdAtom('n'),
+//                                     NumAtom(1)
+//                                 ]
+//                             ]
+//                         ] 
+//                     ]
+//                 ],
+//                 []
+//             ),
+//             ResultSuccess(
+//                 IdAtom('define'),
+//                 tokenize(' (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
+//             ),
+//             ResultSuccess(
+//                 [
+//                     IdAtom('fact'),
+//                     IdAtom('n')
+//                 ],
+//                 tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
+//             )
+//         ];
+//         checkExpectMultiple(parseSexp, result, expected);
+//     })
+// });
 
-describe('parseSexps', () => {
-    it('', () => {
-        checkExpect(parseSexps([CP]), {thing: [], remain: [CP] });
-        const result = [
-            tokenize(') (hello)'),
-            tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
-            tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
-        ];
-        const expected = [
-            ResultSuccess(
-                [],
-                tokenize(') (hello)')
-            ),
-            ResultSuccess(
-                [
-                    IdAtom('define'),
-                    [
-                        IdAtom('fact'),
-                        IdAtom('n')
-                    ],
-                    [
-                        IdAtom('if'),
-                        [
-                            IdAtom('='),
-                            IdAtom('n'),
-                            NumAtom(0),
-                        ],
-                        NumAtom(1),
-                        [
-                            IdAtom('*'),
-                            IdAtom('n'),
-                            [
-                                IdAtom('fact'),
-                                [
-                                    IdAtom('-'),
-                                    IdAtom('n'),
-                                    NumAtom(1)
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
-                [CP]
-            ),
-            ResultSuccess(
-                [
-                    [
-                        IdAtom('fact'),
-                        IdAtom('n')
-                    ],
-                    [
-                        IdAtom('if'),
-                        [
-                            IdAtom('='),
-                            IdAtom('n'),
-                            NumAtom(0),
-                        ],
-                        NumAtom(1),
-                        [
-                            IdAtom('*'),
-                            IdAtom('n'),
-                            [
-                                IdAtom('fact'),
-                                [
-                                    IdAtom('-'),
-                                    IdAtom('n'),
-                                    NumAtom(1)
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
-                [CP]
-            )
-        ];
-        checkExpectMultiple(parseSexps, result, expected);
-    });
-});
+// describe('parseSexps', () => {
+//     it('', () => {
+//         checkExpect(parseSexps([CP]), {thing: [], remain: [CP] });
+//         const result = [
+//             tokenize(') (hello)'),
+//             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
+//             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
+//         ];
+//         const expected = [
+//             ResultSuccess(
+//                 [],
+//                 tokenize(') (hello)')
+//             ),
+//             ResultSuccess(
+//                 [
+//                     IdAtom('define'),
+//                     [
+//                         IdAtom('fact'),
+//                         IdAtom('n')
+//                     ],
+//                     [
+//                         IdAtom('if'),
+//                         [
+//                             IdAtom('='),
+//                             IdAtom('n'),
+//                             NumAtom(0),
+//                         ],
+//                         NumAtom(1),
+//                         [
+//                             IdAtom('*'),
+//                             IdAtom('n'),
+//                             [
+//                                 IdAtom('fact'),
+//                                 [
+//                                     IdAtom('-'),
+//                                     IdAtom('n'),
+//                                     NumAtom(1)
+//                                 ]
+//                             ]
+//                         ]
+//                     ]
+//                 ],
+//                 [CP]
+//             ),
+//             ResultSuccess(
+//                 [
+//                     [
+//                         IdAtom('fact'),
+//                         IdAtom('n')
+//                     ],
+//                     [
+//                         IdAtom('if'),
+//                         [
+//                             IdAtom('='),
+//                             IdAtom('n'),
+//                             NumAtom(0),
+//                         ],
+//                         NumAtom(1),
+//                         [
+//                             IdAtom('*'),
+//                             IdAtom('n'),
+//                             [
+//                                 IdAtom('fact'),
+//                                 [
+//                                     IdAtom('-'),
+//                                     IdAtom('n'),
+//                                     NumAtom(1)
+//                                 ]
+//                             ]
+//                         ]
+//                     ]
+//                 ],
+//                 [CP]
+//             )
+//         ];
+//         checkExpectMultiple(parseSexps, result, expected);
+//     });
+// });
 
-describe('parse', () => {
-    it('should parse these simpler things', () => {
-        const result = [
-            '',
-            '(',
-            '[',
-            '{',
-            ')',
-            ']',
-            '}',
-            '123',
-            '"hello"',
-            'x',
-            '#true',
-            '(define x 10)'
-        ];
-        const expected = [
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [NumAtom(123)],
-            [StringAtom('hello')],
-            [IdAtom('x')],
-            [BooleanAtom('#true')],
-            [[IdAtom('define'), IdAtom('x'), NumAtom(10)]]
-        ];
-        checkExpectMultiple(parse, result, expected);
-    });
+// describe('parse', () => {
+//     it('should parse these simpler things', () => {
+//         const result = [
+//             '',
+//             '(',
+//             '[',
+//             '{',
+//             ')',
+//             ']',
+//             '}',
+//             '123',
+//             '"hello"',
+//             'x',
+//             '#true',
+//             '(define x 10)'
+//         ];
+//         const expected = [
+//             [],
+//             [],
+//             [],
+//             [],
+//             [],
+//             [],
+//             [],
+//             [NumAtom(123)],
+//             [StringAtom('hello')],
+//             [IdAtom('x')],
+//             [BooleanAtom('#true')],
+//             [[IdAtom('define'), IdAtom('x'), NumAtom(10)]]
+//         ];
+//         checkExpectMultiple(parse, result, expected);
+//     });
 
-    it('should parse this fact function', () => {
-        const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))');
-        const expected = [
-            [
-                IdAtom('define'),
-                [ 
-                    IdAtom('fact'),
-                    IdAtom('n'),
-                ],
-                [
-                    IdAtom('if'),
-                    [ 
-                        IdAtom('='),
-                        IdAtom('n'),
-                        NumAtom(0),
-                    ],
-                    NumAtom(1),
-                    [
-                        IdAtom('*'),
-                        IdAtom('n'),
-                        [
-                            IdAtom('fact'),
-                            [
-                                IdAtom('-'),
-                                IdAtom('n'),
-                                NumAtom(1)
-                            ]
-                        ]
-                    ] 
-                ]
-            ]
-        ];
-        checkExpect(result, expected);
-    });
+//     it('should parse this fact function', () => {
+//         const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))');
+//         const expected = [
+//             [
+//                 IdAtom('define'),
+//                 [ 
+//                     IdAtom('fact'),
+//                     IdAtom('n'),
+//                 ],
+//                 [
+//                     IdAtom('if'),
+//                     [ 
+//                         IdAtom('='),
+//                         IdAtom('n'),
+//                         NumAtom(0),
+//                     ],
+//                     NumAtom(1),
+//                     [
+//                         IdAtom('*'),
+//                         IdAtom('n'),
+//                         [
+//                             IdAtom('fact'),
+//                             [
+//                                 IdAtom('-'),
+//                                 IdAtom('n'),
+//                                 NumAtom(1)
+//                             ]
+//                         ]
+//                     ] 
+//                 ]
+//             ]
+//         ];
+//         checkExpect(result, expected);
+//     });
 
-    it('should parse this fib function', () => {
-        const result = parse('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))');
-        const expected = [
-            [
-                IdAtom('define'),
-                [
-                    IdAtom('fib'),
-                    IdAtom('n')
-                ],
-                [
-                    IdAtom('if'),
-                    [
-                        IdAtom('or'),
-                        [
-                            IdAtom('='),
-                            IdAtom('n'),
-                            NumAtom(0)
-                        ],
-                        [
-                            IdAtom('='),
-                            IdAtom('n'),
-                            NumAtom(1)
-                        ]
-                    ],
-                    IdAtom('n'),
-                    [
-                        IdAtom('+'),
-                        [
-                            IdAtom('fib'),
-                            [
-                                IdAtom('-'),
-                                IdAtom('n'),
-                                NumAtom(1)
-                            ]
-                        ],
-                        [
-                            IdAtom('fib'),
-                            [
-                                IdAtom('-'),
-                                IdAtom('n'),
-                                NumAtom(2)
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-    });
+//     it('should parse this fib function', () => {
+//         const result = parse('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))');
+//         const expected = [
+//             [
+//                 IdAtom('define'),
+//                 [
+//                     IdAtom('fib'),
+//                     IdAtom('n')
+//                 ],
+//                 [
+//                     IdAtom('if'),
+//                     [
+//                         IdAtom('or'),
+//                         [
+//                             IdAtom('='),
+//                             IdAtom('n'),
+//                             NumAtom(0)
+//                         ],
+//                         [
+//                             IdAtom('='),
+//                             IdAtom('n'),
+//                             NumAtom(1)
+//                         ]
+//                     ],
+//                     IdAtom('n'),
+//                     [
+//                         IdAtom('+'),
+//                         [
+//                             IdAtom('fib'),
+//                             [
+//                                 IdAtom('-'),
+//                                 IdAtom('n'),
+//                                 NumAtom(1)
+//                             ]
+//                         ],
+//                         [
+//                             IdAtom('fib'),
+//                             [
+//                                 IdAtom('-'),
+//                                 IdAtom('n'),
+//                                 NumAtom(2)
+//                             ]
+//                         ]
+//                     ]
+//                 ]
+//             ]
+//         ];
+//     });
 
-    it('should parse some nonsense like this', () => {
-        const result = parse('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
-        const expected = [
-            [
-                StringAtom('hello'),
-                IdAtom('world'),
-                [
-                    IdAtom('this'),
-                    StringAtom('is'),
-                    StringAtom('some non'),
-                    IdAtom('sense'),
-                    [
-                        IdAtom('which'),
-                        IdAtom('should'),
-                        IdAtom('be')
-                    ],
-                    BooleanAtom('#t'),
-                    NumAtom(10),
-                    IdAtom('parsable')
-                ]
-            ]
-        ];
-        checkExpect(result, expected);
-    })
-});
+//     it('should parse some nonsense like this', () => {
+//         const result = parse('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
+//         const expected = [
+//             [
+//                 StringAtom('hello'),
+//                 IdAtom('world'),
+//                 [
+//                     IdAtom('this'),
+//                     StringAtom('is'),
+//                     StringAtom('some non'),
+//                     IdAtom('sense'),
+//                     [
+//                         IdAtom('which'),
+//                         IdAtom('should'),
+//                         IdAtom('be')
+//                     ],
+//                     BooleanAtom('#t'),
+//                     NumAtom(10),
+//                     IdAtom('parsable')
+//                 ]
+//             ]
+//         ];
+//         checkExpect(result, expected);
+//     })
+// });
