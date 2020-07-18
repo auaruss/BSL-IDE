@@ -57,7 +57,6 @@ export type ParseError
          | 'No Closing Paren'
          | 'No Open Paren'
          | 'Mismatched Parens'
-         | 'Parsed non-token (should never be seen)'
          | 'Parsed non-result (should never be seen)'
          | 'Non-boolean was processed as a boolean (should never be seen)',
     value: string
