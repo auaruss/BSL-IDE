@@ -60,7 +60,7 @@ export type ParseError
          | 'Parsed non-token (should never be seen)'
          | 'Parsed non-result (should never be seen)'
          | 'Non-boolean was processed as a boolean (should never be seen)',
-    remain : Token[]
+    value: string
   };
 
 // ----------------------------------------------------------------------------
