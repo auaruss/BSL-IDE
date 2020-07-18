@@ -29,7 +29,13 @@ export type TokenError
 
 // ----------------------------------------------------------------------------
 
-export type Atom
+export type Result<T>
+  = {
+    thing: T,
+    remain: Token[]
+  };
+
+export type SExp
   = {
     type: 'String'
     value: string
@@ -42,16 +48,7 @@ export type Atom
   } | {
     type: 'Bool',
     value: boolean
-  };
-
-export type Result<T>
-  = {
-    thing: T,
-    remain: Token[]
-  };
-
-export type SExp
-  = Atom | SExp[] | ParseError;
+  } | SExp[] | ParseError;
 
 export type ParseError
   = TokenError
@@ -77,8 +74,19 @@ export type Definition
 
 
 export type Expr
-  = Atom
-  | [string, Expr[]]
+  = {
+    type: 'String'
+    value: string
+  } | {
+    type: 'Num'
+    value: number
+  } | {
+    type: 'Id',
+    value: string
+  } | {
+    type: 'Bool',
+    value: boolean
+  } | [string, Expr[]];
 
 export type SyntaxError
   = {
