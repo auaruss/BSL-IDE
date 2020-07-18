@@ -9,12 +9,12 @@
  */
 
 import {
-  AtomType, ResultFailure, ResultSuccess, Result,
+  ParseError, Result,
   SExp, Token, TokenError, TokenType
 } from './types';
 
 import {
-  isSuccess, isFailure, isDefinition
+  isTokenError
 } from './predicates';
 
 // Regexp Definitions.
@@ -35,7 +35,6 @@ const tokenExpressions: [TokenType, RegExp][] = [
 /**
  * Transforms a string into a list of tokens.
  * @param exp expression as a string
- * @throws error when the input cannot be parsed into any defined tokens.
  */
 const tokenize = (exp: string): Token[] => {
   if (exp == '') {
@@ -63,84 +62,84 @@ const tokenize = (exp: string): Token[] => {
  * @param tokens
  * @throws error if a non-token is in the Token[].
  */
-const parseSexp = (tokens: Token[]): Result<SExp> => {
-  if (tokens.length === 0) return {error: 'Reached the end without finding an SExpression.', remain: []};
+const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
+  if (tokens.length === 0) {
+    return { thing: {error: 'No Valid SExp', value: ''}, remain: [] }
+  }
+  if (isTokenError(tokens[0])) {
+    const result: Result<ParseError> = {
+      thing: tokens[0],
+      remain: tokens.slice(1)
+    }
+    return result;
+  } else {
+    switch(tokens[0].type) {
+      case TokenType.OpenParen:
+      case TokenType.OpenSquareParen:
+      case TokenType.OpenBraceParen:
+        const parseRest = parseSexps(tokens.slice(1));
+        // this means parseRest is the rest of the current SExp. so for
+        // '(define hello 1) (define x 10)'
+        // parseRest should be equal to
+        // {
+        //   thing: [Id('define'), Id('hello'), Num('1').
+        //   remain: tokenize(') (define x 10)')
+        // } (ignoring whitespace in the tokenization)
 
-  switch(tokens[0].type) {
-    case TokenType.OpenParen:
-    case TokenType.OpenSquareParen:
-    case TokenType.OpenBraceParen:
-      const parseRest = parseSexps(tokens.slice(1));
-      // this means parseRest is the rest of the current SExp. so for
-      // '(define hello 1) (define x 10)'
-      // parseRest should be equal to
-      // {
-      //   thing: [Id('define'), Id('hello'), Num('1').
-      //   remain: tokenize(') (define x 10)')
-      // } (ignoring whitespace in the tokenization)
+        // Note that parseRest always returns a success, so we can assume that an SExp exists at the
+        // start of the expression if and only if the remain from parsing the rest starts with a closing paren
+        // which matches our current open paren.
 
-      // Note that parseRest always returns a success, so we can assume that an SExp exists at the
-      // start of the expression if and only if the remain from parsing the rest starts with a closing paren
-      // which matches our current open paren.
-
-      // This also means if the remain is empty we return a failure.
-      if (parseRest.remain.length === 0) {
+        // This also means if the remain is empty we return a failure.
+        if (parseRest.remain.length === 0) {
+          return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+        } else if (parensMatch(tokens[0], parseRest.remain[0])) {
+          return {
+            thing: parseRest.thing,
+            remain: parseRest.remain.slice(1)
+          };
+        } else {
+          return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+        }
+      case TokenType.CloseParen:
+      case TokenType.CloseSquareParen:
+      case TokenType.CloseBraceParen:
+        return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+      case TokenType.Number:
         return {
-          error: 'Found an opening parenthesis with no matching closing parenthesis.',
-          remain: tokens
+          thing: {
+            type: 'Num',
+            value: Number(tokens[0].value)
+          },
+          remain: tokens.slice(1)
         };
-      } else if (parensMatch(tokens[0], parseRest.remain[0])) {
+      case TokenType.String:
         return {
-          thing: parseRest.thing,
-          remain: parseRest.remain.slice(1)
+          thing: {
+            type: 'String',
+            value: tokens[0].value.slice(1,-1)
+          },
+          remain: tokens.slice(1)
         };
-      } else {
+      case TokenType.Identifier:
         return {
-          error: 'Found an opening parenthesis with no matching closing parenthesis.',
-          remain: tokens
+          thing: {
+            type: 'Id',
+            value: tokens[0].value
+          },
+          remain: tokens.slice(1)
         };
-      }
-    case TokenType.CloseParen:
-    case TokenType.CloseSquareParen:
-    case TokenType.CloseBraceParen:
-      return {
-        error: 'Found a closing parenthesis with no matching opening parenthesis.',
-        remain: tokens
-      };
-    case TokenType.Number:
-      return {
-        thing: {
-          type: AtomType.Number,
-          value: Number(tokens[0].value)
-        },
-        remain: tokens.slice(1)
-      };
-    case TokenType.String:
-      return {
-        thing: {
-          type: AtomType.String,
-          value: tokens[0].value.slice(1,-1)
-        },
-        remain: tokens.slice(1)
-      };
-    case TokenType.Identifier:
-      return {
-        thing: {
-          type: AtomType.Identifier,
-          value: tokens[0].value
-        },
-        remain: tokens.slice(1)
-      };
-    case TokenType.Boolean:
-      return {
-        thing: {
-          type: AtomType.Boolean,
-          value: whichBool(tokens[0])
-        },
-        remain: tokens.slice(1)
-      };
-    default:
-      throw new Error('Somehow a non-token was passed to parseSExp.');
+      case TokenType.Boolean:
+        return {
+          thing: {
+            type: 'Bool',
+            value: whichBool(tokens[0])
+          },
+          remain: tokens.slice(1)
+        };
+      default:
+        return { thing: {error: 'Parsed non-result (should never be seen)', value: ''}, remain: tokens }
+    }
   }
 }
 
