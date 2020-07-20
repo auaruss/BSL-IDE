@@ -208,7 +208,7 @@ describe('tokenize', () => {
 
 describe('parseSexp', () => {
     it('', () => {
-        checkExpect(parseSexp([CP]),    {error: 'Found a closing parenthesis with no matching opening parenthesis.', remain: [CP] });
+        checkExpect(parseSexp([CP]), { thing: {error: 'No Open Paren', value: ''}, remain: [CP] });
         checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
         const result = [
             tokenize(') (hello)').filter(x => x.type !== SPACE),
