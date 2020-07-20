@@ -6,6 +6,9 @@ exports.__esModule = true;
  *
  * @todo The tokenizer should handle negative numbers and decimals.
  * @todo The tokenizer and parser must handle '().
+ * @todo The tokenizer should remove the quotes around a string.
+ * @todo The tokenizer should transform booleans
+ * @todo Rename parse functions to read functions
  */
 var types_1 = require("./types");
 var predicates_1 = require("./predicates");
@@ -50,21 +53,21 @@ var tokenize = function (exp) {
  * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
  *         first and we deal with the whitespace completely in there.
  * @param tokens
- * @throws error if a non-token is in the Token[].
  */
 var parseSexp = function (tokens) {
     if (tokens.length === 0) {
         return { thing: { error: 'No Valid SExp', value: '' }, remain: [] };
     }
-    if (predicates_1.isTokenError(tokens[0])) {
+    var firstToken = tokens[0];
+    if (predicates_1.isTokenError(firstToken)) {
         var result = {
-            thing: tokens[0],
+            thing: firstToken,
             remain: tokens.slice(1)
         };
         return result;
     }
     else {
-        switch (tokens[0].type) {
+        switch (firstToken.type) {
             case types_1.TokenType.OpenParen:
             case types_1.TokenType.OpenSquareParen:
             case types_1.TokenType.OpenBraceParen:
@@ -76,17 +79,16 @@ var parseSexp = function (tokens) {
                 //   thing: [Id('define'), Id('hello'), Num('1').
                 //   remain: tokenize(') (define x 10)')
                 // } (ignoring whitespace in the tokenization)
-                // Note that parseRest always returns a success, so we can assume that an SExp exists at the
-                // start of the expression if and only if the remain from parsing the rest starts with a closing paren
-                // which matches our current open paren.
-                // This also means if the remain is empty we return a failure.
                 if (parseRest.remain.length === 0) {
                     return { thing: { error: 'No Closing Paren', value: '' }, remain: tokens };
                 }
-                else if (parseRest.remain[0] === ')'
-                    || parseRest.remain[0] === ']'
-                    || parseRest.remain[0] === '}') {
-                    if (parensMatch(tokens[0], parseRest.remain[0]))
+                var firstTokenAfterSExps = parseRest.remain[0];
+                if ((!predicates_1.isTokenError(firstTokenAfterSExps))
+                    &&
+                        (firstTokenAfterSExps.type === types_1.TokenType.CloseParen
+                            || firstTokenAfterSExps.type === types_1.TokenType.CloseSquareParen
+                            || firstTokenAfterSExps.type === types_1.TokenType.CloseBraceParen)) {
+                    if (parensMatch(firstToken.type, firstTokenAfterSExps.type))
                         return {
                             thing: parseRest.thing,
                             remain: parseRest.remain.slice(1)
@@ -94,12 +96,10 @@ var parseSexp = function (tokens) {
                     return {
                         thing: {
                             error: 'Mismatched Parens',
-                            value: tokens[0].value + ' ' + parseRest.remain[0].value
+                            value: firstToken.value + ' ' + firstTokenAfterSExps.value
                         },
-                        remain: parseRest.remain[0].value
+                        remain: parseRest.remain.slice(1)
                     };
-                }
-                else if (parensMatch(tokens[0], parseRest.remain[0])) {
                 }
                 else {
                     return { thing: { error: 'No Closing Paren', value: '' }, remain: tokens };
@@ -120,7 +120,7 @@ var parseSexp = function (tokens) {
                 return {
                     thing: {
                         type: 'String',
-                        value: tokens[0].value.slice(1, -1)
+                        value: tokens[0].value.slice(1, -1) // removes "" from string
                     },
                     remain: tokens.slice(1)
                 };
@@ -134,10 +134,7 @@ var parseSexp = function (tokens) {
                 };
             case types_1.TokenType.Boolean:
                 return {
-                    thing: {
-                        type: 'Bool',
-                        value: whichBool(tokens[0])
-                    },
+                    thing: whichBool(tokens[0]),
                     remain: tokens.slice(1)
                 };
             default:
@@ -153,23 +150,22 @@ var parseSexp = function (tokens) {
 var parseSexps = function (tokens) {
     if (tokens.length === 0)
         return { thing: [], remain: [] };
-    if (tokens[0].type === types_1.TokenType.Whitespace) {
+    var firstToken = tokens[0];
+    if (predicates_1.isTokenError(firstToken)) {
+        var parseRest_1 = parseSexps(tokens.slice(1));
+        parseRest_1.thing.unshift([firstToken]);
+        return { thing: parseRest_1.thing, remain: parseRest_1.remain };
+    }
+    else if (firstToken.type === types_1.TokenType.Whitespace) {
         return parseSexps(tokens.slice(1));
     }
     var parseFirst = parseSexp(tokens);
-    if (isSuccess(parseFirst)) {
-        var parseRest = parseSexps(parseFirst.remain);
-        return {
-            thing: [parseFirst.thing].concat(parseRest.thing),
-            remain: parseRest.remain
-        };
-    }
-    else if (isFailure(parseFirst)) {
-        return { thing: [], remain: tokens };
-    }
-    else {
-        throw new Error('Not a ResultSuccess or ResultFailure somehow.');
-    }
+    var parseRest = parseSexps(parseFirst.remain);
+    parseRest.thing.unshift([parseFirst.thing]);
+    return {
+        thing: parseRest.thing,
+        remain: parseRest.remain
+    };
 };
 /**
  * Parses as many SExp as possible from the start of an expression.
@@ -180,7 +176,7 @@ exports.parse = function (exp) {
     return parsed;
 };
 /**
- * Given two tokens, if the first is an opening paren token and the second a closing paren token,
+ * Given two token types, if the first is an opening paren token and the second a closing paren token,
  * determines whether they are matching paren types.
  *
  * @param op open paren token
@@ -189,35 +185,39 @@ exports.parse = function (exp) {
  *         False if given any other tokens, or given the tokens in the wrong order.
  */
 var parensMatch = function (op, cp) {
-    if (op.type === types_1.TokenType.OpenParen) {
-        return cp.type === types_1.TokenType.CloseParen;
+    if (op === types_1.TokenType.OpenParen) {
+        return cp === types_1.TokenType.CloseParen;
     }
-    else if (op.type === types_1.TokenType.OpenSquareParen) {
-        return cp.type === types_1.TokenType.CloseSquareParen;
+    else if (op === types_1.TokenType.OpenSquareParen) {
+        return cp === types_1.TokenType.CloseSquareParen;
     }
-    else if (op.type === types_1.TokenType.OpenBraceParen) {
-        return cp.type === types_1.TokenType.CloseBraceParen;
+    else if (op === types_1.TokenType.OpenBraceParen) {
+        return cp === types_1.TokenType.CloseBraceParen;
     }
     return false;
 };
 /**
- * Checks whether a given boolean token is true or false.
+ * Converts a boolean token into a Boolean SExp.
  * @param t token
- * @throws error when called on non-boolean token
  */
 var whichBool = function (t) {
     switch (t.value) {
         case '#T':
         case '#t':
         case '#true':
-            return true;
+            return {
+                type: 'Bool',
+                value: true
+            };
         case '#F':
         case '#f':
         case '#false':
-            return false;
-        default:
-            throw new Error("Called whichBool on a non-boolean token.");
+            return {
+                type: 'Bool',
+                value: false
+            };
     }
+    return { error: 'Non-boolean was processed as a boolean (should never be seen)', value: t.value };
 };
 module.exports = {
     'tokenize': tokenize,

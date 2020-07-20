@@ -161,19 +161,25 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
  * @throws error when the Result is neither a ResultSuccess nor ResultFailure
  */
 const parseSexps = (tokens: Token[]): Result<SExp[]> => {
-  if (tokens.length === 0) return { thing: [], remain: []};
-  if (tokens[0].type === TokenType.Whitespace) { return parseSexps(tokens.slice(1)); }
+  if (tokens.length === 0) return { thing: [], remain: [] };
+  
+  let firstToken = tokens[0];
+  
+  if (isTokenError(firstToken)) {
+    let parseRest = parseSexps(tokens.slice(1));
+    parseRest.thing.unshift([firstToken]);
+    return { thing: parseRest.thing, remain: parseRest.remain }
+  } else if (firstToken.type === TokenType.Whitespace) {
+    return parseSexps(tokens.slice(1));
+  }
+  
   let parseFirst = parseSexp(tokens);
-  if (isSuccess(parseFirst)) {
-    const parseRest = parseSexps(parseFirst.remain);
-    return {
-      thing: [parseFirst.thing].concat(parseRest.thing),
-      remain: parseRest.remain
-    };
-  } else if (isFailure(parseFirst)) {
-  return { thing: [], remain: tokens }
-  } else {
-    throw new Error('Not a ResultSuccess or ResultFailure somehow.');
+  let parseRest = parseSexps(parseFirst.remain);
+  parseRest.thing.unshift([parseFirst.thing]);
+
+  return {
+    thing: parseRest.thing,
+    remain: parseRest.remain
   }
 }
 
