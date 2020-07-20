@@ -60,7 +60,6 @@ const tokenize = (exp: string): Token[] => {
  * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
  *         first and we deal with the whitespace completely in there.
  * @param tokens
- * @throws error if a non-token is in the Token[].
  */
 const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
   if (tokens.length === 0) {
@@ -93,10 +92,22 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         // This also means if the remain is empty we return a failure.
         if (parseRest.remain.length === 0) {
           return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
-        } else if (parensMatch(tokens[0], parseRest.remain[0])) {
+        } else if (
+            parseRest.remain[0] === ')'
+         || parseRest.remain[0] === ']'
+         || parseRest.remain[0] === '}'
+        ) {
+          if (parensMatch(tokens[0], parseRest.remain[0]))
+            return {
+              thing: parseRest.thing,
+              remain: parseRest.remain.slice(1)
+            };
           return {
-            thing: parseRest.thing,
-            remain: parseRest.remain.slice(1)
+            thing: {
+              error: 'Mismatched Parens',
+              value: tokens[0].value + ' ' + parseRest.remain[0].value
+            },
+            remain: parseRest.remain[0].value
           };
         } else {
           return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
@@ -131,10 +142,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         };
       case TokenType.Boolean:
         return {
-          thing: {
-            type: 'Bool',
-            value: whichBool(tokens[0])
-          },
+          thing:whichBool(tokens[0]),
           remain: tokens.slice(1)
         };
       default:
@@ -183,7 +191,15 @@ export const parse = (exp:string): SExp[] => {
  * @return True if the tokens match in the correct order,
  *         False if given any other tokens, or given the tokens in the wrong order.
  */
-const parensMatch = (op: Token, cp: Token): boolean => {
+const parensMatch = (
+  op: {
+    type:TokenType.OpenParen|TokenType.OpenSquareParen|TokenType.OpenBraceParen,
+    value:'('|'['|'{'
+  },
+  cp:  {
+    type:TokenType.CloseParen|TokenType.CloseSquareParen|TokenType.CloseBraceParen,
+    value:')'|']'|'}'
+  }): boolean => {
   if (op.type === TokenType.OpenParen) {
     return cp.type === TokenType.CloseParen;
   } else if (op.type === TokenType.OpenSquareParen) {
@@ -195,23 +211,27 @@ const parensMatch = (op: Token, cp: Token): boolean => {
 }
 
 /**
- * Checks whether a given boolean token is true or false.
+ * Converts a boolean token into a Boolean SExp.
  * @param t token
- * @throws error when called on non-boolean token
  */
-const whichBool = (t: Token): boolean => {
+const whichBool = (t: Token): SExp => {
   switch (t.value) {
     case '#T':
     case '#t':
     case '#true':
-      return true;
+      return {
+        type: 'Bool',
+        value: true
+      }
     case '#F':
     case '#f':
     case '#false':
-      return false;
-    default:
-      throw new Error("Called whichBool on a non-boolean token.");
+      return {
+        type: 'Bool',
+        value: false
+      };
   }
+  return { error: 'Non-boolean was processed as a boolean (should never be seen)', value: t.value}
 }
 
 module.exports =  {

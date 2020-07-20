@@ -16,15 +16,6 @@ var TokenType;
     TokenType["Boolean"] = "Boolean";
 })(TokenType = exports.TokenType || (exports.TokenType = {}));
 ;
-// ----------------------------------------------------------------------------
-var AtomType;
-(function (AtomType) {
-    AtomType["String"] = "String";
-    AtomType["Number"] = "Number";
-    AtomType["Boolean"] = "Boolean";
-    AtomType["Identifier"] = "Identifier";
-})(AtomType = exports.AtomType || (exports.AtomType = {}));
-;
 var ValueType;
 (function (ValueType) {
     ValueType["NonFunction"] = "NonFunction";
