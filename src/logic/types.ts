@@ -3,7 +3,7 @@
 export type Token
   = {
     type: TokenType
-    value: string,
+    string: string,
   } 
   | TokenError;
 
@@ -24,7 +24,7 @@ export enum TokenType {
 export type TokenError
   = {
     error: 'Unidentified Token',
-    value: string
+    string: string
   };
 
 // ----------------------------------------------------------------------------
@@ -59,7 +59,7 @@ export type ParseError
          | 'Mismatched Parens'
          | 'Parsed non-result (should never be seen)'
          | 'Non-boolean was processed as a boolean (should never be seen)',
-    value: string
+    tokens: Token[]
   };
 
 // ----------------------------------------------------------------------------
