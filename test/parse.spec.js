@@ -37,10 +37,10 @@ function IdTok(v)      { return Tok('Identifier',   v);            }
 function StringTok(v)  { return Tok('String', '"' + v + '"');      }
 function BooleanTok(v) { return Tok('Boolean',      v);            }
 
-function TokErr(v) { return { error: 'Unidentified Token', value: v }; }
+function TokErr(v)        { return { error: 'Unidentified Token', value: v }; }
+function ParseError(e, v) { return { error: e, value: v }; }
 
-function ResultSuccess(t, r) { return {thing: t, remain: r} }
-function ResultFailure(e, r) { return {error: e, remain: r} }
+function Result(t, r) { return {thing: t, remain: r} }
 
 function NumAtom(v)     { return Atom('Number',            v);  }
 function IdAtom(v)      { return Atom('Identifier',        v);  }
@@ -217,11 +217,11 @@ describe('parseSexp', () => {
             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
         ];
         const expected = [
-            ResultFailure(
-                'Found a closing parenthesis with no matching opening parenthesis.',
+            Result(
+                ParseError('No Open Paren', ''),
                 tokenize(') (hello)').filter(x => x.type !== SPACE)
             ),
-            ResultSuccess(
+            Result(
                 [
                     IdAtom('define'),
                     [ 
@@ -252,11 +252,11 @@ describe('parseSexp', () => {
                 ],
                 []
             ),
-            ResultSuccess(
+            Result(
                 IdAtom('define'),
                 tokenize(' (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             ),
-            ResultSuccess(
+            Result(
                 [
                     IdAtom('fact'),
                     IdAtom('n')
@@ -264,7 +264,7 @@ describe('parseSexp', () => {
                 tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             )
         ];
-        // checkExpectMultiple(parseSexp, result, expected);
+        checkExpectMultiple(parseSexp, result, expected);
     });
 
     it('should handle error tokens', () => {
