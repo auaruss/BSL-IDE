@@ -38,16 +38,16 @@ export type Result<T>
 export type SExp
   = {
     type: 'String'
-    value: string
+    sexp: string
   } | {
     type: 'Num'
-    value: number
+    sexp: number
   } | {
     type: 'Id',
-    value: string
+    sexp: string
   } | {
     type: 'Bool',
-    value: boolean
+    sexp: boolean
   } | SExp[] | ParseError;
 
 export type ParseError
@@ -75,16 +75,16 @@ export type Definition
 export type Expr
   = {
     type: 'String'
-    value: string
+    expr: string
   } | {
     type: 'Num'
-    value: number
+    expr: number
   } | {
     type: 'Id',
-    value: string
+    expr: string
   } | {
     type: 'Bool',
-    value: boolean
+    expr: boolean
   } | [string, Expr[]];
 
 export type SyntaxError
