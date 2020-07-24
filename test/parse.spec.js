@@ -1,20 +1,20 @@
 const { tokenize, parse, parseSexp, parseSexps } = require('../src/logic/parse.js');
 const { expect } = require('chai');
 
-function Tok(t, v)   { return { type:  t, value: v }; }
-function Atom(t, v)  { return { type:  t, value: v }; }
-function Err(e, v) { return { error: e, value: v }; }
+function Tok  (t, v)   { return { type:  t, value: v }; }
+function Atom (t, v)   { return { type:  t, value: v }; }
+function Err  (e, v)   { return { error: e, value: v }; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
       [
-        Tok('CloseParen', ')'),
-        Tok('OpenParen', '('), 
-        Tok('Whitespace', ' '),
-        Tok('OpenSquareParen', '['),
+        Tok('CloseParen',       ')'),
+        Tok('OpenParen',        '('), 
+        Tok('Whitespace',       ' '),
+        Tok('OpenSquareParen',  '['),
         Tok('CloseSquareParen', ']'),
-        Tok('OpenBraceParen', '{'),
-        Tok('CloseBraceParen', '}'),
-        Tok('Whitespace', '\n')
+        Tok('OpenBraceParen',   '{'),
+        Tok('CloseBraceParen',  '}'),
+        Tok('Whitespace',       '\n')
       ];
 
 const whichBool = (t) => {
@@ -32,20 +32,19 @@ const whichBool = (t) => {
     }
 }
 
-function NumTok(v)     { return Tok('Number',       v.toString()); }
-function IdTok(v)      { return Tok('Identifier',   v);            }
-function StringTok(v)  { return Tok('String', '"' + v + '"');      }
-function BooleanTok(v) { return Tok('Boolean',      v);            }
+function NumTok     (v)      { return Tok('Number',       v.toString()); }
+function IdTok      (v)      { return Tok('Identifier',   v);            }
+function StringTok  (v)      { return Tok('String', '"' + v + '"');      }
+function BooleanTok (v)      { return Tok('Boolean',      v);            }
 
-function TokErr(v)        { return { error: 'Unidentified Token', value: v }; }
-function ParseError(e, v) { return { error: e, value: v }; }
+function TokErr        (v)        { return { error: 'Unidentified Token', value: v }; }
+function ParseError (e, v)        { return { error: e, value: v }; }
 
-function Result(t, r) { return {thing: t, remain: r} }
-
-function NumAtom(v)     { return Atom('Number',            v);  }
-function IdAtom(v)      { return Atom('Identifier',        v);  }
-function StringAtom(v)  { return Atom('String',            v);  }
-function BooleanAtom(v) { return Atom('Boolean', whichBool(v)); }
+function Result   (t, r)      { return {thing: t, remain: r} }
+function NumAtom     (v)      { return Atom('Number',            v);  }
+function IdAtom      (v)      { return Atom('Identifier',        v);  }
+function StringAtom  (v)      { return Atom('String',            v);  }
+function BooleanAtom (v)      { return Atom('Boolean', whichBool(v)); }
 
 
 
