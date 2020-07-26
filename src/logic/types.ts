@@ -48,11 +48,11 @@ export type SExp
   } | {
     type: 'Bool',
     sexp: boolean
-  } | SExp[] | ParseError;
+  } | SExp[] | ReadError;
 
-export type ParseError
+export type ReadError
   =  {
-    parseError: 'No Valid SExp'
+    readError: 'No Valid SExp'
          | 'No Closing Paren'
          | 'No Open Paren'
          | 'Mismatched Parens'
