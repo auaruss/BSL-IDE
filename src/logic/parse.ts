@@ -17,7 +17,7 @@ import {
 } from './types';
 
 import {
-  isTokenError
+  isTokenError, isParseError
 } from './predicates';
 
 // Regexp Definitions.
@@ -82,40 +82,35 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
       case TokenType.OpenParen:
       case TokenType.OpenSquareParen:
       case TokenType.OpenBraceParen:
-        const parseRest = parseSexps(tokens.slice(1));
-        // this means parseRest is the rest of the current SExp. so for
-        // '(define hello 1) (define x 10)'
-        // parseRest should be equal to
-        // {
-        //   thing: [Id('define'), Id('hello'), Num('1').
-        //   remain: tokenize(') (define x 10)')
-        // } (ignoring whitespace in the tokenization)
-
-        if (parseRest.remain.length === 0) {
-          return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
-        }
-        const firstTokenAfterSExps = parseRest.remain[0];
-        if ((! isTokenError(firstTokenAfterSExps))
+        let i = 1;
+        let insideSexps: Token[] = [];
+        for (let token of tokens.slice(1)) {
+          if ((! isTokenError(token))
           &&
-            (firstTokenAfterSExps.type === TokenType.CloseParen
-          || firstTokenAfterSExps.type === TokenType.CloseSquareParen
-          || firstTokenAfterSExps.type === TokenType.CloseBraceParen)
-        ) {
-          if (parensMatch(firstToken.type, firstTokenAfterSExps.type))
-            return {
-              thing: parseRest.thing,
-              remain: parseRest.remain.slice(1)
-            };
-          return {
-            thing: {
-              parseError: 'Mismatched Parens',
-              tokens: [firstToken, firstTokenAfterSExps]
-            },
-            remain: parseRest.remain.slice(1)
-          };
-        } else {
-          return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
+            (token.type === TokenType.CloseParen
+          || token.type === TokenType.CloseSquareParen
+          || token.type === TokenType.CloseBraceParen)) {
+            if (parensMatch(firstToken.type, token.type)) {
+              return {
+                // What to do with parseSexps.remain here?
+                thing: parseSexps(insideSexps).thing,
+                remain: tokens.slice(i+1)
+              };
+            } else {
+              return {
+                thing: {parseError: 'Mismatched Parens', tokens: [firstToken, token]},
+                remain: tokens.slice(i+1)
+              };
+            }
+          } else {
+            insideSexps.push(token);
+            i++;
+          }
         }
+        return {
+          thing: {parseError:'No Closing Paren', tokens:insideSexps},
+          remain: tokens
+        };
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
       case TokenType.CloseBraceParen:
@@ -161,28 +156,31 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
 /**
  * Parses as many SExp as possible from the start of the list of tokens.
  * @param tokens
- * @throws error when the Result is neither a ResultSuccess nor ResultFailure
  */
-const parseSexps = (tokens: Token[]): Result<SExp[]> => {
+const parseSexps = (tokens: Token[]): Result<SExp[]> | Result<ParseError> => {
   if (tokens.length === 0) return { thing: [], remain: [] };
   
   let firstToken = tokens[0];
   
   if (isTokenError(firstToken)) {
-    let parseRest = parseSexps(tokens.slice(1));
-    parseRest.thing.unshift([firstToken]);
-    return { thing: parseRest.thing, remain: parseRest.remain }
+    return { thing: firstToken, remain: tokens.slice(1) };
   } else if (firstToken.type === TokenType.Whitespace) {
     return parseSexps(tokens.slice(1));
   }
   
   let parseFirst = parseSexp(tokens);
-  let parseRest = parseSexps(parseFirst.remain);
-  parseRest.thing.unshift([parseFirst.thing]);
 
-  return {
-    thing: parseRest.thing,
-    remain: parseRest.remain
+  if (isParseError(parseFirst.thing)) {
+    return { thing: parseFirst.thing, remain: tokens.slice(1) };
+  }
+
+  let parseRest = parseSexps(parseFirst.remain);
+
+  if (isTokenError(parseRest.thing)) {
+    return parseFirst;
+  } else {
+    parseRest.thing.unshift(parseFirst.thing);
+    return parseRest;
   }
 }
 
