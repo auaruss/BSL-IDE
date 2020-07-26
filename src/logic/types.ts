@@ -56,7 +56,7 @@ export type ReadError
          | 'No Closing Paren'
          | 'No Open Paren'
          | 'Mismatched Parens'
-         | 'Parsed non-result (should never be seen)'
+         | 'Read non-result (should never be seen)'
          | 'Non-boolean was processed as a boolean (should never be seen)',
     tokens: Token[]
   } | TokenError;
