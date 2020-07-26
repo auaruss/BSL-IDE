@@ -1,9 +1,8 @@
-const { tokenize, parse, parseSexp, parseSexps } = require('../src/logic/parse.js');
+const { tokenize, read, readSexp, readSexps } = require('../src/logic/read.js');
 const { expect } = require('chai');
 
 function Tok  (t, v)   { return { type:  t, value: v }; }
 function Atom (t, v)   { return { type:  t, value: v }; }
-function Err  (e, v)   { return { error: e, value: v }; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
       [
@@ -37,8 +36,8 @@ function IdTok      (v)      { return Tok('Identifier',   v);            }
 function StringTok  (v)      { return Tok('String', '"' + v + '"');      }
 function BooleanTok (v)      { return Tok('Boolean',      v);            }
 
-function TokErr        (v)        { return { error: 'Unidentified Token', value: v }; }
-function ParseError (e, v)        { return { error: e, value: v }; }
+function TokErr     (v)        { return { tokenError: 'Unidentified Token', value: v }; }
+function ReadErr (e, v)        { return { readError: e,                     value: v }; }
 
 function Result   (t, r)      { return {thing: t, remain: r} }
 function NumAtom     (v)      { return Atom('Number',            v);  }
@@ -205,21 +204,16 @@ describe('tokenize', () => {
     })
 });
 
-describe('parseSexp', () => {
+describe('readSexp', () => {
     it('', () => {
-        checkExpect(parseSexp([CP]), { thing: {error: 'No Open Paren', value: ''}, remain: [CP] });
-        checkExpect(parseSexp([OP,CP]), {thing: [], remain: [] });
+        checkExpect(readSexp([CP]), { thing: {error: 'No Open Paren', value: ''}, remain: [CP] });
+        checkExpect(readSexp([OP,CP]), {thing: [], remain: [] });
         const result = [
-            tokenize(') (hello)').filter(x => x.type !== SPACE),
             tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
         ];
         const expected = [
-            Result(
-                ParseError('No Open Paren', ''),
-                tokenize(') (hello)').filter(x => x.type !== SPACE)
-            ),
             Result(
                 [
                     IdAtom('define'),
@@ -263,23 +257,36 @@ describe('parseSexp', () => {
                 tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             )
         ];
-        checkExpectMultiple(parseSexp, result, expected);
+        checkExpectMultiple(readSexp, result, expected);
     });
 
     it('should handle error tokens', () => {
-        const errorInput = parseSexp(tokenize('(define bool #t123)'));
+        const errorInput = readSexp(tokenize('(define bool #t123)'));
         const errorExpected = Result(
             TokErr('#'),
             [IdTok('t123')]
         );
         checkExpect(errorInput, errorExpected);
+    });
+
+    it('should handle errors', () => {
+        const errorInput = [
+            tokenize(') (hello)').filter(x => x.type !== SPACE),
+        ];
+        const errorExpected = [
+            Result(
+                ReadError('No Open Paren', ''),
+                tokenize(') (hello)').filter(x => x.type !== SPACE)
+            ),
+        ];
+        checkExpect(errorInput, errorExpected);
     })
 
 });
 
-describe('parseSexps', () => {
+describe('readSexps', () => {
     it('', () => {
-        checkExpect(parseSexps([CP]), {thing: [], remain: [CP] });
+        checkExpect(readSexps([CP]), {thing: [], remain: [CP] });
         const result = [
             tokenize(') (hello)'),
             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
@@ -352,12 +359,12 @@ describe('parseSexps', () => {
                 [CP]
             )
         ];
-        checkExpectMultiple(parseSexps, result, expected);
+        checkExpectMultiple(readSexps, result, expected);
     });
 });
 
-describe('parse', () => {
-    it('should parse these simpler things', () => {
+describe('read', () => {
+    it('should read these simpler things', () => {
         const result = [
             '',
             '(',
@@ -374,7 +381,7 @@ describe('parse', () => {
         ];
         const expected = [
             [],
-            [ParseError()],
+            [ReadError()],
             [],
             [],
             [],
@@ -386,11 +393,11 @@ describe('parse', () => {
             [BooleanAtom('#true')],
             [[IdAtom('define'), IdAtom('x'), NumAtom(10)]]
         ];
-        checkExpectMultiple(parse, result, expected);
+        checkExpectMultiple(read, result, expected);
     });
 
-    it('should parse this fact function', () => {
-        const result = parse('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))');
+    it('should read this fact function', () => {
+        const result = read('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))');
         const expected = [
             [
                 IdAtom('define'),
@@ -424,8 +431,8 @@ describe('parse', () => {
         checkExpect(result, expected);
     });
 
-    it('should parse this fib function', () => {
-        const result = parse('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))');
+    it('should read this fib function', () => {
+        const result = read('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))');
         const expected = [
             [
                 IdAtom('define'),
@@ -473,8 +480,8 @@ describe('parse', () => {
         ];
     });
 
-    it('should parse some nonsense like this', () => {
-        const result = parse('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
+    it('should read some nonsense like this', () => {
+        const result = read('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
         const expected = [
             [
                 StringAtom('hello'),
