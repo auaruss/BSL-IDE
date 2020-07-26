@@ -3,7 +3,7 @@
 export type Token
   = {
     type: TokenType
-    string: string,
+    token: string,
   } 
   | TokenError;
 
@@ -23,7 +23,7 @@ export enum TokenType {
 
 export type TokenError
   = {
-    error: 'Unidentified Token',
+    tokenError: 'Unidentified Token',
     string: string
   };
 
@@ -51,16 +51,15 @@ export type SExp
   } | SExp[] | ParseError;
 
 export type ParseError
-  = TokenError
-  | {
-    error: 'No Valid SExp'
+  =  {
+    parseError: 'No Valid SExp'
          | 'No Closing Paren'
          | 'No Open Paren'
          | 'Mismatched Parens'
          | 'Parsed non-result (should never be seen)'
          | 'Non-boolean was processed as a boolean (should never be seen)',
     tokens: Token[]
-  };
+  } | TokenError;
 
 // ----------------------------------------------------------------------------
 

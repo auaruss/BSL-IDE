@@ -46,13 +46,13 @@ const tokenize = (exp: string): Token[] => {
   for (let [tokenType, expression] of tokenExpressions) {
     let result = expression.exec(exp);
     if (result) {
-      let firstToken: Token[] = [{type: tokenType, value: result[0]}];
+      let firstToken: Token[] = [{type: tokenType, token: result[0]}];
       let restString: string = exp.slice(result[0].length);
       return firstToken.concat(tokenize(restString));
     }
   }
 
-  let firstToken: Token[] = [{error: 'Unidentified Token', value:exp[0]}];
+  let firstToken: Token[] = [{tokenError: 'Unidentified Token', string: exp[0]}];
   let restString = exp.slice(1);
   return firstToken.concat(tokenize(restString));
 }
@@ -66,7 +66,7 @@ const tokenize = (exp: string): Token[] => {
  */
 const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
   if (tokens.length === 0) {
-    return { thing: {error: 'No Valid SExp', value: ''}, remain: [] }
+    return { thing: {parseError: 'No Valid SExp', tokens: []}, remain: [] }
   }
 
   const firstToken = tokens[0];
@@ -92,7 +92,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         // } (ignoring whitespace in the tokenization)
 
         if (parseRest.remain.length === 0) {
-          return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+          return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
         }
         const firstTokenAfterSExps = parseRest.remain[0];
         if ((! isTokenError(firstTokenAfterSExps))
@@ -108,23 +108,23 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
             };
           return {
             thing: {
-              error: 'Mismatched Parens',
-              value: firstToken.value + ' ' + firstTokenAfterSExps.value
+              parseError: 'Mismatched Parens',
+              tokens: [firstToken, firstTokenAfterSExps]
             },
             remain: parseRest.remain.slice(1)
           };
         } else {
-          return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+          return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
         }
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
       case TokenType.CloseBraceParen:
-        return { thing: {error: 'No Closing Paren', value: ''}, remain: tokens }
+        return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
       case TokenType.Number:
         return {
           thing: {
             type: 'Num',
-            value: Number(tokens[0].value)
+            sexp: Number(firstToken.token)
           },
           remain: tokens.slice(1)
         };
@@ -132,7 +132,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         return {
           thing: {
             type: 'String',
-            value: tokens[0].value.slice(1,-1) // removes "" from string
+            sexp: firstToken.token.slice(1,-1) // removes "" from string
           },
           remain: tokens.slice(1)
         };
@@ -140,17 +140,20 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         return {
           thing: {
             type: 'Id',
-            value: tokens[0].value
+            sexp: firstToken.token
           },
           remain: tokens.slice(1)
         };
       case TokenType.Boolean:
         return {
-          thing:whichBool(tokens[0]),
+          thing: whichBool(firstToken),
           remain: tokens.slice(1)
         };
       default:
-        return { thing: {error: 'Parsed non-result (should never be seen)', value: ''}, remain: tokens }
+        return {
+          thing: {parseError: 'Parsed non-result (should never be seen)', tokens: []},
+          remain: tokens
+        };
     }
   }
 }
@@ -218,23 +221,24 @@ const parensMatch = (
  * @param t token
  */
 const whichBool = (t: Token): SExp => {
-  switch (t.value) {
+  if (isTokenError(t)) return t;
+  switch (t.token) {
     case '#T':
     case '#t':
     case '#true':
       return {
         type: 'Bool',
-        value: true
+        sexp: true
       }
     case '#F':
     case '#f':
     case '#false':
       return {
         type: 'Bool',
-        value: false
+        sexp: false
       };
   }
-  return { error: 'Non-boolean was processed as a boolean (should never be seen)', value: t.value}
+  return { parseError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] }
 }
 
 module.exports =  {
