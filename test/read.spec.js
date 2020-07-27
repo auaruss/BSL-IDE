@@ -1,8 +1,8 @@
 const { tokenize, read, readSexp, readSexps } = require('../src/logic/read.js');
 const { expect } = require('chai');
 
-function Tok  (t, v)   { return { type:  t, value: v }; }
-function Atom (t, v)   { return { type:  t, value: v }; }
+function Tok  (t, v)   { return { type:  t, token: v }; }
+function Atom (t, v)   { return { type:  t, sexp: v }; }
 
 const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ] =
       [
@@ -36,12 +36,13 @@ function IdTok      (v)      { return Tok('Identifier',   v);            }
 function StringTok  (v)      { return Tok('String', '"' + v + '"');      }
 function BooleanTok (v)      { return Tok('Boolean',      v);            }
 
-function TokErr     (v)        { return { tokenError: 'Unidentified Token', value: v }; }
-function ReadErr (e, v)        { return { readError: e,                     value: v }; }
+function TokErr     (v)        { return { tokenError: 'Unidentified Token', string: v }; }
+function ReadErr (e, v)        { return { readError: e,                     tokens: v }; }
 
 function Result   (t, r)      { return {thing: t, remain: r} }
+
 function NumAtom     (v)      { return Atom('Number',            v);  }
-function IdAtom      (v)      { return Atom('Identifier',        v);  }
+function IdAtom      (v)      { return Atom('Id',        v);  }
 function StringAtom  (v)      { return Atom('String',            v);  }
 function BooleanAtom (v)      { return Atom('Boolean', whichBool(v)); }
 
@@ -187,7 +188,7 @@ describe('tokenize', () => {
             tokenize('(define (simple-choice x y z) (if x y z))')
               .concat([NL])
               .concat(tokenize('(simple-choice #t 10 20)'))
-              .concat([{type: 'Whitespace', value: '\n\n'}])
+              .concat([{type: 'Whitespace', token: '\n\n'}])
               .concat(tokenize('(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))'))
               .concat([NL])
               .concat(tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
@@ -206,7 +207,7 @@ describe('tokenize', () => {
 
 describe('readSexp', () => {
     it('', () => {
-        checkExpect(readSexp([CP]), { thing: {error: 'No Open Paren', value: ''}, remain: [CP] });
+        checkExpect(readSexp([CP]), Result(ReadErr('No Open Paren',[CP]), []));
         checkExpect(readSexp([OP,CP]), {thing: [], remain: [] });
         const result = [
             tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE),
@@ -217,31 +218,31 @@ describe('readSexp', () => {
             Result(
                 [
                     IdAtom('define'),
-                    [ 
-                        IdAtom('fact'),
-                        IdAtom('n'),
-                    ],
-                    [
-                        IdAtom('if'),
-                        [ 
-                            IdAtom('='),
-                            IdAtom('n'), 
-                            NumAtom(0),
-                        ],
-                        NumAtom(1),
-                        [
-                            IdAtom('*'),
-                            IdAtom('n'),
-                            [
-                                IdAtom('fact'),
-                                [
-                                    IdAtom('-'),
-                                    IdAtom('n'),
-                                    NumAtom(1)
-                                ]
-                            ]
-                        ] 
-                    ]
+                    // [ 
+                    //     IdAtom('fact'),
+                    //     IdAtom('n'),
+                    // ],
+                    // [
+                    //     IdAtom('if'),
+                    //     [ 
+                    //         IdAtom('='),
+                    //         IdAtom('n'), 
+                    //         NumAtom(0),
+                    //     ],
+                    //     NumAtom(1),
+                    //     [
+                    //         IdAtom('*'),
+                    //         IdAtom('n'),
+                    //         [
+                    //             IdAtom('fact'),
+                    //             [
+                    //                 IdAtom('-'),
+                    //                 IdAtom('n'),
+                    //                 NumAtom(1)
+                    //             ]
+                    //         ]
+                    //     ] 
+                    // ]
                 ],
                 []
             ),
@@ -252,7 +253,7 @@ describe('readSexp', () => {
             Result(
                 [
                     IdAtom('fact'),
-                    IdAtom('n')
+                    // IdAtom('n')
                 ],
                 tokenize(' (if (= n 0) 1 (* n (fact (- n 1)))))').filter(x => x.type !== SPACE)
             )
@@ -280,24 +281,24 @@ describe('readSexp', () => {
             ),
         ];
         checkExpect(errorInput, errorExpected);
-    })
+    });
 
 });
 
 describe('readSexps', () => {
     it('', () => {
-        checkExpect(readSexps([CP]), {thing: [], remain: [CP] });
+        checkExpect(readSexps([CP]), {thing: [ReadErr('No Open Paren', [CP])], remain: [] });
         const result = [
             tokenize(') (hello)'),
             tokenize('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
             tokenize('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'),
         ];
         const expected = [
-            ResultSuccess(
-                [],
-                tokenize(') (hello)')
+            Result(
+                [ReadErr('No Open Paren', [CP])],
+                tokenize(' (hello)')
             ),
-            ResultSuccess(
+            Result(
                 [
                     IdAtom('define'),
                     [
@@ -324,11 +325,12 @@ describe('readSexps', () => {
                                 ]
                             ]
                         ]
-                    ]
+                    ],
+                    ReadErr('No Open Paren', [CP])
                 ],
-                [CP]
+                []
             ),
-            ResultSuccess(
+            Result(
                 [
                     [
                         IdAtom('fact'),
@@ -354,9 +356,10 @@ describe('readSexps', () => {
                                 ]
                             ]
                         ]
-                    ]
+                    ],
+                    ReadErr('No Open Paren', [CP])
                 ],
-                [CP]
+                []
             )
         ];
         checkExpectMultiple(readSexps, result, expected);
@@ -381,7 +384,7 @@ describe('read', () => {
         ];
         const expected = [
             [],
-            [ReadError()],
+            [],
             [],
             [],
             [],
@@ -481,7 +484,7 @@ describe('read', () => {
     });
 
     it('should read some nonsense like this', () => {
-        const result = read('("hello" world (this "is" "some non" sense (which should be) #t 10 parsable))');
+        const result = read('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))');
         const expected = [
             [
                 StringAtom('hello'),
@@ -498,7 +501,7 @@ describe('read', () => {
                     ],
                     BooleanAtom('#t'),
                     NumAtom(10),
-                    IdAtom('parsable')
+                    IdAtom('readable')
                 ]
             ]
         ];

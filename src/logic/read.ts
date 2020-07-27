@@ -83,24 +83,39 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
       case TokenType.OpenSquareParen:
       case TokenType.OpenBraceParen:
         let i = 1;
+        let leftGTRight = 1;
         let insideSexps: Token[] = [];
+
         for (let token of tokens.slice(1)) {
-          if ((! isTokenError(token))
-          &&
-            (token.type === TokenType.CloseParen
-          || token.type === TokenType.CloseSquareParen
-          || token.type === TokenType.CloseBraceParen)) {
-            if (parensMatch(firstToken.type, token.type)) {
-              return {
-                // What to do with readSexps.remain here?
-                thing: readSexps(insideSexps).thing,
-                remain: []
-              };
+          if (! isTokenError(token)) {
+            if (token.type === TokenType.CloseParen
+             || token.type === TokenType.CloseSquareParen
+             || token.type === TokenType.CloseBraceParen) {
+              leftGTRight = leftGTRight - 1;
+            }
+             
+            if (token.type === TokenType.OpenParen
+             || token.type === TokenType.OpenSquareParen
+             || token.type === TokenType.OpenBraceParen) {
+              leftGTRight = leftGTRight + 1;
+            }
+          
+            if (leftGTRight === 0) {
+              if (parensMatch(firstToken.type, token.type)) {
+                return {
+                  // What to do with readSexps.remain here?
+                  thing: readSexps(insideSexps).thing,
+                  remain: tokens.slice(i+1)
+                };
+              } else {
+                return {
+                  thing: {readError: 'Mismatched Parens', tokens: [firstToken, token]},
+                  remain: tokens.slice(i+1)
+                };
+              }
             } else {
-              return {
-                thing: {readError: 'Mismatched Parens', tokens: [firstToken, token]},
-                remain: []
-              };
+              insideSexps.push(token);
+              i += 1;
             }
           } else {
             insideSexps.push(token);
@@ -109,7 +124,7 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
         }
         return {
           thing: {readError:'No Closing Paren', tokens:insideSexps},
-          remain: tokens
+          remain: []
         };
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
@@ -145,10 +160,7 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
           remain: tokens.slice(1)
         };
       default:
-        return {
-          thing: {readError: 'Read non-result (should never be seen)', tokens: []},
-          remain: tokens
-        };
+        return readSexp(tokens.slice(1));
     }
   }
 }
@@ -157,13 +169,13 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
  * Reads as many SExp as possible from the start of the list of tokens.
  * @param tokens
  */
-const readSexps = (tokens: Token[]): Result<SExp[]> | Result<ReadError> => {
+const readSexps = (tokens: Token[]): Result<SExp[]> => {
   if (tokens.length === 0) return { thing: [], remain: [] };
   
   let firstToken = tokens[0];
   
   if (isTokenError(firstToken)) {
-    return { thing: firstToken, remain: tokens.slice(1) };
+    return { thing: [firstToken], remain: tokens.slice(1) };
   } else if (firstToken.type === TokenType.Whitespace) {
     return readSexps(tokens.slice(1));
   }
@@ -171,10 +183,8 @@ const readSexps = (tokens: Token[]): Result<SExp[]> | Result<ReadError> => {
   let readFirst = readSexp(tokens);
 
   if (isReadError(readFirst.thing)) {
-    return { thing: readFirst.thing, remain: tokens.slice(1) };
+    return { thing: [readFirst.thing], remain: tokens.slice(1) };
   }
-
-  // throw new Error('doesnt reach')
 
   let readRest = readSexps(readFirst.remain);
 
