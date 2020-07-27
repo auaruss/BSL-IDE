@@ -1,14 +1,14 @@
 'use strict';
 exports.__esModule = true;
 /**
- * An S-exp parser for the student languages.
+ * An S-exp reader for the student languages.
  * @author: Alice Russell, Sam Soucie
  *
  * @todo The tokenizer should handle negative numbers and decimals.
- * @todo The tokenizer and parser must handle '().
+ * @todo The tokenizer and reader must handle '().
  * @todo The tokenizer should remove the quotes around a string.
  * @todo The tokenizer should transform booleans
- * @todo Rename parse functions to read functions
+ * @todo Rename read functions to read functions
  */
 var types_1 = require("./types");
 var predicates_1 = require("./predicates");
@@ -38,25 +38,25 @@ var tokenize = function (exp) {
         var _a = tokenExpressions_1[_i], tokenType = _a[0], expression = _a[1];
         var result = expression.exec(exp);
         if (result) {
-            var firstToken_1 = [{ type: tokenType, value: result[0] }];
+            var firstToken_1 = [{ type: tokenType, token: result[0] }];
             var restString_1 = exp.slice(result[0].length);
             return firstToken_1.concat(tokenize(restString_1));
         }
     }
-    var firstToken = [{ error: 'Unidentified Token', value: exp[0] }];
+    var firstToken = [{ tokenError: 'Unidentified Token', string: exp[0] }];
     var restString = exp.slice(1);
     return firstToken.concat(tokenize(restString));
 };
 /**
- * Attempts to parse the first SExp from a list of tokens.
+ * Attempts to read the first SExp from a list of tokens.
  * @remark A failure is produced when no starting SExp is found.
- * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
+ * @remark Note that this function does not deal with whitespace as we expect to always be calling read
  *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
-var parseSexp = function (tokens) {
+var readSexp = function (tokens) {
     if (tokens.length === 0) {
-        return { thing: { error: 'No Valid SExp', value: '' }, remain: [] };
+        return { thing: { readError: 'No Valid SExp', tokens: [] }, remain: [] };
     }
     var firstToken = tokens[0];
     if (predicates_1.isTokenError(firstToken)) {
@@ -71,48 +71,45 @@ var parseSexp = function (tokens) {
             case types_1.TokenType.OpenParen:
             case types_1.TokenType.OpenSquareParen:
             case types_1.TokenType.OpenBraceParen:
-                var parseRest = parseSexps(tokens.slice(1));
-                // this means parseRest is the rest of the current SExp. so for
-                // '(define hello 1) (define x 10)'
-                // parseRest should be equal to
-                // {
-                //   thing: [Id('define'), Id('hello'), Num('1').
-                //   remain: tokenize(') (define x 10)')
-                // } (ignoring whitespace in the tokenization)
-                if (parseRest.remain.length === 0) {
-                    return { thing: { error: 'No Closing Paren', value: '' }, remain: tokens };
-                }
-                var firstTokenAfterSExps = parseRest.remain[0];
-                if ((!predicates_1.isTokenError(firstTokenAfterSExps))
-                    &&
-                        (firstTokenAfterSExps.type === types_1.TokenType.CloseParen
-                            || firstTokenAfterSExps.type === types_1.TokenType.CloseSquareParen
-                            || firstTokenAfterSExps.type === types_1.TokenType.CloseBraceParen)) {
-                    if (parensMatch(firstToken.type, firstTokenAfterSExps.type))
-                        return {
-                            thing: parseRest.thing,
-                            remain: parseRest.remain.slice(1)
-                        };
-                    return {
-                        thing: {
-                            error: 'Mismatched Parens',
-                            value: firstToken.value + ' ' + firstTokenAfterSExps.value
-                        },
-                        remain: parseRest.remain.slice(1)
-                    };
-                }
-                else {
-                    return { thing: { error: 'No Closing Paren', value: '' }, remain: tokens };
-                }
+                return { thing: [], remain: [] };
+            // let i = 1;
+            // let insideSexps: Token[] = [];
+            // for (let token of tokens.slice(1)) {
+            //   if ((! isTokenError(token))
+            //   &&
+            //     (token.type === TokenType.CloseParen
+            //   || token.type === TokenType.CloseSquareParen
+            //   || token.type === TokenType.CloseBraceParen)) {
+            //     if (parensMatch(firstToken.type, token.type)) {
+            //       return {
+            //         // What to do with readSexps.remain here?
+            //         thing: readSexps(insideSexps).thing,
+            //         remain: []
+            //       };
+            //     } else {
+            //       return {
+            //         thing: {readError: 'Mismatched Parens', tokens: [firstToken, token]},
+            //         remain: []
+            //       };
+            //     }
+            //   } else {
+            //     insideSexps.push(token);
+            //     i += 1;
+            //   }
+            // }
+            // return {
+            //   thing: {readError:'No Closing Paren', tokens:insideSexps},
+            //   remain: tokens
+            // };
             case types_1.TokenType.CloseParen:
             case types_1.TokenType.CloseSquareParen:
             case types_1.TokenType.CloseBraceParen:
-                return { thing: { error: 'No Closing Paren', value: '' }, remain: tokens };
+                return { thing: { readError: 'No Open Paren', tokens: [firstToken] }, remain: tokens.slice(1) };
             case types_1.TokenType.Number:
                 return {
                     thing: {
                         type: 'Num',
-                        value: Number(tokens[0].value)
+                        sexp: Number(firstToken.token)
                     },
                     remain: tokens.slice(1)
                 };
@@ -120,7 +117,7 @@ var parseSexp = function (tokens) {
                 return {
                     thing: {
                         type: 'String',
-                        value: tokens[0].value.slice(1, -1) // removes "" from string
+                        sexp: firstToken.token.slice(1, -1) // removes "" from string
                     },
                     remain: tokens.slice(1)
                 };
@@ -128,52 +125,58 @@ var parseSexp = function (tokens) {
                 return {
                     thing: {
                         type: 'Id',
-                        value: tokens[0].value
+                        sexp: firstToken.token
                     },
                     remain: tokens.slice(1)
                 };
             case types_1.TokenType.Boolean:
                 return {
-                    thing: whichBool(tokens[0]),
+                    thing: whichBool(firstToken),
                     remain: tokens.slice(1)
                 };
             default:
-                return { thing: { error: 'Parsed non-result (should never be seen)', value: '' }, remain: tokens };
+                return {
+                    thing: { readError: 'Read non-result (should never be seen)', tokens: [] },
+                    remain: tokens
+                };
         }
     }
 };
 /**
- * Parses as many SExp as possible from the start of the list of tokens.
+ * Reads as many SExp as possible from the start of the list of tokens.
  * @param tokens
- * @throws error when the Result is neither a ResultSuccess nor ResultFailure
  */
-var parseSexps = function (tokens) {
+var readSexps = function (tokens) {
     if (tokens.length === 0)
         return { thing: [], remain: [] };
     var firstToken = tokens[0];
     if (predicates_1.isTokenError(firstToken)) {
-        var parseRest_1 = parseSexps(tokens.slice(1));
-        parseRest_1.thing.unshift([firstToken]);
-        return { thing: parseRest_1.thing, remain: parseRest_1.remain };
+        return { thing: firstToken, remain: tokens.slice(1) };
     }
     else if (firstToken.type === types_1.TokenType.Whitespace) {
-        return parseSexps(tokens.slice(1));
+        return readSexps(tokens.slice(1));
     }
-    var parseFirst = parseSexp(tokens);
-    var parseRest = parseSexps(parseFirst.remain);
-    parseRest.thing.unshift([parseFirst.thing]);
-    return {
-        thing: parseRest.thing,
-        remain: parseRest.remain
-    };
+    var readFirst = readSexp(tokens);
+    if (predicates_1.isReadError(readFirst.thing)) {
+        return { thing: readFirst.thing, remain: tokens.slice(1) };
+    }
+    // throw new Error('doesnt reach')
+    var readRest = readSexps(readFirst.remain);
+    if (predicates_1.isReadError(readRest.thing)) {
+        return { thing: [readFirst.thing], remain: readFirst.remain };
+    }
+    else {
+        readRest.thing.unshift(readFirst.thing);
+        return readRest;
+    }
 };
 /**
- * Parses as many SExp as possible from the start of an expression.
+ * Reads as many SExp as possible from the start of an expression.
  * @param exp an expression as a string
  */
-exports.parse = function (exp) {
-    var parsed = parseSexps(tokenize(exp)).thing;
-    return parsed;
+exports.read = function (exp) {
+    var sexpsRead = readSexps(tokenize(exp)).thing;
+    return sexpsRead;
 };
 /**
  * Given two token types, if the first is an opening paren token and the second a closing paren token,
@@ -201,27 +204,29 @@ var parensMatch = function (op, cp) {
  * @param t token
  */
 var whichBool = function (t) {
-    switch (t.value) {
+    if (predicates_1.isTokenError(t))
+        return t;
+    switch (t.token) {
         case '#T':
         case '#t':
         case '#true':
             return {
                 type: 'Bool',
-                value: true
+                sexp: true
             };
         case '#F':
         case '#f':
         case '#false':
             return {
                 type: 'Bool',
-                value: false
+                sexp: false
             };
     }
-    return { error: 'Non-boolean was processed as a boolean (should never be seen)', value: t.value };
+    return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] };
 };
 module.exports = {
     'tokenize': tokenize,
-    'parse': exports.parse,
-    'parseSexp': parseSexp,
-    'parseSexps': parseSexps
+    'read': exports.read,
+    'readSexp': readSexp,
+    'readSexps': readSexps
 };

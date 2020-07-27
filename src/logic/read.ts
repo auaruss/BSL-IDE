@@ -1,23 +1,23 @@
 'use strict';
 
 /**
- * An S-exp parser for the student languages.
+ * An S-exp reader for the student languages.
  * @author: Alice Russell, Sam Soucie 
  * 
  * @todo The tokenizer should handle negative numbers and decimals.
- * @todo The tokenizer and parser must handle '().
+ * @todo The tokenizer and reader must handle '().
  * @todo The tokenizer should remove the quotes around a string.
  * @todo The tokenizer should transform booleans
- * @todo Rename parse functions to read functions
+ * @todo Rename read functions to read functions
  */
 
 import {
-  ParseError, Result,
+  ReadError, Result,
   SExp, Token, TokenError, TokenType
 } from './types';
 
 import {
-  isTokenError, isParseError
+  isTokenError, isReadError
 } from './predicates';
 
 // Regexp Definitions.
@@ -58,21 +58,21 @@ const tokenize = (exp: string): Token[] => {
 }
 
 /**
- * Attempts to parse the first SExp from a list of tokens.
+ * Attempts to read the first SExp from a list of tokens.
  * @remark A failure is produced when no starting SExp is found.
- * @remark Note that this function does not deal with whitespace as we expect to always be calling parse
+ * @remark Note that this function does not deal with whitespace as we expect to always be calling read
  *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
-const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
+const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
   if (tokens.length === 0) {
-    return { thing: {parseError: 'No Valid SExp', tokens: []}, remain: [] }
+    return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
   }
 
   const firstToken = tokens[0];
 
   if (isTokenError(firstToken)) {
-    const result: Result<ParseError> = {
+    const result: Result<ReadError> = {
       thing: firstToken,
       remain: tokens.slice(1)
     }
@@ -92,29 +92,29 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
           || token.type === TokenType.CloseBraceParen)) {
             if (parensMatch(firstToken.type, token.type)) {
               return {
-                // What to do with parseSexps.remain here?
-                thing: parseSexps(insideSexps).thing,
-                remain: tokens.slice(i+1)
+                // What to do with readSexps.remain here?
+                thing: readSexps(insideSexps).thing,
+                remain: []
               };
             } else {
               return {
-                thing: {parseError: 'Mismatched Parens', tokens: [firstToken, token]},
-                remain: tokens.slice(i+1)
+                thing: {readError: 'Mismatched Parens', tokens: [firstToken, token]},
+                remain: []
               };
             }
           } else {
             insideSexps.push(token);
-            i++;
+            i += 1;
           }
         }
         return {
-          thing: {parseError:'No Closing Paren', tokens:insideSexps},
+          thing: {readError:'No Closing Paren', tokens:insideSexps},
           remain: tokens
         };
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
       case TokenType.CloseBraceParen:
-        return { thing: {parseError: 'No Closing Paren', tokens: []}, remain: tokens }
+        return { thing: {readError: 'No Open Paren', tokens: [firstToken]}, remain: tokens.slice(1) }
       case TokenType.Number:
         return {
           thing: {
@@ -146,7 +146,7 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
         };
       default:
         return {
-          thing: {parseError: 'Parsed non-result (should never be seen)', tokens: []},
+          thing: {readError: 'Read non-result (should never be seen)', tokens: []},
           remain: tokens
         };
     }
@@ -154,10 +154,10 @@ const parseSexp = (tokens: Token[]): Result<SExp> | Result<ParseError> => {
 }
 
 /**
- * Parses as many SExp as possible from the start of the list of tokens.
+ * Reads as many SExp as possible from the start of the list of tokens.
  * @param tokens
  */
-const parseSexps = (tokens: Token[]): Result<SExp[]> | Result<ParseError> => {
+const readSexps = (tokens: Token[]): Result<SExp[]> | Result<ReadError> => {
   if (tokens.length === 0) return { thing: [], remain: [] };
   
   let firstToken = tokens[0];
@@ -165,32 +165,34 @@ const parseSexps = (tokens: Token[]): Result<SExp[]> | Result<ParseError> => {
   if (isTokenError(firstToken)) {
     return { thing: firstToken, remain: tokens.slice(1) };
   } else if (firstToken.type === TokenType.Whitespace) {
-    return parseSexps(tokens.slice(1));
+    return readSexps(tokens.slice(1));
   }
   
-  let parseFirst = parseSexp(tokens);
+  let readFirst = readSexp(tokens);
 
-  if (isParseError(parseFirst.thing)) {
-    return { thing: parseFirst.thing, remain: tokens.slice(1) };
+  if (isReadError(readFirst.thing)) {
+    return { thing: readFirst.thing, remain: tokens.slice(1) };
   }
 
-  let parseRest = parseSexps(parseFirst.remain);
+  // throw new Error('doesnt reach')
 
-  if (isTokenError(parseRest.thing)) {
-    return parseFirst;
+  let readRest = readSexps(readFirst.remain);
+
+  if (isReadError(readRest.thing)) {
+    return { thing: [readFirst.thing], remain: readFirst.remain };
   } else {
-    parseRest.thing.unshift(parseFirst.thing);
-    return parseRest;
+    readRest.thing.unshift(readFirst.thing);
+    return readRest;
   }
 }
 
 /**
- * Parses as many SExp as possible from the start of an expression.
+ * Reads as many SExp as possible from the start of an expression.
  * @param exp an expression as a string
  */
-export const parse = (exp:string): SExp[] => {
-  const parsed = parseSexps(tokenize(exp)).thing;
-  return parsed;
+export const read = (exp:string): SExp[] | ReadError => {
+  const sexpsRead = readSexps(tokenize(exp)).thing;
+  return sexpsRead;
 }
 
 /**
@@ -236,12 +238,12 @@ const whichBool = (t: Token): SExp => {
         sexp: false
       };
   }
-  return { parseError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] }
+  return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] }
 }
 
 module.exports =  {
   'tokenize': tokenize,
-  'parse': parse,
-  'parseSexp': parseSexp,
-  'parseSexps': parseSexps
+  'read': read,
+  'readSexp': readSexp,
+  'readSexps': readSexps
 };
