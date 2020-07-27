@@ -218,31 +218,31 @@ describe('readSexp', () => {
             Result(
                 [
                     IdAtom('define'),
-                    // [ 
-                    //     IdAtom('fact'),
-                    //     IdAtom('n'),
-                    // ],
-                    // [
-                    //     IdAtom('if'),
-                    //     [ 
-                    //         IdAtom('='),
-                    //         IdAtom('n'), 
-                    //         NumAtom(0),
-                    //     ],
-                    //     NumAtom(1),
-                    //     [
-                    //         IdAtom('*'),
-                    //         IdAtom('n'),
-                    //         [
-                    //             IdAtom('fact'),
-                    //             [
-                    //                 IdAtom('-'),
-                    //                 IdAtom('n'),
-                    //                 NumAtom(1)
-                    //             ]
-                    //         ]
-                    //     ] 
-                    // ]
+                    [ 
+                        IdAtom('fact'),
+                        IdAtom('n'),
+                    ],
+                    [
+                        IdAtom('if'),
+                        [ 
+                            IdAtom('='),
+                            IdAtom('n'), 
+                            NumAtom(0),
+                        ],
+                        NumAtom(1),
+                        [
+                            IdAtom('*'),
+                            IdAtom('n'),
+                            [
+                                IdAtom('fact'),
+                                [
+                                    IdAtom('-'),
+                                    IdAtom('n'),
+                                    NumAtom(1)
+                                ]
+                            ]
+                        ] 
+                    ]
                 ],
                 []
             ),
