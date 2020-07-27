@@ -241,7 +241,7 @@ describe('readSexp', () => {
                                     NumAtom(1)
                                 ]
                             ]
-                        ] 
+                        ]
                     ]
                 ],
                 []
@@ -382,12 +382,12 @@ describe('read', () => {
         ];
         const expected = [
             [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+            [ReadErr('No Close Paren', '(')],
+            [ReadErr('No Close Paren', '[')],
+            [ReadErr('No Close Paren', '{')],
+            [ReadErr('No Open Paren', ')')],
+            [ReadErr('No Open Paren', ']')],
+            [ReadErr('No Open Paren', '}')],
             [NumAtom(123)],
             [StringAtom('hello')],
             [IdAtom('x')],
@@ -479,6 +479,7 @@ describe('read', () => {
                 ]
             ]
         ];
+        checkExpect(result, expected);
     });
 
     it('should read some nonsense like this', () => {

@@ -200,7 +200,7 @@ const readSexps = (tokens: Token[]): Result<SExp[]> => {
  * Reads as many SExp as possible from the start of an expression.
  * @param exp an expression as a string
  */
-export const read = (exp:string): SExp[] | ReadError => {
+export const read = (exp:string): SExp[] => {
   const sexpsRead = readSexps(tokenize(exp)).thing;
   return sexpsRead;
 }
