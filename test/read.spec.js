@@ -41,10 +41,10 @@ function ReadErr (e, v)        { return { readError: e,                     toke
 
 function Result   (t, r)      { return {thing: t, remain: r} }
 
-function NumAtom     (v)      { return Atom('Number',            v);  }
-function IdAtom      (v)      { return Atom('Id',        v);  }
+function NumAtom     (v)      { return Atom('Num',               v);  }
+function IdAtom      (v)      { return Atom('Id',                v);  }
 function StringAtom  (v)      { return Atom('String',            v);  }
-function BooleanAtom (v)      { return Atom('Boolean', whichBool(v)); }
+function BooleanAtom (v)      { return Atom('Bool',    whichBool(v)); }
 
 
 
@@ -261,27 +261,27 @@ describe('readSexp', () => {
         checkExpectMultiple(readSexp, result, expected);
     });
 
-    it('should handle error tokens', () => {
-        const errorInput = readSexp(tokenize('(define bool #t123)'));
-        const errorExpected = Result(
-            TokErr('#'),
-            [IdTok('t123')]
-        );
-        checkExpect(errorInput, errorExpected);
-    });
+    // it('should handle error tokens', () => {
+    //     const errorInput = readSexp(tokenize('(define bool #t123)'));
+    //     const errorExpected = Result(
+    //         TokErr('#'),
+    //         [IdTok('t123')]
+    //     );
+    //     checkExpect(errorInput, errorExpected);
+    // });
 
-    it('should handle errors', () => {
-        const errorInput = [
-            tokenize(') (hello)').filter(x => x.type !== SPACE),
-        ];
-        const errorExpected = [
-            Result(
-                ReadErr('No Open Paren', ''),
-                tokenize(') (hello)').filter(x => x.type !== SPACE)
-            ),
-        ];
-        checkExpect(errorInput, errorExpected);
-    });
+    // it('should handle errors', () => {
+    //     const errorInput = [
+    //         tokenize(') (hello)').filter(x => x.type !== SPACE),
+    //     ];
+    //     const errorExpected = [
+    //         Result(
+    //             ReadErr('No Open Paren', ''),
+    //             tokenize(') (hello)').filter(x => x.type !== SPACE)
+    //         ),
+    //     ];
+    //     checkExpect(errorInput, errorExpected);
+    // });
 
 });
 
@@ -296,7 +296,7 @@ describe('readSexps', () => {
         const expected = [
             Result(
                 [],
-                tokenize('( (hello)')
+                tokenize(') (hello)')
             ),
             Result(
                 [
@@ -382,12 +382,12 @@ describe('read', () => {
         ];
         const expected = [
             [],
-            [ReadErr('No Close Paren', '(')],
-            [ReadErr('No Close Paren', '[')],
-            [ReadErr('No Close Paren', '{')],
-            [ReadErr('No Open Paren', ')')],
-            [ReadErr('No Open Paren', ']')],
-            [ReadErr('No Open Paren', '}')],
+            [ReadErr('No Closing Paren', [OP])],
+            [ReadErr('No Closing Paren', [OSP])],
+            [ReadErr('No Closing Paren', [OBP])],
+            [ReadErr('No Open Paren', [CP])],
+            [ReadErr('No Open Paren', [CSP])],
+            [ReadErr('No Open Paren', [CBP])],
             [NumAtom(123)],
             [StringAtom('hello')],
             [IdAtom('x')],
@@ -505,5 +505,5 @@ describe('read', () => {
             ]
         ];
         checkExpect(result, expected);
-    })
+    });
 });
