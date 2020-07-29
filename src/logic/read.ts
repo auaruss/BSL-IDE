@@ -82,50 +82,45 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
       case TokenType.OpenParen:
       case TokenType.OpenSquareParen:
       case TokenType.OpenBraceParen:
-        let i = 1;
-        let leftGTRight = 1;
-        let insideSexps: Token[] = [];
+        const readRest = readSexps(tokens.slice(1));
+        // this means parseRest is the rest of the current SExp. so for
+        // '(define hello 1) (define x 10)'
+        // parseRest should be equal to
+        // {
+        //   thing: [Id('define'), Id('hello'), Num('1').
+        //   remain: tokenize(') (define x 10)')
+        // } (ignoring whitespace in the tokenization)
 
-        for (let token of tokens.slice(1)) {
-          if (! isTokenError(token)) {
-            if (token.type === TokenType.CloseParen
-             || token.type === TokenType.CloseSquareParen
-             || token.type === TokenType.CloseBraceParen) {
-              leftGTRight = leftGTRight - 1;
-            }
-             
-            if (token.type === TokenType.OpenParen
-             || token.type === TokenType.OpenSquareParen
-             || token.type === TokenType.OpenBraceParen) {
-              leftGTRight = leftGTRight + 1;
-            }
-          
-            if (leftGTRight === 0) {
-              if (parensMatch(firstToken.type, token.type)) {
-                return {
-                  // What to do with readSexps.remain here?
-                  thing: readSexps(insideSexps).thing,
-                  remain: tokens.slice(i+1)
-                };
-              } else {
-                return {
-                  thing: {readError: 'Mismatched Parens', tokens: [firstToken, token]},
-                  remain: tokens.slice(i+1)
-                };
-              }
-            } else {
-              insideSexps.push(token);
-              i += 1;
-            }
+        // Note that parseRest always returns a success, so we can assume that an SExp exists at the
+        // start of the expression if and only if the remain from parsing the rest starts with a closing paren
+        // which matches our current open paren.
+
+        // This also means if the remain is empty we return a failure.
+        if (readRest.remain.length === 0) {
+          return {
+            thing: {
+              readError: 'No Closing Paren',
+              tokens: tokens
+            },
+            remain: []
+          }
+        } else {
+          const firstUnprocessedToken = readRest.remain[0];
+          if (isTokenError(firstUnprocessedToken)) {
+            return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
+          } else if (firstUnprocessedToken.type === TokenType.CloseParen
+                  || firstUnprocessedToken.type === TokenType.CloseSquareParen
+                  || firstUnprocessedToken.type === TokenType.CloseBraceParen) {
+            if (parensMatch(firstToken.type, firstUnprocessedToken.type))
+              return { thing: readRest.thing, remain: readRest.remain.slice(1) }
+            return {
+              thing: { readError:'Mismatched Parens', tokens: [firstToken, firstUnprocessedToken]},
+              remain: readRest.remain.slice(1)
+            };
           } else {
-            insideSexps.push(token);
-            i += 1;
+            return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
           }
         }
-        return {
-          thing: {readError:'No Closing Paren', tokens:insideSexps},
-          remain: []
-        };
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
       case TokenType.CloseBraceParen:
@@ -175,7 +170,9 @@ const readSexps = (tokens: Token[]): Result<SExp[]> => {
   let firstToken = tokens[0];
   
   if (isTokenError(firstToken)) {
-    return { thing: [firstToken], remain: tokens.slice(1) };
+    let thingToReturn = readSexps(tokens.slice(1));
+    thingToReturn.thing.unshift(firstToken);
+    return { thing: thingToReturn.thing, remain: thingToReturn.remain };
   } else if (firstToken.type === TokenType.Whitespace) {
     return readSexps(tokens.slice(1));
   }
@@ -183,7 +180,7 @@ const readSexps = (tokens: Token[]): Result<SExp[]> => {
   let readFirst = readSexp(tokens);
 
   if (isReadError(readFirst.thing)) {
-    return { thing: [readFirst.thing], remain: tokens.slice(1) };
+    return { thing: [], remain: tokens };
   }
 
   let readRest = readSexps(readFirst.remain);
@@ -201,18 +198,26 @@ const readSexps = (tokens: Token[]): Result<SExp[]> => {
  * @param exp an expression as a string
  */
 export const read = (exp:string): SExp[] => {
-  const sexpsRead = readSexps(tokenize(exp)).thing;
-  return sexpsRead;
+  let tokens = tokenize(exp);
+  let sexps = [];
+  
+  while (tokens.length !== 0) {
+    let next = readSexp(tokens);
+    sexps.push(next.thing);
+    tokens = next.remain;
+  }
+
+  return sexps;
 }
 
 /**
  * Given two token types, if the first is an opening paren token and the second a closing paren token,
  * determines whether they are matching paren types.
  * 
- * @param op open paren token
- * @param cp close paren token
- * @return True if the tokens match in the correct order,
- *         False if given any other tokens, or given the tokens in the wrong order.
+ * @param op open paren token type
+ * @param cp close paren token type
+ * @return True if the types in the correct order and the paren types match,
+ *         False if given any other token types, or given the types in the wrong order.
  */
 const parensMatch = (
   op: TokenType, cp: TokenType): boolean => {
