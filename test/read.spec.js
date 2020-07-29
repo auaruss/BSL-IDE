@@ -261,27 +261,27 @@ describe('readSexp', () => {
         checkExpectMultiple(readSexp, result, expected);
     });
 
-    // it('should handle error tokens', () => {
-    //     const errorInput = readSexp(tokenize('(define bool #t123)'));
-    //     const errorExpected = Result(
-    //         TokErr('#'),
-    //         [IdTok('t123')]
-    //     );
-    //     checkExpect(errorInput, errorExpected);
-    // });
+    it('should handle error tokens', () => {
+        const errorInput = readSexp(tokenize('(define bool #t123)'));
+        const errorExpected = Result(
+            [IdAtom('define'), IdAtom('bool'), TokErr('#'), IdAtom('t123')],
+            []
+        )
+        checkExpect(errorInput, errorExpected);
+    });
 
-    // it('should handle errors', () => {
-    //     const errorInput = [
-    //         tokenize(') (hello)').filter(x => x.type !== SPACE),
-    //     ];
-    //     const errorExpected = [
-    //         Result(
-    //             ReadErr('No Open Paren', ''),
-    //             tokenize(') (hello)').filter(x => x.type !== SPACE)
-    //         ),
-    //     ];
-    //     checkExpect(errorInput, errorExpected);
-    // });
+    it('should handle errors', () => {
+        const errorInput = [
+            tokenize(') (hello)'),
+        ];
+        const errorExpected = [
+            Result(
+                ReadErr('No Open Paren', [CP]),
+                tokenize(' (hello)')
+            ),
+        ];
+        checkExpectMultiple(readSexp, errorInput, errorExpected);
+    });
 
 });
 
