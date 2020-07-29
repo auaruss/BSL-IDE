@@ -3,9 +3,9 @@ exports.__esModule = true;
 exports.isTokenError = function (x) {
     if (!(typeof x === 'object'))
         return false;
-    if (!(x.tokenError && typeof x.tokenError !== 'string'))
+    if (!(x.tokenError && typeof x.tokenError === 'string'))
         return false;
-    if (!x.tokens)
+    if (!x.string)
         return false;
     return x.tokenError === 'Unidentified Token';
 };

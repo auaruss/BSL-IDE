@@ -4,8 +4,8 @@ import {
 
 export const isTokenError = (x: any): x is TokenError => {
   if (! (typeof x === 'object')) return false;
-  if (! (x.tokenError && typeof x.tokenError !== 'string')) return false;
-  if (! x.tokens) return false;
+  if (! (x.tokenError && typeof x.tokenError === 'string')) return false;
+  if (! x.string) return false;
   return x.tokenError === 'Unidentified Token';
 }
 
