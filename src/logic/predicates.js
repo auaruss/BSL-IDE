@@ -14,7 +14,7 @@ exports.isReadError = function (x) {
         return true;
     if (!(typeof x === 'object'))
         return false;
-    if (!(x.readError && typeof x.readError !== 'string'))
+    if (!(x.readError && typeof x.readError === 'string'))
         return false;
     if (!x.tokens)
         return false;

@@ -12,7 +12,7 @@ export const isTokenError = (x: any): x is TokenError => {
 export const isReadError = (x: any): x is ReadError => {
   if (isTokenError(x)) return true;
   if (! (typeof x === 'object')) return false;
-  if (! (x.readError && typeof x.readError !== 'string')) return false;
+  if (! (x.readError && typeof x.readError === 'string')) return false;
   if (! x.tokens) return false;
   return x.readError === 'No Valid SExp'
       || x.readError === 'No Closing Paren'
