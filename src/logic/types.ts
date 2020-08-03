@@ -53,22 +53,24 @@ export type SExp
 export type ReadError
   =  {
     readError: 'No Valid SExp'
-         | 'No Closing Paren'
-         | 'No Open Paren'
-         | 'Mismatched Parens'
-         | 'Read non-result (should never be seen)'
-         | 'Non-boolean was processed as a boolean (should never be seen)',
+             | 'No Closing Paren'
+             | 'No Open Paren'
+             | 'Mismatched Parens'
+             | 'Read non-result (should never be seen)'
+             | 'Non-boolean was processed as a boolean (should never be seen)',
     tokens: Token[]
   } | TokenError;
 
 // ----------------------------------------------------------------------------
 
 export type DefOrExpr
-  = Definition | Expr | SyntaxError;
+  = Definition | Expr;
 
 export type Definition
   = ['define', [string, string[]], Expr]
-  | ['define', string, Expr];
+  | ['define', string, Expr]
+  | ['define', string]
+  | { case: 'Defn', err: SyntaxError };
 
 
 export type Expr
@@ -84,11 +86,14 @@ export type Expr
   } | {
     type: 'Bool',
     expr: boolean
-  } | [string, Expr[]];
+  } 
+  | [string, Expr[]] 
+  | { case: 'Expr', err: SyntaxError };
 
 export type SyntaxError
   = {
-    error: 'Empty Expr'
+    error: 'Empty Expr',
+    sexps: SExp[]
   }; //...
 
 // ----------------------------------------------------------------------------
@@ -121,8 +126,8 @@ export type Fn
 export type Env = Map<String,Value>;
 
 type Error
-  = SyntaxError
-  | {
+  = /*ParseError
+  | */{
     error: "Id Not in Env"
     id: string
   } // ...
