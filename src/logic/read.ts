@@ -2,60 +2,18 @@
 
 /**
  * An S-exp reader for the student languages.
- * @author: Alice Russell, Sam Soucie 
- * 
- * @todo The tokenizer should handle negative numbers and decimals.
- * @todo The tokenizer and reader must handle '().
- * @todo The tokenizer should remove the quotes around a string.
- * @todo The tokenizer should transform booleans
- * @todo Rename read functions to read functions
  */
 
 import {
   ReadError, Result,
-  SExp, Token, TokenError, TokenType
+  SExp, Token, TokenType
 } from './types';
+
+import { tokenize } from './tokenize';
 
 import {
   isTokenError, isReadError
 } from './predicates';
-
-// Regexp Definitions.
-const tokenExpressions: [TokenType, RegExp][] = [
-  [TokenType.OpenParen, /^\(/],
-  [TokenType.OpenSquareParen, /^\[/],
-  [TokenType.OpenBraceParen, /^\{/],
-  [TokenType.CloseParen, /^\)/],
-  [TokenType.CloseSquareParen, /^]/],
-  [TokenType.CloseBraceParen, /^}/],
-  [TokenType.Number, /^\d+/],
-  [TokenType.String, /^"[^"]*"/],
-  [TokenType.Identifier, /^[^",'`\(\)\[\]{};#\s]+/],
-  [TokenType.Whitespace, /^\s+/],
-  [TokenType.Boolean, /^#t\b|#T\b|#f\b|#F\b|#true\b|#false\b/]
-];
-
-/**
- * Transforms a string into a list of tokens.
- * @param exp expression as a string
- */
-const tokenize = (exp: string): Token[] => {
-  if (exp == '') {
-    return [];
-  }
-  for (let [tokenType, expression] of tokenExpressions) {
-    let result = expression.exec(exp);
-    if (result) {
-      let firstToken: Token[] = [{type: tokenType, token: result[0]}];
-      let restString: string = exp.slice(result[0].length);
-      return firstToken.concat(tokenize(restString));
-    }
-  }
-
-  let firstToken: Token[] = [{tokenError: 'Unidentified Token', string: exp[0]}];
-  let restString = exp.slice(1);
-  return firstToken.concat(tokenize(restString));
-}
 
 /**
  * Attempts to read the first SExp from a list of tokens.
@@ -64,7 +22,7 @@ const tokenize = (exp: string): Token[] => {
  *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
-const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
+export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
   if (tokens.length === 0) {
     return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
   }
@@ -100,9 +58,9 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
           return {
             thing: {
               readError: 'No Closing Paren',
-              tokens: tokens
+              tokens: [firstToken]
             },
-            remain: []
+            remain: tokens.slice(1)
           }
         } else {
           const firstUnprocessedToken = readRest.remain[0];
@@ -164,7 +122,7 @@ const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
  * Reads as many SExp as possible from the start of the list of tokens.
  * @param tokens
  */
-const readSexps = (tokens: Token[]): Result<SExp[]> => {
+export const readSexps = (tokens: Token[]): Result<SExp[]> => {
   if (tokens.length === 0) return { thing: [], remain: [] };
   
   let firstToken = tokens[0];
@@ -256,9 +214,6 @@ const whichBool = (t: Token): SExp => {
   return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] }
 }
 
-module.exports =  {
-  'tokenize': tokenize,
-  'read': read,
-  'readSexp': readSexp,
-  'readSexps': readSexps
-};
+module.exports.read      = read;
+module.exports.readSexp  = readSexp;
+module.exports.readSexps = readSexps;
