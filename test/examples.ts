@@ -117,7 +117,7 @@ const TEST_CASE_SUCCESSES: [string[], Token[][]][] = [
     '(* 2 3)',
     '(fact 5)',
     '(f 10)'
-  ]
+  ],
 
   [
     '(define x 100)'
