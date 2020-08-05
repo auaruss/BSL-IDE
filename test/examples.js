@@ -63,66 +63,61 @@ var whichBool = function (s) {
 var TEST_CASE_SUCCESSES = [
     [
         ['(define x 10)'],
-        [[IdTok('define'), IdTok('x'), NumTok('10')]]
     ],
     [
         ['#t', '#f', '#true', '#false'],
-        [
-            [BooleanTok('#t')],
-            [BooleanTok('#f')],
-            [BooleanTok('#true')],
-            [BooleanTok('#false')]
-        ]
     ],
     [
-        '',
-        '123', '"hello"', '#true',
+        ['', '123', '"hello"', '#true']
     ],
     [
-        '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'
+        ['(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))']
     ],
-    ['"abc" def "ghi"', '"abc"def"ghi"'],
+    [['"abc" def "ghi"', '"abc"def"ghi"']],
     [
-        '(define (simple-choice x y z) (if x y z))\n'
-            + '(simple-choice #t 10 20)\n'
-            + '\n'
-            + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
-            + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n'
+        ['(define (simple-choice x y z) (if x y z))\n'
+                + '(simple-choice #t 10 20)\n'
+                + '\n'
+                + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
+                + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n']
     ],
-    ['(define (mn x y) (if (< x y) x y))'],
+    [['(define (mn x y) (if (< x y) x y))']],
     [
-        '(simple-choice #t 10 20)',
-        '(* 2 3)',
-        '(fact 5)',
-        '(f 10)'
-    ]['(define x 100)'
-        + '(define testNum 10)'
-        + '(define testBool #true)'
-        + '(define testStr "Hello")'
-        + '(define (simple-choice x y z) (if x y z))'
-        + '(simple-choice #t 10 20)'
-        + '\n'
-        + '(define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))'
-        + '(mul 2 3)'
-        + '\n'
-        + '\n'
-        + '(define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))'
-        + '(fact 5)'
-        + '(define (f x) (g (+ x 1)))'
-        + '(define (g y) (mul x y))'
-        + '\n'
-        + 'x'
-        + 'testNum'
-        + 'testBool'
-        + 'testStr'
-        + '(* 2 3)'
-        + '(/ 2 2)'
-        + '(- 3 2)'
-        + '(+ 2)'
-        + '(- 2)'
-        + '(* 2)'
-        + '(/ 2)'],
-    ['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'],
+        ['(simple-choice #t 10 20)',
+            '(* 2 3)',
+            '(fact 5)',
+            '(f 10)']
+    ],
+    [
+        ['(define x 100)'
+                + '(define testNum 10)'
+                + '(define testBool #true)'
+                + '(define testStr "Hello")'
+                + '(define (simple-choice x y z) (if x y z))'
+                + '(simple-choice #t 10 20)'
+                + '\n'
+                + '(define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))'
+                + '(mul 2 3)'
+                + '\n'
+                + '\n'
+                + '(define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))'
+                + '(fact 5)'
+                + '(define (f x) (g (+ x 1)))'
+                + '(define (g y) (mul x y))'
+                + '\n'
+                + 'x'
+                + 'testNum'
+                + 'testBool'
+                + 'testStr'
+                + '(* 2 3)'
+                + '(/ 2 2)'
+                + '(- 3 2)'
+                + '(+ 2)'
+                + '(- 2)'
+                + '(* 2)'
+                + '(/ 2)']
+    ],
+    [['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))']]
 ];
 /**
  * These are test cases which should have an error at some point in the pipeline.

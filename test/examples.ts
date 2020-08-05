@@ -75,52 +75,51 @@ const whichBool = (s: string): boolean => {
  * These test cases are cases which should succeed through
  * the entire pipeline.
  */
-const TEST_CASE_SUCCESSES: [string[], Token[][]][] = [
+const TEST_CASE_SUCCESSES: [string[]][] = [
   [
     ['(define x 10)'],
-    [[IdTok('define'), IdTok('x'), NumTok('10')]]
+    // [[IdTok('define'), IdTok('x'), NumTok('10')]]
   ],
 
   [
     ['#t', '#f', '#true', '#false'],
-    [
-      [BooleanTok('#t')],
-      [BooleanTok('#f')],
-      [BooleanTok('#true')],
-      [BooleanTok('#false')]
-    ]
+    // [
+    //   [BooleanTok('#t')],
+    //   [BooleanTok('#f')],
+    //   [BooleanTok('#true')],
+    //   [BooleanTok('#false')]
+    // ]
   ],
 
   [
-    '',
-    '123','"hello"','#true',
+    ['','123','"hello"','#true']
   ],
 
   [
-    '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'
+    ['(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))']
   ],
 
-  ['"abc" def "ghi"', '"abc"def"ghi"'],
+  [['"abc" def "ghi"', '"abc"def"ghi"']],
 
   [
-    '(define (simple-choice x y z) (if x y z))\n'
+    ['(define (simple-choice x y z) (if x y z))\n'
   + '(simple-choice #t 10 20)\n'
   + '\n'
   + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
-  + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n'
+  + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n']
   ],
 
-  ['(define (mn x y) (if (< x y) x y))'],
+  [['(define (mn x y) (if (< x y) x y))']],
 
   [
-    '(simple-choice #t 10 20)',
+    ['(simple-choice #t 10 20)',
     '(* 2 3)',
     '(fact 5)',
-    '(f 10)'
+    '(f 10)']
   ],
 
   [
-    '(define x 100)'
+   [ '(define x 100)'
     + '(define testNum 10)'
     + '(define testBool #true)'
     + '(define testStr "Hello")'
@@ -146,10 +145,10 @@ const TEST_CASE_SUCCESSES: [string[], Token[][]][] = [
     + '(+ 2)'
     + '(- 2)'
     + '(* 2)'
-    + '(/ 2)'
+    + '(/ 2)']
   ],
 
-  ['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'],
+  [['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))']]
 ];
 
 /**
