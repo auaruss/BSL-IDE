@@ -1,3 +1,5 @@
+'use strict';
+
 const { tokenize } = require('../src/logic/tokenize.js');
 const { checkExpect, checkExpectMultiple } = require('./check-expect');
 
