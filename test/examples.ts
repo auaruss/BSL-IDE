@@ -1,3 +1,5 @@
+'use strict';
+
 import {
   TokenType, TokenError, Token, SExp,
   ReadError
@@ -18,6 +20,11 @@ const Atom = (t: 'String'|'Num'|'Id'|'Bool',
   }
   throw new Error('Mismatch in atom type/value');
 }
+
+const NumTok     = (v: string): Token => { return Tok(TokenType.Number,       v.toString()); }
+const IdTok      = (v: string): Token => { return Tok(TokenType.Identifier,   v);            }
+const StringTok  = (v: string): Token => { return Tok(TokenType.String, '"' + v + '"');      }
+const BooleanTok = (v: string): Token => { return Tok(TokenType.Boolean,      v);            }
 
 const NumAtom     = (v: number): SExp => { return Atom('Num',            v);  }
 const IdAtom      = (v: string): SExp => { return Atom('Id',             v);  }
@@ -68,16 +75,25 @@ const whichBool = (s: string): boolean => {
  * These test cases are cases which should succeed through
  * the entire pipeline.
  */
-const TEST_CASE_SUCCESSES: string[][] = [
-  ['(define x 10)'],
+const TEST_CASE_SUCCESSES: [string[], Token[][]][] = [
+  [
+    ['(define x 10)'],
+    [[IdTok('define'), IdTok('x'), NumTok('10')]]
+  ],
 
-  ['#t', '#f', '#true', '#false'],
+  [
+    ['#t', '#f', '#true', '#false'],
+    [
+      [BooleanTok('#t')],
+      [BooleanTok('#f')],
+      [BooleanTok('#true')],
+      [BooleanTok('#false')]
+    ]
+  ],
 
   [
     '',
-    '123',
-    '"hello"',
-    '#true',
+    '123','"hello"','#true',
   ],
 
   [
@@ -104,38 +120,41 @@ const TEST_CASE_SUCCESSES: string[][] = [
   ]
 
   [
-    `(define x 100)
-    (define testNum 10)
-    (define testBool #true)
-    (define testStr "Hello")
-    (define (simple-choice x y z) (if x y z))
-    (simple-choice #t 10 20)
-    
-    (define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))
-    (mul 2 3)
-    
-    
-    (define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))
-    (fact 5)
-    (define (f x) (g (+ x 1)))
-    (define (g y) (mul x y))
-    
-    x
-    testNum
-    testBool
-    testStr
-    (* 2 3)
-    (/ 2 2)
-    (- 3 2)
-    (+ 2)
-    (- 2)
-    (* 2)
-    (/ 2)`
+    '(define x 100)'
+    + '(define testNum 10)'
+    + '(define testBool #true)'
+    + '(define testStr "Hello")'
+    + '(define (simple-choice x y z) (if x y z))'
+    + '(simple-choice #t 10 20)'
+    + '\n'
+    + '(define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))'
+    + '(mul 2 3)'
+    + '\n'
+    + '\n'
+    + '(define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))'
+    + '(fact 5)'
+    + '(define (f x) (g (+ x 1)))'
+    + '(define (g y) (mul x y))'
+    + '\n'
+    + 'x'
+    + 'testNum'
+    + 'testBool'
+    + 'testStr'
+    + '(* 2 3)'
+    + '(/ 2 2)'
+    + '(- 3 2)'
+    + '(+ 2)'
+    + '(- 2)'
+    + '(* 2)'
+    + '(/ 2)'
   ],
 
   ['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'],
 ];
 
+/**
+ * These are test cases which should have an error at some point in the pipeline.
+ */
 const TEST_CASE_ERRORS: string[][] = [
   ['([[[][][][][][])))[][])))){}{}{}'],
 
