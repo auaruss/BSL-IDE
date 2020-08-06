@@ -1,6 +1,7 @@
 'use strict';
 exports.__esModule = true;
 var types_1 = require("../src/logic/types");
+var tokenize_1 = require("../src/logic/tokenize");
 var Tok = function (t, v) {
     return { type: t, token: v };
 };
@@ -63,33 +64,173 @@ var whichBool = function (s) {
 var TEST_CASE_SUCCESSES = [
     [
         ['(define x 10)'],
+        [
+            [OP, IdTok('define'), IdTok('x'), NumTok('10'), CP]
+        ]
     ],
     [
         ['#t', '#f', '#true', '#false'],
+        [
+            [BooleanTok('#t')],
+            [BooleanTok('#f')],
+            [BooleanTok('#true')],
+            [BooleanTok('#false')]
+        ]
     ],
     [
-        ['', '123', '"hello"', '#true']
+        ['', '123', '"hello"', '#true'],
+        [
+            [],
+            [NumTok('123')],
+            [StringTok('hello')],
+            [BooleanTok('true')]
+        ]
     ],
     [
-        ['(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))']
+        ['(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'],
+        [
+            [
+                OP,
+                IdTok('define'),
+                SPACE,
+                OP,
+                IdTok('fact'),
+                SPACE,
+                IdTok('n'),
+                CP,
+                SPACE,
+                OP,
+                IdTok('if'),
+                SPACE,
+                OP,
+                IdTok('='),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                NumTok('0'),
+                CP,
+                SPACE,
+                NumTok('1'),
+                SPACE,
+                OP,
+                IdTok('*'),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                OP,
+                IdTok('fact'),
+                SPACE,
+                OP,
+                IdTok('-'),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                NumTok('1'),
+                CP,
+                CP,
+                CP,
+                CP,
+                CP
+            ]
+        ]
     ],
-    [['"abc" def "ghi"', '"abc"def"ghi"']],
     [
         ['(define (simple-choice x y z) (if x y z))\n'
                 + '(simple-choice #t 10 20)\n'
                 + '\n'
                 + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
-                + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n']
+                + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n'],
+        [
+            tokenize_1.tokenize('(define (simple-choice x y z) (if x y z))')
+                .concat([NL])
+                .concat(tokenize_1.tokenize('(simple-choice #t 10 20)'))
+                .concat([Tok(types_1.TokenType.Whitespace, '\n\n')])
+                .concat(tokenize_1.tokenize('(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))'))
+                .concat([NL])
+                .concat(tokenize_1.tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
+                .concat([NL])
+        ]
     ],
-    [['(define (mn x y) (if (< x y) x y))']],
     [
-        ['(simple-choice #t 10 20)',
+        ['(define (mn x y) (if (< x y) x y))'],
+        [
+            [
+                OP,
+                IdTok('define'),
+                SPACE,
+                OP,
+                IdTok('mn'),
+                SPACE,
+                IdTok('x'),
+                SPACE,
+                IdTok('y'),
+                CP,
+                SPACE,
+                OP,
+                IdTok('if'),
+                SPACE,
+                OP,
+                IdTok('<'),
+                SPACE,
+                IdTok('x'),
+                SPACE,
+                IdTok('y'),
+                CP,
+                SPACE,
+                IdTok('x'),
+                SPACE,
+                IdTok('y'),
+                CP,
+                CP
+            ]
+        ]
+    ],
+    [
+        [
+            '(simple-choice #t 10 20)',
             '(* 2 3)',
             '(fact 5)',
-            '(f 10)']
+            '(f 10)'
+        ],
+        [
+            [
+                OP,
+                IdTok('simple-choice'),
+                SPACE,
+                BooleanTok('#t'),
+                SPACE,
+                NumTok('10'),
+                SPACE,
+                NumTok('20')
+            ],
+            [
+                OP,
+                IdTok('*'),
+                SPACE,
+                NumTok('2'),
+                SPACE,
+                NumTok('3'),
+                CP
+            ],
+            [
+                OP,
+                IdTok('fact'),
+                SPACE,
+                NumTok('5'),
+                CP
+            ],
+            [
+                OP,
+                IdTok('f'),
+                SPACE,
+                NumTok('10'),
+                CP
+            ]
+        ]
     ],
     [
-        ['(define x 100)'
+        [
+            '(define x 100)'
                 + '(define testNum 10)'
                 + '(define testBool #true)'
                 + '(define testStr "Hello")'
@@ -115,9 +256,107 @@ var TEST_CASE_SUCCESSES = [
                 + '(+ 2)'
                 + '(- 2)'
                 + '(* 2)'
-                + '(/ 2)']
+                + '(/ 2)'
+        ],
+        [
+            tokenize_1.tokenize('(define x 100)')
+                .concat(tokenize_1.tokenize('(define testNum 10)'))
+                .concat(tokenize_1.tokenize('(define testBool #true)'))
+                .concat(tokenize_1.tokenize('(define testStr "Hello")'))
+                .concat(tokenize_1.tokenize('(define (simple-choice x y z) (if x y z))'))
+                .concat(tokenize_1.tokenize('(simple-choice #t 10 20)'))
+                .concat(tokenize_1.tokenize('\n'))
+                .concat(tokenize_1.tokenize('(define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))'))
+                .concat(tokenize_1.tokenize('(mul 2 3)'))
+                .concat(tokenize_1.tokenize('\n\n'))
+                .concat(tokenize_1.tokenize('(define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))'))
+                .concat(tokenize_1.tokenize('(fact 5)'))
+                .concat(tokenize_1.tokenize('(define (f x) (g (+ x 1)))'))
+                .concat(tokenize_1.tokenize('(define (g y) (mul x y))'))
+                .concat(tokenize_1.tokenize('\n'))
+                .concat(tokenize_1.tokenize('x'))
+                .concat(tokenize_1.tokenize('testNum'))
+                .concat(tokenize_1.tokenize('testBool'))
+                .concat(tokenize_1.tokenize('testStr'))
+                .concat(tokenize_1.tokenize('(* 2 3)'))
+                .concat(tokenize_1.tokenize('(/ 2 2)'))
+                .concat(tokenize_1.tokenize('(- 3 2)'))
+                .concat(tokenize_1.tokenize('(+ 2)'))
+                .concat(tokenize_1.tokenize('(- 2)'))
+                .concat(tokenize_1.tokenize('(* 2)'))
+                .concat(tokenize_1.tokenize('(/ 2)'))
+        ]
     ],
-    [['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))']]
+    [
+        ['(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'],
+        [
+            [
+                OP,
+                IdTok('define'),
+                SPACE,
+                OP,
+                IdTok('fib'),
+                SPACE,
+                IdTok('n'),
+                CP,
+                SPACE,
+                OP,
+                IdTok('if'),
+                SPACE,
+                OP,
+                IdTok('or'),
+                SPACE,
+                OP,
+                IdTok('='),
+                SPACE,
+                IdTok('n'),
+                NumTok('0'),
+                CP,
+                SPACE,
+                OP,
+                IdTok('='),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                NumTok('1'),
+                CP,
+                CP,
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                OP,
+                IdTok('+'),
+                SPACE,
+                OP,
+                IdTok('fib'),
+                SPACE,
+                OP,
+                IdTok('-'),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                NumTok('1'),
+                CP,
+                CP,
+                SPACE,
+                OP,
+                OP,
+                IdTok('fib'),
+                SPACE,
+                OP,
+                IdTok('-'),
+                SPACE,
+                IdTok('n'),
+                SPACE,
+                NumTok('2'),
+                CP,
+                CP,
+                CP,
+                CP,
+                CP
+            ]
+        ]
+    ]
 ];
 /**
  * These are test cases which should have an error at some point in the pipeline.
@@ -134,6 +373,13 @@ var TEST_CASE_ERRORS = [
         ']',
         '}',
         'x'
+    ],
+    [
+        '"abc" def "ghi"', '"abc"def"ghi"'
+        // [
+        //   [StringTok('abc'), SPACE, IdTok('def'), SPACE, StringTok('ghi')],
+        //   [StringTok('abc'), IdTok('def'), StringTok('ghi')]
+        // ]
     ],
     [
         'define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
