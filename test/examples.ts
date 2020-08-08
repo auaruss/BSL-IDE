@@ -1,13 +1,13 @@
 'use strict';
 
 import {
-  TokenType, TokenError, Token, SExp,
-  ReadError
+  DefOrExpr, ReadError, TokenType, TokenError, Token, SExp,
 } from '../src/logic/types';
 
-import {
-  tokenize
-} from '../src/logic/tokenize';
+import { tokenize } from '../src/logic/tokenize';
+import { read } from '../src/logic/read';
+import { parse, valOf } from '../src/logic/eval';
+import { checkExpect } from './check-expect';
 
 const Tok = (t: TokenType, v: string): Token => {
   return { type: t, token: v};
@@ -75,6 +75,74 @@ const whichBool = (s: string): boolean => {
       return false;
   }  
 }
+
+const t = (
+  input?: string,
+  tokens?: Token[],
+  sexps?: SExp[],
+  deforexprs?: DefOrExpr[],
+  values?: Value[],
+  output?: string
+) => {
+  describe(input, () => {
+   
+    if (input) {
+      let ts = tokenize(input);
+      if (tokens) {
+        it('should tokenize correctly', () => {
+          checkExpect(ts, tokens);
+        });
+      } else {
+        tokens = ts;
+      }
+    }
+
+    if (tokens) {
+      let s = read(tokens); // Change this to something like readTokens
+      if (sexps) {
+        it('should read correctly', () => {
+          checkExpect(s, sexps);
+        });
+      } else {
+        sexps = screen;
+      }
+    }
+
+    if (sexps) {
+      let d = parse(sexps);
+      if (deforexprs) {
+        it('should parse correctly', () => {
+          checkExpect(d, deforexprs);
+        });
+      } else {
+        deforexprs = d;
+      }
+    }
+
+    if (deforexprs) {
+      let doe = valOf(deforexprs);
+      if (values) {
+        it('should evaluate correctly', () => {
+          checkExpect(doe, values);
+        });
+      } else {
+        values = doe;
+      }
+    }
+
+    if (values) {
+      let o = printOut(values);
+      if (output) {
+        it('should output correctly', () => {
+          checkExpect(o, output);
+        });
+      }
+    }
+
+  });
+};
+
+
 /**
  * These test cases are cases which should succeed through
  * the entire pipeline.
