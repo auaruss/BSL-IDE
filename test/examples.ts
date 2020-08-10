@@ -140,89 +140,73 @@ const t = (
     }
 
   });
-};
+}
 
 
 /**
  * These test cases are cases which should succeed through
  * the entire pipeline.
  */
-const TEST_CASE_SUCCESSES: [string[], Token[][]][] = [
-  [
-    ['(define x 10)'],
-    [ 
-      [OP, IdTok('define'), IdTok('x'), NumTok('10'), CP]
-    ]
-  ],
+t(
+  '(define x 10)',
+  [OP, IdTok('define'), IdTok('x'), NumTok('10'), CP]
+)
 
-  [
-    ['#t', '#f', '#true', '#false'],
-    [
-      [BooleanTok('#t')],
-      [BooleanTok('#f')],
-      [BooleanTok('#true')],
-      [BooleanTok('#false')]
-    ]
-  ],
+t('#t', [BooleanTok('#t')]);
+t('#f', [BooleanTok('#f')]);
+t('#true', [BooleanTok('#true')]);
+t('#false', [BooleanTok('#false')]);
 
-  [
-    ['','123','"hello"','#true'],
-    [
-      [],
-      [NumTok('123')],
-      [StringTok('hello')],
-      [BooleanTok('true')]
-    ]
-  ],
+t('', []);
+t('123', [NumTok('123')]);
+t('"hello"', [StringTok('hello')]);
+t('#true', [BooleanTok('true')]);
 
+t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
   [
-    ['(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'],
-    [
-      [
-        OP,
-        IdTok('define'),
-        SPACE,
-        OP,
-        IdTok('fact'),
-        SPACE,
-        IdTok('n'),
-        CP,
-        SPACE,
-        OP,
-        IdTok('if'),
-        SPACE,
-        OP,
-        IdTok('='),
-        SPACE,
-        IdTok('n'),
-        SPACE,
-        NumTok('0'),
-        CP,
-        SPACE,
-        NumTok('1'),
-        SPACE,
-        OP,
-        IdTok('*'),
-        SPACE,
-        IdTok('n'),
-        SPACE,
-        OP,
-        IdTok('fact'),
-        SPACE,
-        OP,
-        IdTok('-'),
-        SPACE,
-        IdTok('n'),
-        SPACE,
-        NumTok('1'),
-        CP,
-        CP,
-        CP,
-        CP,
-        CP
-      ]
-    ]
-  ],
+    OP,
+    IdTok('define'),
+    SPACE,
+    OP,
+    IdTok('fact'),
+    SPACE,
+    IdTok('n'),
+    CP,
+    SPACE,
+    OP,
+    IdTok('if'),
+    SPACE,
+    OP,
+    IdTok('='),
+    SPACE,
+    IdTok('n'),
+    SPACE,
+    NumTok('0'),
+    CP,
+    SPACE,
+    NumTok('1'),
+    SPACE,
+    OP,
+    IdTok('*'),
+    SPACE,
+    IdTok('n'),
+    SPACE,
+    OP,
+    IdTok('fact'),
+    SPACE,
+    OP,
+    IdTok('-'),
+    SPACE,
+    IdTok('n'),
+    SPACE,
+    NumTok('1'),
+    CP,
+    CP,
+    CP,
+    CP,
+    CP
+  ]);
+
 
   [
     ['(define (simple-choice x y z) (if x y z))\n'
