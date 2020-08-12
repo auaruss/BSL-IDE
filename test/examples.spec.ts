@@ -5,7 +5,7 @@ import {
 } from '../src/logic/types';
 
 import { tokenize } from '../src/logic/tokenize';
-import { read } from '../src/logic/read';
+import { read, readTokens } from '../src/logic/read';
 // import { parse, valOf } from '../src/logic/eval';
 import { checkExpect } from './check-expect';
 
@@ -97,20 +97,16 @@ const t = (
       }
     }
 
-  //  if (tokens) {
-  //     try {
-  //       let s = read(tokens); // Change this to something like readTokens
-  //     } catch {
-  //       assertFailure();
-  //     }
-  //     if (sexps) {
-  //       it('should read correctly', () => {
-  //         checkExpect(s, sexps);
-  //       });
-  //     } else {
-  //       sexps = screen;
-  //     }
-  //   }
+   if (tokens) {
+        let s = readTokens(tokens); // Change this to something like readTokens
+      if (sexps) {
+        it('should read correctly', () => {
+          checkExpect(s, sexps);
+        });
+      } else {
+        sexps = s;
+      }
+    }
 
   //   if (sexps) {
   //     let d = parse(sexps);
@@ -146,24 +142,193 @@ const t = (
   });
 }
 
-/**
- * These test cases are cases which should succeed through
- * the entire pipeline.
- */
-t(
-  '(define x 10)',
-  [OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok('10'), CP]
+/*****************************************************************************
+ *                        Test cases for correctness.                        *
+ *                                                                           *
+ * These test cases are intended to test the basic behavior of a BSL program *
+ * regardless of live editing behavior.                                      *
+ *****************************************************************************/
+
+t('', [], []);
+t('123', [ NumTok('123') ], [ NumAtom(123) ] );
+t('"hello"', [ StringTok('hello') ], [ StringAtom('hello') ]);
+t('#true', [ BooleanTok('#true') ], [ BooleanAtom('#true') ]);
+
+t('(', [ OP ], [ ReadErr('No Closing Paren', [ OP ]) ]);
+t('[', [ OSP ], [ ReadErr('No Closing Paren', [ OSP ]) ]);
+t('{', [ OBP ], [ ReadErr('No Closing Paren', [ OBP ]) ]);
+t(')', [ CP ], [ ReadErr('No Open Paren', [ CP ]) ]);
+t(']', [ CSP ], [ ReadErr('No Open Paren', [ CSP ]) ]);
+t('}', [ CBP ], [ ReadErr('No Open Paren', [ CBP ]) ]);
+
+t('#t', [ BooleanTok('#t') ], [ BooleanAtom('#t') ]);
+t('#f', [ BooleanTok('#f') ], [ BooleanAtom('#f') ]);
+t('#true', [ BooleanTok('#true') ], [ BooleanAtom('#true') ]);
+t('#false', [ BooleanTok('#false') ], [ BooleanAtom('#false') ]);
+
+t('x', [ IdTok('x') ], [ IdAtom('x') ]);
+t('+', [ IdTok('+') ], [ IdAtom('+') ]);
+
+t('"abc" def "ghi"',
+  
+  [
+    StringTok('abc'),
+    SPACE,
+    IdTok('def'),
+    SPACE,
+    StringTok('ghi')
+  ],
+  
+  [
+    StringAtom('abc'),
+    IdAtom('def'),
+    StringAtom('ghi')
+  ]
 );
 
-t('#t', [BooleanTok('#t')]);
-t('#f', [BooleanTok('#f')]);
-t('#true', [BooleanTok('#true')]);
-t('#false', [BooleanTok('#false')]);
+t('"abc"def"ghi"',
+  
+  [
+    StringTok('abc'),
+    IdTok('def'),
+    StringTok('ghi')
+  ],
 
-t('', []);
-t('123', [NumTok('123')]);
-t('"hello"', [StringTok('hello')]);
-t('#true', [BooleanTok('#true')]);
+  [
+    StringAtom('abc'),
+    IdAtom('def'),
+    StringAtom('ghi')
+  ]
+);
+
+t('#t123',
+  [
+    TokErr('#'),
+    IdTok('t123')
+  ],
+
+  [
+    TokErr('#'),
+    IdAtom('t123')
+  ]
+);
+
+t(
+  '(define x 10)',
+  [ OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok('10'), CP ],
+  [ 
+    [ IdAtom('define'), IdAtom('x'), NumAtom(10) ]
+  ]
+);
+
+t('(123)',
+  
+  [
+    OP,
+    NumTok('123'),
+    CP
+  ],
+
+  [
+    [ NumAtom(123) ]
+  ]
+);
+
+t('([[[][][][][][])))[][])))){}{}{}',
+  
+  [
+    OP,
+    OSP,
+    OSP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    CP,
+    CP,
+    CP,
+    OSP,
+    CSP,
+    OSP,
+    CSP,
+    CP,
+    CP,
+    CP,
+    CP,
+    OBP,
+    CBP,
+    OBP,
+    CBP,
+    OBP,
+    CBP
+  ],
+
+  [
+    [
+      ReadErr('No Closing Paren', [ OSP ]),
+      ReadErr('No Closing Paren', [ OSP ]),
+      [],[],[],[],[],[]
+    ],
+    ReadErr('No Open Paren', [ CP ]),
+    ReadErr('No Open Paren', [ CP ]),
+    [],[],
+    ReadErr('No Open Paren', [ CP ]),
+    ReadErr('No Open Paren', [ CP ]),
+    ReadErr('No Open Paren', [ CP ]),
+    ReadErr('No Open Paren', [ CP ]),
+    [],
+    []
+  ]
+);
+
+t(') (hello)',
+  
+  [
+    CP,
+    SPACE,
+    OP,
+    IdTok('hello'),
+    CP
+  ],
+
+  [
+    ReadErr('No Open Paren', [ CP ]),
+    [
+      IdAtom('hello')
+    ]
+  ],
+);
+
+t('(define bool #t123)',
+  
+  [
+    OP,
+    IdTok('define'),
+    SPACE,
+    IdTok('bool'),
+    SPACE,
+    TokErr('#'),
+    IdTok('t123'),
+    CP
+  ],
+
+  [
+    [
+      IdAtom('define'),
+      IdAtom('bool'),
+      TokErr('#'),
+      IdAtom('t123')
+    ]
+  ]
+);
 
 t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
   [
@@ -208,10 +373,42 @@ t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
     CP,
     CP,
     CP
+  ],
+
+  [
+    [
+      IdAtom('define'),
+      [
+        IdAtom('fact'),
+        IdAtom('n')
+      ],
+      [
+        IdAtom('if'),
+        [
+          IdAtom('='),
+          IdAtom('n'),
+          NumAtom(0)
+        ],
+        NumAtom(1),
+        [
+          IdAtom('*'),
+          IdAtom('n'),
+          [
+            IdAtom('fact'),
+            [
+              IdAtom('-'),
+              IdAtom('n'),
+              NumAtom(1)
+            ]
+          ]
+        ]
+      ]
+    ]
   ]
 );
 
 t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
+
   [
     IdTok('define'),
     SPACE,
@@ -253,6 +450,36 @@ t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
     CP,
     CP,
     CP
+  ],
+
+  [
+    IdAtom('define'),
+    [
+      IdAtom('fact'),
+      IdAtom('n')
+    ],
+    [
+      IdAtom('if'),
+      [
+        IdAtom('='),
+        IdAtom('n'),
+        NumAtom(0)
+      ],
+      NumAtom(1),
+      [
+        IdAtom('*'),
+        IdAtom('n'),
+        [
+          IdAtom('fact'),
+          [
+            IdAtom('-'),
+            IdAtom('n'),
+            NumAtom(1)
+          ]
+        ]
+      ]
+    ],
+    ReadErr('No Open Paren', [ CP ])
   ]
 );
 
@@ -296,6 +523,35 @@ t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
     CP,
     CP,
     CP
+  ],
+
+  [
+    [
+      IdAtom('fact'),
+      IdAtom('n')
+    ],
+    [
+      IdAtom('if'),
+      [
+        IdAtom('='),
+        IdAtom('n'),
+        NumAtom(0)
+      ],
+      NumAtom(1),
+      [
+        IdAtom('*'),
+        IdAtom('n'),
+        [
+          IdAtom('fact'),
+          [
+            IdAtom('-'),
+            IdAtom('n'),
+            NumAtom(1)
+          ]
+        ]
+      ]
+    ],
+    ReadErr('No Open Paren', [ CP ])
   ]
 );
 
@@ -306,13 +562,98 @@ t('(define (simple-choice x y z) (if x y z))\n'
 + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n',
 
   tokenize('(define (simple-choice x y z) (if x y z))')
-  .concat([NL])
+  .concat([ NL ])
   .concat(tokenize('(simple-choice #t 10 20)'))
-  .concat([Tok(TokenType.Whitespace, '\n\n')])
+  .concat([ Tok(TokenType.Whitespace, '\n\n') ])
   .concat(tokenize('(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))'))
-  .concat([NL])
+  .concat([ NL ])
   .concat(tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
-  .concat([NL])
+  .concat([ NL ]),
+
+  [
+    [
+      IdAtom('define'),
+      [
+        IdAtom('simple-choice'),
+        IdAtom('x'),
+        IdAtom('y'),
+        IdAtom('z')
+      ],
+      [
+        IdAtom('if'),
+        IdAtom('x'),
+        IdAtom('y'),
+        IdAtom('z')
+      ]
+    ],
+
+    [
+        IdAtom('simple-choice'),
+        BooleanAtom('#t'),
+        NumAtom(10),
+        NumAtom(20)
+    ],
+
+    [
+      IdAtom('define'),
+      [
+        IdAtom('*'),
+        IdAtom('m'),
+        IdAtom('n')
+      ],
+      [
+        IdAtom('if'),
+        [
+          IdAtom('='),
+          IdAtom('n'),
+          NumAtom(0)
+        ],
+        NumAtom(0),
+        [
+          IdAtom('+'),
+          IdAtom('m'),
+          [
+            IdAtom('*'),
+            IdAtom('m'),
+            [
+              IdAtom('-'),
+              IdAtom('n'),
+              NumAtom(1)
+            ]
+          ]
+        ]
+      ]
+    ],
+
+    [
+      IdAtom('define'),
+      [
+        IdAtom('fact'),
+        IdAtom('n')
+      ],
+      [
+        IdAtom('if'),
+        [
+          IdAtom('='),
+          IdAtom('n'),
+          NumAtom(0)
+        ],
+        NumAtom(1),
+        [
+          IdAtom('*'),
+          IdAtom('n'),
+          [
+            IdAtom('fact'),
+            [
+              IdAtom('-'),
+              IdAtom('n'),
+              NumAtom(1)
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
 );
 
 t(
@@ -345,6 +686,27 @@ t(
     IdTok('y'),
     CP,
     CP
+  ],
+
+  [
+    [
+      IdAtom('define'),
+      [
+        IdAtom('mn'),
+        IdAtom('x'),
+        IdAtom('y')
+      ],
+      [
+        IdAtom('if'),
+        [
+          IdAtom('<'),
+          IdAtom('x'),
+          IdAtom('y')
+        ],
+        IdAtom('x'),
+        IdAtom('y')
+      ]
+    ]
   ]
 );
 
@@ -352,6 +714,7 @@ t(
 
 
 t('(simple-choice #t 10 20)',
+
   [
     OP,
     IdTok('simple-choice'),
@@ -362,6 +725,15 @@ t('(simple-choice #t 10 20)',
     SPACE,
     NumTok('20'),
     CP
+  ],
+
+  [
+    [ 
+      IdAtom('simple-choice'),
+      BooleanAtom('#t'),
+      NumAtom(10),
+      NumAtom(20)
+    ]
   ]
 );
 
@@ -374,26 +746,50 @@ t('(* 2 3)',
     SPACE,
     NumTok('3'),
     CP
+  ],
+
+  [
+    [
+      IdAtom('*'),
+      NumAtom(2),
+      NumAtom(3)
+    ]
   ]
 );
 
 t('(fact 5)',
+  
   [
     OP,
     IdTok('fact'),
     SPACE,
     NumTok('5'),
     CP
+  ],
+
+  [
+    [
+      IdAtom('fact'),
+      NumAtom(5)
+    ]
   ]
 );
 
 t('(f 10)',
+  
   [
     OP,
     IdTok('f'),
     SPACE,
     NumTok('10'),
     CP
+  ],
+
+  [
+    [
+      IdAtom('f'),
+      NumAtom(10)
+    ]
   ]
 );
 
@@ -450,8 +846,31 @@ t('(define x 100)'
     .concat(tokenize('(+ 2)'))
     .concat(tokenize('(- 2)'))
     .concat(tokenize('(* 2)'))
-    .concat(tokenize('(/ 2)'))
+    .concat(tokenize('(/ 2)')),
 
+  read('(define x 100)')
+    .concat(read('(define testNum 10)'))
+    .concat(read('(define testBool #true)'))
+    .concat(read('(define testStr "Hello")'))
+    .concat(read('(define (simple-choice x y z) (if x y z))'))
+    .concat(read('(simple-choice #t 10 20)'))
+    .concat(read('(define (mul m n) (if (= n 0) 0 (+ m (mul m (- n 1)))))'))
+    .concat(read('(mul 2 3)'))
+    .concat(read('(define (fact n) (if (= n 0) 1 (mul n (fact (- n 1)))))'))
+    .concat(read('(fact 5)'))
+    .concat(read('(define (f x) (g (+ x 1)))'))
+    .concat(read('(define (g y) (mul x y))'))
+    .concat(read('x'))
+    .concat(read('testNum'))
+    .concat(read('testBool'))
+    .concat(read('testStr'))
+    .concat(read('(* 2 3)'))
+    .concat(read('(/ 2 2)'))
+    .concat(read('(- 3 2)'))
+    .concat(read('(+ 2)'))
+    .concat(read('(- 2)'))
+    .concat(read('(* 2)'))
+    .concat(read('(/ 2)'))
 );
 
 t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))',
@@ -522,132 +941,8 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'
   ]
 );
 
-t('([[[][][][][][])))[][])))){}{}{}',
-  [
-    OP,
-    OSP,
-    OSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    CP,
-    CP,
-    CP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    CP,
-    CP,
-    CP,
-    CP,
-    OBP,
-    CBP,
-    OBP,
-    CBP,
-    OBP,
-    CBP
-  ]
-);
-
-t('+',
-  [ IdTok('+') ]
-);
-
-t('(123)',
-  [
-    OP,
-    NumTok('123'),
-    CP
-  ]
-);
-
-t('(',
-  [ OP ]
-);
-
-t('[',
-  [ OSP ]
-);
-
-t('{',
-  [ OBP ]
-);
-
-t(')',
-  [ CP ]
-);
-
-t(']',
-  [ CSP ]
-);
-
-t('}',
-  [ CBP ]
-);
-
-t('x',
-  [ IdTok('x') ]
-);
-
-t('"abc" def "ghi"',
-  [
-    StringTok('abc'),
-    SPACE,
-    IdTok('def'),
-    SPACE,
-    StringTok('ghi')
-  ]
-);
-
-t('"abc"def"ghi"',
-  [
-    StringTok('abc'),
-    IdTok('def'),
-    StringTok('ghi')
-  ]
-);
-
-t('#t123',
-  [
-    TokErr('#'),
-    IdTok('t123')
-  ]
-);
-
-t('(define bool #t123)',
-  [
-    OP,
-    IdTok('define'),
-    SPACE,
-    IdTok('bool'),
-    SPACE,
-    TokErr('#'),
-    IdTok('t123'),
-    CP
-  ]
-);
-
-t(') (hello)',
-  [
-    CP,
-    SPACE,
-    OP,
-    IdTok('hello'),
-    CP
-  ]
-);
-
 t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))',
+  
   [
     OP,
     StringTok('hello'),
@@ -678,6 +973,27 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
     IdTok('readable'),
     CP,
     CP
+  ],
+
+  [
+    [
+      StringAtom('hello'),
+      IdAtom('world'),
+      [
+        IdAtom('this'),
+        StringAtom('is'),
+        StringAtom('some non'),
+        IdAtom('sense'),
+        [
+          IdAtom('which'),
+          IdAtom('should'),
+          IdAtom('be')
+        ],
+        BooleanAtom('#t'),
+        NumAtom(10),
+        IdAtom('readable')
+      ]
+    ]
   ]
 );
 
