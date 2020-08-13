@@ -16,7 +16,7 @@ run tests by doing:
 npm test
 ```
 
-add a new test by adding to test/examples.spec.ts, then running
+add a new test by adding to test/examples.spec.ts, then running:
 ```
 tsc test/example.spec.ts
 npm test
