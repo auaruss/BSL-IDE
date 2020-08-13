@@ -137,12 +137,8 @@ exports.readSexps = function (tokens) {
         return readRest;
     }
 };
-/**
- * Reads as many SExp as possible from the start of an expression.
- * @param exp an expression as a string
- */
-exports.read = function (exp) {
-    var tokens = tokenize_1.tokenize(exp);
+exports.readTokens = function (ts) {
+    var tokens = ts.slice();
     var sexps = [];
     while (tokens.length !== 0) {
         var next = exports.readSexp(tokens);
@@ -150,6 +146,13 @@ exports.read = function (exp) {
         tokens = next.remain;
     }
     return sexps;
+};
+/**
+ * Reads as many SExp as possible from the start of an expression.
+ * @param exp an expression as a string
+ */
+exports.read = function (exp) {
+    return exports.readTokens(tokenize_1.tokenize(exp));
 };
 /**
  * Given two token types, if the first is an opening paren token and the second a closing paren token,
@@ -197,3 +200,6 @@ var whichBool = function (t) {
     }
     return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] };
 };
+module.exports.read = exports.read;
+module.exports.readSexp = exports.readSexp;
+module.exports.readSexps = exports.readSexps;

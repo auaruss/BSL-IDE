@@ -151,12 +151,8 @@ export const readSexps = (tokens: Token[]): Result<SExp[]> => {
   }
 }
 
-/**
- * Reads as many SExp as possible from the start of an expression.
- * @param exp an expression as a string
- */
-export const read = (exp:string): SExp[] => {
-  let tokens = tokenize(exp);
+export const readTokens = (ts: Token[]): SExp[] => {
+  let tokens = ts.slice(); 
   let sexps = [];
   
   while (tokens.length !== 0) {
@@ -166,6 +162,14 @@ export const read = (exp:string): SExp[] => {
   }
 
   return sexps;
+}
+
+/**
+ * Reads as many SExp as possible from the start of an expression.
+ * @param exp an expression as a string
+ */
+export const read = (exp:string): SExp[] => {
+  return readTokens(tokenize(exp));
 }
 
 /**
