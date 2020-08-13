@@ -4,10 +4,15 @@ import {
   DefOrExpr, ReadError, TokenType, TokenError, Token, SExp, Value
 } from '../src/logic/types';
 
-import { tokenize } from '../src/logic/tokenize';
-import { read, readTokens } from '../src/logic/read';
-// import { parse, valOf } from '../src/logic/eval';
+import { tokenize                     } from '../src/logic/evaluator/tokenize';
+import { read,     readTokens         } from '../src/logic/evaluator/read';
+import { parse,    parseSexps         } from '../src/logic/evaluator/parse';
+import { evaluate, evaluateDefOrExprs } from '../src/logic/evaluator/eval';
+import { print,    printValues        } from '../src/logic/evaluator/print';
+
 import { checkExpect } from './check-expect';
+
+import { assert } from 'chai';
 
 const Tok = (t: TokenType, v: string): Token => {
   return { type: t, token: v};
@@ -87,57 +92,88 @@ const t = (
   describe(input, () => {
    
     if (input) {
-      let ts = tokenize(input);
-      if (tokens) {
-        it('should tokenize correctly', () => {
-          checkExpect(ts, tokens);
-        });
-      } else {
-        tokens = ts;
+      try {
+        let ts = tokenize(input);
+        if (tokens) {
+          it('should tokenize correctly', () => {
+            checkExpect(ts, tokens);
+          });
+        } else {
+          tokens = ts;
+        }
+      } catch (e) {
+        it('Threw this error on the tokenizer: ' + e, () => {
+          assert.fail();
+        })
       }
     }
 
-   if (tokens) {
-        let s = readTokens(tokens); // Change this to something like readTokens
-      if (sexps) {
-        it('should read correctly', () => {
-          checkExpect(s, sexps);
+    if (tokens) {
+      let s: any;
+      try {
+        s = readTokens(tokens);
+        if (sexps) {
+          it('should read correctly', () => {
+            checkExpect(s, sexps);
+          });
+        } else {
+          sexps = s;
+        }
+      } catch (e) {
+        it('Threw this error on the reader: ' + e, () => {
+          assert.fail();
         });
-      } else {
-        sexps = s;
       }
     }
 
-  //   if (sexps) {
-  //     let d = parse(sexps);
-  //     if (deforexprs) {
-  //       it('should parse correctly', () => {
-  //         checkExpect(d, deforexprs);
-  //       });
-  //     } else {
-  //       deforexprs = d;
-  //     }
-  //   }
+    if (sexps) {
+      try {
+        let d = parseSexps(sexps);
+        if (deforexprs) {
+          it('should parse correctly', () => {
+            checkExpect(d, deforexprs);
+          });
+        } else {
+          deforexprs = d;
+        }
+      } catch (e) {
+        it('Threw this error on the parser: ' + e, () => {
+          assert.fail();
+        });
+      }
+    }
 
-  //   if (deforexprs) {
-  //     let doe = valOf(deforexprs);
-  //     if (values) {
-  //       it('should evaluate correctly', () => {
-  //         checkExpect(doe, values);
-  //       });
-  //     } else {
-  //       values = doe;
-  //     }
-  //   }
+    if (deforexprs) {
+      try {
+        let doe = evaluateDefOrExprs(deforexprs);
+        if (values) {
+          it('should evaluate correctly', () => {
+            checkExpect(doe, values);
+          });
+        } else {
+          values = doe;
+        }
+      } catch (e) {
+        it('Threw this error on the evaluator: ' + e, () => {
+          assert.fail();
+        });
+      }
+    }
 
-  //   if (values) {
-  //     let o = printOut(values);
-  //     if (output) {
-  //       it('should output correctly', () => {
-  //         checkExpect(o, output);
-  //       });
-  //     }
-  //   }
+    if (values) {
+      try {
+        let o = printValues(values);
+        if (output) {
+          it('should output correctly', () => {
+            checkExpect(o, output);
+          });
+        }
+      } catch (e) {
+        it('Threw this error on the reader: ' + e, () => {
+          assert.fail();
+        });
+      }
+    }
 
   });
 }
@@ -149,7 +185,7 @@ const t = (
  * regardless of live editing behavior.                                      *
  *****************************************************************************/
 
-t('', [], []);
+t('', [], [], [], []);
 t('123', [ NumTok('123') ], [ NumAtom(123) ] );
 t('"hello"', [ StringTok('hello') ], [ StringAtom('hello') ]);
 t('#true', [ BooleanTok('#true') ], [ BooleanAtom('#true') ]);
@@ -873,7 +909,7 @@ t('(define x 100)'
     .concat(read('(/ 2)'))
 );
 
-t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))',
+t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))',
   [
     OP,
     IdTok('define'),
@@ -938,6 +974,52 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'
     CP,
     CP,
     CP
+  ],
+
+  [
+    [
+      IdAtom('define'),
+      [
+        IdAtom('fib'),
+        IdAtom('n')
+      ],
+      [
+        IdAtom('if'),
+        [ 
+          IdAtom('or'),
+          [
+            IdAtom('='),
+            IdAtom('n'),
+            NumAtom(0)
+          ],
+          [
+            IdAtom('='),
+            IdAtom('n'),
+            NumAtom(1)
+          ]
+        ],
+        NumAtom(1),
+        [
+          IdAtom('+'),
+          [
+            IdAtom('fib'),
+            [
+              IdAtom('-'),
+              IdAtom('n'),
+              NumAtom(1)
+            ]
+          ],
+          [
+            IdAtom('fib'),
+            [
+              IdAtom('-'),
+              IdAtom('n'),
+              NumAtom(2)
+            ]
+          ]
+        ]
+      ]
+    ]
   ]
 );
 
@@ -1002,3 +1084,22 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
 // 'background-image\n' +
 // '(define (f x) (+ 1 x))\n',
 // );
+
+/*****************************************************************************
+ *                   Test cases for live editing behavior.                   *
+ *                                                                           *
+ * These test cases are intended to illustrate specific live editing         *
+ * behavior and the intended output of the live editor with that behavior.   *
+ *****************************************************************************/
+
+
+/**
+ * Behavior:
+ * Someone uses an editor that inserts matching parens automatically.
+ * when they write (fib 10), it goes from () to (fib 10) one character at a time.
+ */
+
+/**
+ * Behavior:
+ * A user comments out a piece of code.
+ */

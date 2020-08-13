@@ -1,10 +1,13 @@
 'use strict';
 exports.__esModule = true;
 var types_1 = require("../src/logic/types");
-var tokenize_1 = require("../src/logic/tokenize");
-var read_1 = require("../src/logic/read");
-// import { parse, valOf } from '../src/logic/eval';
+var tokenize_1 = require("../src/logic/evaluator/tokenize");
+var read_1 = require("../src/logic/evaluator/read");
+var parse_1 = require("../src/logic/evaluator/parse");
+var eval_1 = require("../src/logic/evaluator/eval");
+var print_1 = require("../src/logic/evaluator/print");
 var check_expect_1 = require("./check-expect");
+var chai_1 = require("chai");
 var Tok = function (t, v) {
     return { type: t, token: v };
 };
@@ -63,55 +66,93 @@ var whichBool = function (s) {
 var t = function (input, tokens, sexps, deforexprs, values, output) {
     describe(input, function () {
         if (input) {
-            var ts_1 = tokenize_1.tokenize(input);
-            if (tokens) {
-                it('should tokenize correctly', function () {
-                    check_expect_1.checkExpect(ts_1, tokens);
-                });
+            try {
+                var ts_1 = tokenize_1.tokenize(input);
+                if (tokens) {
+                    it('should tokenize correctly', function () {
+                        check_expect_1.checkExpect(ts_1, tokens);
+                    });
+                }
+                else {
+                    tokens = ts_1;
+                }
             }
-            else {
-                tokens = ts_1;
+            catch (e) {
+                it('Threw this error on the tokenizer: ' + e, function () {
+                    chai_1.assert.fail();
+                });
             }
         }
         if (tokens) {
-            var s_1 = read_1.readTokens(tokens); // Change this to something like readTokens
-            if (sexps) {
-                it('should read correctly', function () {
-                    check_expect_1.checkExpect(s_1, sexps);
+            var s_1;
+            try {
+                s_1 = read_1.readTokens(tokens);
+                if (sexps) {
+                    it('should read correctly', function () {
+                        check_expect_1.checkExpect(s_1, sexps);
+                    });
+                }
+                else {
+                    sexps = s_1;
+                }
+            }
+            catch (e) {
+                it('Threw this error on the reader: ' + e, function () {
+                    chai_1.assert.fail();
                 });
             }
-            else {
-                sexps = s_1;
+        }
+        if (sexps) {
+            try {
+                var d_1 = parse_1.parseSexps(sexps);
+                if (deforexprs) {
+                    it('should parse correctly', function () {
+                        check_expect_1.checkExpect(d_1, deforexprs);
+                    });
+                }
+                else {
+                    deforexprs = d_1;
+                }
+            }
+            catch (e) {
+                it('Threw this error on the parser: ' + e, function () {
+                    chai_1.assert.fail();
+                });
             }
         }
-        //   if (sexps) {
-        //     let d = parse(sexps);
-        //     if (deforexprs) {
-        //       it('should parse correctly', () => {
-        //         checkExpect(d, deforexprs);
-        //       });
-        //     } else {
-        //       deforexprs = d;
-        //     }
-        //   }
-        //   if (deforexprs) {
-        //     let doe = valOf(deforexprs);
-        //     if (values) {
-        //       it('should evaluate correctly', () => {
-        //         checkExpect(doe, values);
-        //       });
-        //     } else {
-        //       values = doe;
-        //     }
-        //   }
-        //   if (values) {
-        //     let o = printOut(values);
-        //     if (output) {
-        //       it('should output correctly', () => {
-        //         checkExpect(o, output);
-        //       });
-        //     }
-        //   }
+        if (deforexprs) {
+            try {
+                var doe_1 = eval_1.evaluateDefOrExprs(deforexprs);
+                if (values) {
+                    it('should evaluate correctly', function () {
+                        check_expect_1.checkExpect(doe_1, values);
+                    });
+                }
+                else {
+                    values = doe_1;
+                }
+            }
+            catch (e) {
+                it('Threw this error on the evaluator: ' + e, function () {
+                    chai_1.assert.fail();
+                });
+            }
+        }
+        if (values) {
+            try {
+                var o_1 = print_1.printValues(values);
+                if (output) {
+                    it('should output correctly', function () {
+                        check_expect_1.checkExpect(o_1, output);
+                    });
+                }
+            }
+            catch (e) {
+                it('Threw this error on the reader: ' + e, function () {
+                    chai_1.assert.fail();
+                });
+            }
+        }
     });
 };
 /*****************************************************************************
@@ -120,7 +161,7 @@ var t = function (input, tokens, sexps, deforexprs, values, output) {
  * These test cases are intended to test the basic behavior of a BSL program *
  * regardless of live editing behavior.                                      *
  *****************************************************************************/
-t('', [], []);
+t('', [], [], [], []);
 t('123', [NumTok('123')], [NumAtom(123)]);
 t('"hello"', [StringTok('hello')], [StringAtom('hello')]);
 t('#true', [BooleanTok('#true')], [BooleanAtom('#true')]);
@@ -731,7 +772,7 @@ t('(define x 100)'
     .concat(read_1.read('(- 2)'))
     .concat(read_1.read('(* 2)'))
     .concat(read_1.read('(/ 2)')));
-t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))', [
+t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))', [
     OP,
     IdTok('define'),
     SPACE,
@@ -795,6 +836,50 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) n (+ (fib (- n 1)) (fib (- n 2)))))'
     CP,
     CP,
     CP
+], [
+    [
+        IdAtom('define'),
+        [
+            IdAtom('fib'),
+            IdAtom('n')
+        ],
+        [
+            IdAtom('if'),
+            [
+                IdAtom('or'),
+                [
+                    IdAtom('='),
+                    IdAtom('n'),
+                    NumAtom(0)
+                ],
+                [
+                    IdAtom('='),
+                    IdAtom('n'),
+                    NumAtom(1)
+                ]
+            ],
+            NumAtom(1),
+            [
+                IdAtom('+'),
+                [
+                    IdAtom('fib'),
+                    [
+                        IdAtom('-'),
+                        IdAtom('n'),
+                        NumAtom(1)
+                    ]
+                ],
+                [
+                    IdAtom('fib'),
+                    [
+                        IdAtom('-'),
+                        IdAtom('n'),
+                        NumAtom(2)
+                    ]
+                ]
+            ]
+        ]
+    ]
 ]);
 t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))', [
     OP,
