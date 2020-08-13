@@ -69,8 +69,7 @@ export type DefOrExpr
 export type Definition
   = ['define', [string, string[]], Expr]
   | ['define', string, Expr]
-  | ['define', string]
-  | { case: 'Defn', err: SyntaxError };
+  | { case:'definition', err: DefinitionError };
 
 
 export type Expr
@@ -88,13 +87,22 @@ export type Expr
     expr: boolean
   } 
   | [string, Expr[]] 
-  | { case: 'Expr', err: SyntaxError };
+  | { case: 'Expr', err: ExprError };
 
-export type SyntaxError
+export type DefinitionError
   = {
-    error: 'Empty Expr',
+    error: 'Invalid definition'
+         | 'Passed a non-definition as definition',
     sexps: SExp[]
   }; //...
+
+export type ExprError
+  = {
+    error: 'Empty Expr'
+         | 'Defn inside Expr'
+         | 'Missing starting ID',
+    sexps: SExp[]
+  };
 
 // ----------------------------------------------------------------------------
 
