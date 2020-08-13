@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 
-export function checkExpect<T, U> (res: T, expected: T): void {
+export function checkExpect<T, U> (res: T, expected: U): void {
   expect(res).to.deep.equal(expected);
 }
 
