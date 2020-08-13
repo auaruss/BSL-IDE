@@ -186,7 +186,7 @@ const t = (
  *****************************************************************************/
 
 t('', [], [], [], []);
-t('123', [ NumTok('123') ], [ NumAtom(123) ] );
+t('123', [ NumTok('123') ], [ NumAtom(123) ]);
 t('"hello"', [ StringTok('hello') ], [ StringAtom('hello') ]);
 t('#true', [ BooleanTok('#true') ], [ BooleanAtom('#true') ]);
 
