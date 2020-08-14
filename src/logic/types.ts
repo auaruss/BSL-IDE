@@ -94,35 +94,29 @@ export type DefinitionError
     error: 'Invalid definition'
          | 'Passed a non-definition as definition',
     sexps: SExp[]
-  }; //...
+  } | ReadError;
 
 export type ExprError
   = {
-    error: 'Empty Expr'
-         | 'Defn inside Expr'
-         | 'Missing starting ID',
+    exprError: 'Empty Expr'
+             | 'Defn inside Expr'
+             | 'Missing starting ID',
     sexps: SExp[]
-  };
+  } | ReadError;
 
 // ----------------------------------------------------------------------------
 
 export type Value
   = {
-    type: ValueType.NonFunction,
-    value: string | number | boolean | Error
+    type: 'NonFunction',
+    value: string | number | boolean
   } | {
-    type: ValueType.BuiltinFunction,
+    type: 'BuiltinFunction',
     value: ((vs: Value[]) => Value)
   } | {
-    type: ValueType.Function,
+    type: 'Function',
     value: Fn
-  };
-
-export enum ValueType {
-  NonFunction='NonFunction',
-  BuiltinFunction='BuiltinFunction',
-  Function='Function',
-};
+  } | ValueError;
 
 export type Fn
   = {
@@ -133,9 +127,9 @@ export type Fn
 
 export type Env = Map<String,Value>;
 
-type Error
-  = /*ParseError
-  | */{
-    error: "Id Not in Env"
-    id: string
-  } // ...
+export type ValueError
+  = 
+  | {
+    valueError: "Id not in environment"
+    deforexprs: DefOrExpr[]
+  } | DefinitionError | ExprError;
