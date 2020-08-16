@@ -69,15 +69,15 @@ export type DefOrExpr
 export type Definition
   = ['define', [string, string[]], Expr]
   | ['define', string, Expr]
-  | { case:'definition', err: DefinitionError };
+  | DefinitionError;
 
 
 export type Expr
   = {
-    type: 'String'
+    type: 'String',
     expr: string
   } | {
-    type: 'Num'
+    type: 'Num',
     expr: number
   } | {
     type: 'Id',
@@ -86,12 +86,12 @@ export type Expr
     type: 'Bool',
     expr: boolean
   } 
-  | [string, Expr[]] 
-  | { case: 'Expr', err: ExprError };
+  | [string, Expr[]]
+  | ExprError;
 
 export type DefinitionError
   = {
-    error: 'Invalid definition'
+    defnError: 'Invalid definition'
          | 'Passed a non-definition as definition',
     sexps: SExp[]
   } | ReadError;
@@ -128,8 +128,7 @@ export type Fn
 export type Env = Map<String,Value>;
 
 export type ValueError
-  = 
-  | {
+  = {
     valueError: "Id not in environment"
     deforexprs: DefOrExpr[]
   } | DefinitionError | ExprError;

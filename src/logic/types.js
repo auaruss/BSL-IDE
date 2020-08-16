@@ -16,10 +16,3 @@ var TokenType;
     TokenType["Boolean"] = "Boolean";
 })(TokenType = exports.TokenType || (exports.TokenType = {}));
 ;
-var ValueType;
-(function (ValueType) {
-    ValueType["NonFunction"] = "NonFunction";
-    ValueType["BuiltinFunction"] = "BuiltinFunction";
-    ValueType["Function"] = "Function";
-})(ValueType = exports.ValueType || (exports.ValueType = {}));
-;
