@@ -11,6 +11,8 @@ import {
   Token, TokenType
 } from '../types';
 
+import { Tok, TokErr } from '../constructors';
+
 // Regexp Definitions.
 export const tokenExpressions: [TokenType, RegExp][] = [
   [TokenType.OpenParen, /^\(/],
@@ -37,13 +39,13 @@ export const tokenize = (exp: string): Token[] => {
   for (let [tokenType, expression] of tokenExpressions) {
     let result = expression.exec(exp);
     if (result) {
-      let firstToken: Token[] = [{type: tokenType, token: result[0]}];
+      let firstToken: Token[] = [Tok(tokenType,result[0])];
       let restString: string = exp.slice(result[0].length);
       return firstToken.concat(tokenize(restString));
     }
   }
 
-  let firstToken: Token[] = [{tokenError: 'Unidentified Token', string: exp[0]}];
+  let firstToken: Token[] = [TokErr(exp[0])];
   let restString = exp.slice(1);
   return firstToken.concat(tokenize(restString));
 }
