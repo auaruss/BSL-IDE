@@ -1,5 +1,7 @@
 import {
-  TokenType, Token, TokenError, SExp, ReadError, Expr, Value, DefOrExpr, ValueError
+  TokenType, Token, TokenError,
+  SExp, ReadError, Expr, Value,
+  DefOrExpr, ValueError, ExprError
 } from './types';
 
 // ----------------------------------------------------------------------------
@@ -74,6 +76,14 @@ export const NumExpr     = (v: number):  Expr => { return PrimitiveExpr('Num',  
 export const IdExpr      = (v: string):  Expr => { return PrimitiveExpr('Id',     v);  }
 export const StringExpr  = (v: string):  Expr => { return PrimitiveExpr('String', v);  }
 export const BooleanExpr = (v: boolean): Expr => { return PrimitiveExpr('Bool',   v); }
+
+export const ExprErr = (
+  e: 'Empty Expr'
+   | 'Defn inside Expr'
+   | 'Missing starting ID',
+  v: SExp[]): ExprError => { 
+  return { exprError: e, sexps: v }; 
+}
 
 // ----------------------------------------------------------------------------
 // | Value constructors                                                       |
