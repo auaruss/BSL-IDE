@@ -1,12 +1,38 @@
 import { SExp, DefOrExpr } from '../types';
+import { read } from './read';
+import { isReadError, isTokenError, isDefinition } from '../predicates';
 
+/**
+ * Given a program, parses the string into a set of definitions and expressions.
+ * @param exp program to be parsed
+ */
 export const parse = (exp: string): DefOrExpr[] => {
-  return [];
+  return parseSexps(read(exp));
 }
 
+/**
+ * Given a program's SExp form, parses the string into a set of definitions and expressions.
+ * @param sexps program to be parsed
+ */
 export const parseSexps = (sexps: SExp[]): DefOrExpr[] => {
-  return [];
+  if (sexps.length === 0) return [];
+  let parseRest = parseSexps(sexps.slice(1));
+  parseRest.unshift(parseSexp(sexps[0]));
+  return parseRest;
 }
+
+/**
+ * Parses a single S-Expression into a definition or expression.
+ * @param sexp
+ */
+export const parseSexp = (sexp: SExp): DefOrExpr => {
+  if (isReadError(sexp)) return sexp;
+  if (sexp.length === 0) return sexp;
+    return parseDefinition(sexp);
+  return parseExpr(sexp);
+}
+
+export const parseDefinition = (sexp: SExp)
 
 // /**
 //  * Checks to make sure the parsed SExps have the proper structure of an Expr.
