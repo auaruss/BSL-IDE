@@ -36,7 +36,7 @@ export type Result<T>
   };
 
 export type SExp
-  = {
+  = ReadError | SExp[] | {
     type: 'String'
     sexp: string
   } | {
@@ -48,16 +48,14 @@ export type SExp
   } | {
     type: 'Bool',
     sexp: boolean
-  } | SExp[] | ReadError;
+  };
 
 export type ReadError
   =  {
     readError: 'No Valid SExp'
              | 'No Closing Paren'
              | 'No Open Paren'
-             | 'Mismatched Parens'
-             | 'Read non-result (should never be seen)'
-             | 'Non-boolean was processed as a boolean (should never be seen)',
+             | 'Mismatched Parens',
     tokens: Token[]
   } | TokenError;
 
