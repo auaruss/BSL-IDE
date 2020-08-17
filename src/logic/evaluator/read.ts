@@ -4,6 +4,8 @@
  * An S-exp reader for the student languages.
  */
 
+
+
 import {
   ReadError, Result,
   SExp, Token, TokenType
@@ -14,6 +16,10 @@ import { tokenize } from './tokenize';
 import {
   isTokenError, isReadError
 } from '../predicates';
+
+import {
+  Atom, NumAtom, IdAtom, StringAtom, BooleanAtom, ReadErr
+} from '../constructors';
 
 /**
  * Attempts to read the first SExp from a list of tokens.
@@ -56,23 +62,20 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
         // This also means if the remain is empty we return a failure.
         if (readRest.remain.length === 0) {
           return {
-            thing: {
-              readError: 'No Closing Paren',
-              tokens: [firstToken]
-            },
+            thing: ReadErr('No Closing Paren', [firstToken]),
             remain: tokens.slice(1)
           }
         } else {
           const firstUnprocessedToken = readRest.remain[0];
           if (isTokenError(firstUnprocessedToken)) {
-            return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
+            return { thing: ReadErr('No Valid SExp', []), remain: [] }
           } else if (firstUnprocessedToken.type === TokenType.CloseParen
                   || firstUnprocessedToken.type === TokenType.CloseSquareParen
                   || firstUnprocessedToken.type === TokenType.CloseBraceParen) {
             if (parensMatch(firstToken.type, firstUnprocessedToken.type))
               return { thing: readRest.thing, remain: readRest.remain.slice(1) }
             return {
-              thing: { readError:'Mismatched Parens', tokens: [firstToken, firstUnprocessedToken]},
+              thing: ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
               remain: readRest.remain.slice(1)
             };
           } else {
@@ -82,37 +85,28 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
       case TokenType.CloseParen:
       case TokenType.CloseSquareParen:
       case TokenType.CloseBraceParen:
-        return { thing: {readError: 'No Open Paren', tokens: [firstToken]}, remain: tokens.slice(1) }
+        return { thing: ReadErr('No Open Paren', [firstToken]), remain: tokens.slice(1) }
       case TokenType.Number:
         return {
-          thing: {
-            type: 'Num',
-            sexp: Number(firstToken.token)
-          },
+          thing: NumAtom(Number(firstToken.token)),
           remain: tokens.slice(1)
         };
       case TokenType.String:
         return {
-          thing: {
-            type: 'String',
-            sexp: firstToken.token.slice(1,-1) // removes "" from string
-          },
+          thing: StringAtom(firstToken.token.slice(1,-1)),
           remain: tokens.slice(1)
         };
       case TokenType.Identifier:
         return {
-          thing: {
-            type: 'Id',
-            sexp: firstToken.token
-          },
+          thing: IdAtom(firstToken.token),
           remain: tokens.slice(1)
         };
       case TokenType.Boolean:
         return {
-          thing: whichBool(firstToken),
+          thing: BooleanAtom(firstToken.token),
           remain: tokens.slice(1)
         };
-      default:
+      case TokenType.Whitespace:
         return readSexp(tokens.slice(1));
     }
   }
@@ -191,31 +185,6 @@ const parensMatch = (
     return cp === TokenType.CloseBraceParen;
   }
   return false;
-}
-
-/**
- * Converts a boolean token into a Boolean SExp.
- * @param t token
- */
-const whichBool = (t: Token): SExp => {
-  if (isTokenError(t)) return t;
-  switch (t.token) {
-    case '#T':
-    case '#t':
-    case '#true':
-      return {
-        type: 'Bool',
-        sexp: true
-      }
-    case '#F':
-    case '#f':
-    case '#false':
-      return {
-        type: 'Bool',
-        sexp: false
-      };
-  }
-  return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] }
 }
 
 module.exports.read      = read;
