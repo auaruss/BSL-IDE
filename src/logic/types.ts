@@ -98,7 +98,8 @@ export type ExprError
   = {
     exprError: 'Empty Expr'
              | 'Defn inside Expr'
-             | 'Missing starting ID',
+             | 'No function name after open paren'
+             | 'Function call with no arguments',
     sexps: SExp[]
   } | ReadError;
 
