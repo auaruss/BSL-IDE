@@ -77,10 +77,15 @@ export const IdExpr      = (v: string):  Expr => { return PrimitiveExpr('Id',   
 export const StringExpr  = (v: string):  Expr => { return PrimitiveExpr('String', v);  }
 export const BooleanExpr = (v: boolean): Expr => { return PrimitiveExpr('Bool',   v); }
 
+export const FunctionExpr = (fid: string, args: Expr[]): Expr => {
+  return [fid, args];
+}
+
 export const ExprErr = (
   e: 'Empty Expr'
    | 'Defn inside Expr'
-   | 'Missing starting ID',
+   | 'No function name after open paren'
+   | 'Function call with no arguments',
   v: SExp[]): ExprError => { 
   return { exprError: e, sexps: v }; 
 }
@@ -115,3 +120,15 @@ const whichBool = (s: string): boolean => {
   }
   return false;
 }
+
+export const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ]: Token[] =
+    [
+        Tok(TokenType.CloseParen,       ')'),
+        Tok(TokenType.OpenParen,        '('), 
+        Tok(TokenType.Whitespace,       ' '),
+        Tok(TokenType.OpenSquareParen,  '['),
+        Tok(TokenType.CloseSquareParen, ']'),
+        Tok(TokenType.OpenBraceParen,   '{'),
+        Tok(TokenType.CloseBraceParen,  '}'),
+        Tok(TokenType.Whitespace,       '\n')
+    ];
