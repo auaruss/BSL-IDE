@@ -90,7 +90,8 @@ export type Expr
 export type DefinitionError
   = {
     defnError: 'Invalid definition'
-         | 'Passed a non-definition as definition',
+         | 'Passed a non-definition as definition'
+         | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there',
     sexps: SExp[]
   } | ReadError;
 
