@@ -31,3 +31,8 @@ export const defOrExprIsExpr = (d: DefOrExpr): d is Expr => {
 export const isDefinition = (x: any): x is Definition => {
   return Array.isArray(x) && x.length > 0 && x[0] === 'define';
 }
+
+
+export const defOrExprArrayIsExprArray = (ds: DefOrExpr[]): ds is Expr[] => {
+  return ds.every(defOrExprIsExpr);
+}
