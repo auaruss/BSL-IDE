@@ -6,6 +6,7 @@ exports.__esModule = true;
 var types_1 = require("../types");
 var tokenize_1 = require("./tokenize");
 var predicates_1 = require("../predicates");
+var constructors_1 = require("../constructors");
 /**
  * Attempts to read the first SExp from a list of tokens.
  * @remark A failure is produced when no starting SExp is found.
@@ -44,17 +45,14 @@ exports.readSexp = function (tokens) {
                 // This also means if the remain is empty we return a failure.
                 if (readRest.remain.length === 0) {
                     return {
-                        thing: {
-                            readError: 'No Closing Paren',
-                            tokens: [firstToken]
-                        },
+                        thing: constructors_1.ReadErr('No Closing Paren', [firstToken]),
                         remain: tokens.slice(1)
                     };
                 }
                 else {
                     var firstUnprocessedToken = readRest.remain[0];
                     if (predicates_1.isTokenError(firstUnprocessedToken)) {
-                        return { thing: { readError: 'No Valid SExp', tokens: [] }, remain: [] };
+                        return { thing: constructors_1.ReadErr('No Valid SExp', []), remain: [] };
                     }
                     else if (firstUnprocessedToken.type === types_1.TokenType.CloseParen
                         || firstUnprocessedToken.type === types_1.TokenType.CloseSquareParen
@@ -62,7 +60,7 @@ exports.readSexp = function (tokens) {
                         if (parensMatch(firstToken.type, firstUnprocessedToken.type))
                             return { thing: readRest.thing, remain: readRest.remain.slice(1) };
                         return {
-                            thing: { readError: 'Mismatched Parens', tokens: [firstToken, firstUnprocessedToken] },
+                            thing: constructors_1.ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
                             remain: readRest.remain.slice(1)
                         };
                     }
@@ -73,37 +71,28 @@ exports.readSexp = function (tokens) {
             case types_1.TokenType.CloseParen:
             case types_1.TokenType.CloseSquareParen:
             case types_1.TokenType.CloseBraceParen:
-                return { thing: { readError: 'No Open Paren', tokens: [firstToken] }, remain: tokens.slice(1) };
+                return { thing: constructors_1.ReadErr('No Open Paren', [firstToken]), remain: tokens.slice(1) };
             case types_1.TokenType.Number:
                 return {
-                    thing: {
-                        type: 'Num',
-                        sexp: Number(firstToken.token)
-                    },
+                    thing: constructors_1.NumAtom(Number(firstToken.token)),
                     remain: tokens.slice(1)
                 };
             case types_1.TokenType.String:
                 return {
-                    thing: {
-                        type: 'String',
-                        sexp: firstToken.token.slice(1, -1) // removes "" from string
-                    },
+                    thing: constructors_1.StringAtom(firstToken.token.slice(1, -1)),
                     remain: tokens.slice(1)
                 };
             case types_1.TokenType.Identifier:
                 return {
-                    thing: {
-                        type: 'Id',
-                        sexp: firstToken.token
-                    },
+                    thing: constructors_1.IdAtom(firstToken.token),
                     remain: tokens.slice(1)
                 };
             case types_1.TokenType.Boolean:
                 return {
-                    thing: whichBool(firstToken),
+                    thing: constructors_1.BooleanAtom(firstToken.token),
                     remain: tokens.slice(1)
                 };
-            default:
+            case types_1.TokenType.Whitespace:
                 return exports.readSexp(tokens.slice(1));
         }
     }
@@ -174,31 +163,6 @@ var parensMatch = function (op, cp) {
         return cp === types_1.TokenType.CloseBraceParen;
     }
     return false;
-};
-/**
- * Converts a boolean token into a Boolean SExp.
- * @param t token
- */
-var whichBool = function (t) {
-    if (predicates_1.isTokenError(t))
-        return t;
-    switch (t.token) {
-        case '#T':
-        case '#t':
-        case '#true':
-            return {
-                type: 'Bool',
-                sexp: true
-            };
-        case '#F':
-        case '#f':
-        case '#false':
-            return {
-                type: 'Bool',
-                sexp: false
-            };
-    }
-    return { readError: 'Non-boolean was processed as a boolean (should never be seen)', tokens: [t] };
 };
 module.exports.read = exports.read;
 module.exports.readSexp = exports.readSexp;

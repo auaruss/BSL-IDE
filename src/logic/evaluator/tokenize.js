@@ -9,6 +9,7 @@
  */
 exports.__esModule = true;
 var types_1 = require("../types");
+var constructors_1 = require("../constructors");
 // Regexp Definitions.
 exports.tokenExpressions = [
     [types_1.TokenType.OpenParen, /^\(/],
@@ -35,12 +36,12 @@ exports.tokenize = function (exp) {
         var _a = tokenExpressions_1[_i], tokenType = _a[0], expression = _a[1];
         var result = expression.exec(exp);
         if (result) {
-            var firstToken_1 = [{ type: tokenType, token: result[0] }];
+            var firstToken_1 = [constructors_1.Tok(tokenType, result[0])];
             var restString_1 = exp.slice(result[0].length);
             return firstToken_1.concat(exports.tokenize(restString_1));
         }
     }
-    var firstToken = [{ tokenError: 'Unidentified Token', string: exp[0] }];
+    var firstToken = [constructors_1.TokErr(exp[0])];
     var restString = exp.slice(1);
     return firstToken.concat(exports.tokenize(restString));
 };
