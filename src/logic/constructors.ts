@@ -1,7 +1,7 @@
 import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, Value,
-  DefOrExpr, ValueError, ExprError
+  DefOrExpr, ValueError, ExprError, DefinitionError
 } from './types';
 
 // ----------------------------------------------------------------------------
@@ -89,6 +89,15 @@ export const ExprErr = (
   v: SExp[]): ExprError => { 
   return { exprError: e, sexps: v }; 
 }
+
+export const DefnErr = (
+  e: 'Invalid definition'
+   | 'Passed a non-definition as definition'
+   | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there',
+  v: SExp[]): DefinitionError => {
+    return { defnError: e, sexps: v };
+} 
+
 
 // ----------------------------------------------------------------------------
 // | Value constructors                                                       |
