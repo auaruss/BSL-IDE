@@ -31,3 +31,6 @@ exports.defOrExprIsExpr = function (d) {
 exports.isDefinition = function (x) {
     return Array.isArray(x) && x.length > 0 && x[0] === 'define';
 };
+exports.defOrExprArrayIsExprArray = function (ds) {
+    return ds.every(exports.defOrExprIsExpr);
+};
