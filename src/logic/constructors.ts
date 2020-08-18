@@ -91,9 +91,12 @@ export const ExprErr = (
 }
 
 export const DefnErr = (
-  e: 'Invalid definition'
+  e: 'Invalid definition name'
+   | 'Invalid function name'
    | 'Passed a non-definition as definition'
-   | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there',
+   | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there'
+   | 'Expected a function header and parameters (in parentheses), received nothing'
+   | 'A function in BSL cannot have zero parameters'
   v: SExp[]): DefinitionError => {
     return { defnError: e, sexps: v };
 } 

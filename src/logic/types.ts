@@ -89,9 +89,12 @@ export type Expr
 
 export type DefinitionError
   = {
-    defnError: 'Invalid definition'
+    defnError: 'Invalid definition name'
+             | 'Invalid function name'
              | 'Passed a non-definition as definition'
-             | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there',
+             | 'Expected a variable name, or a function name and its variables (in parentheses), but nothing\'s there'
+             | 'Expected a function header and parameters (in parentheses), received nothing'
+             | 'A function in BSL cannot have zero parameters',
     sexps: SExp[]
   } | ReadError;
 
