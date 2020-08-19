@@ -74,6 +74,20 @@ exports.DefnErr = function (e, v) {
 exports.NFn = function (v) {
     return { type: 'NonFunction', value: v };
 };
+exports.BFn = function (v) {
+    return { type: 'BuiltinFunction', value: v };
+};
+function Fn(a, e, b) {
+    return {
+        type: 'Function',
+        value: {
+            args: a,
+            env: e,
+            body: b
+        }
+    };
+}
+exports.Fn = Fn;
 exports.ValErr = function (e, d) {
     return { valueError: e, deforexprs: d };
 };

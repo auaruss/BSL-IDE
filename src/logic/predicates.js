@@ -23,6 +23,20 @@ exports.isReadError = function (x) {
         || x.readError === 'No Open Paren'
         || x.readError === 'Mismatched Parens';
 };
+exports.isExprError = function (x) {
+    if (exports.isReadError(x))
+        return true;
+    if (!(typeof x === 'object'))
+        return false;
+    if (!(x.exprError && typeof x.exprError === 'string'))
+        return false;
+    if (!x.sexps)
+        return false;
+    return x.exprError === 'Empty Expr'
+        || x.exprError === 'Defn inside Expr'
+        || x.exprError === 'No function name after open paren'
+        || x.exprError === 'Function call with no arguments';
+};
 // Checks to see if a specific DefOrExpr is an Expr.
 exports.defOrExprIsExpr = function (d) {
     return (!exports.isDefinition(d));

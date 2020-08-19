@@ -65,8 +65,8 @@ export type DefOrExpr
   = Definition | Expr;
 
 export type Definition
-  = ['define', [string, string[]], Expr]
-  | ['define', string, Expr]
+  = ['define', string, Expr]
+  | ['define', [string, string[]], Expr]
   | DefinitionError;
 
 
@@ -91,13 +91,16 @@ export type DefinitionError
   = {
     defnError: 'Invalid expression passed where function name was expected'
              | 'Invalid expression passed where function argument was expected'
+             | 'A definition requires two parts, but found none'
+             | 'A definition requires two parts, but found one'
              | 'Passed a non-definition as definition'
              | 'Expected a variable name, or a function header'
              | 'Expected a function header with parameters in parentheses, received nothing in parentheses'
              | 'Expected a function header with parameters in parentheses, received a function name with no parameters'
              | 'A function in BSL cannot have zero parameters'
              | 'A definition can\'t have more than 3 parts'
-             | 'Cannot have a definition as the body of a definition',
+             | 'Cannot have a definition as the body of a definition'
+             | 'The body given is not a valid Expr',
     sexps: SExp[]
   } | ReadError;
 
@@ -121,10 +124,10 @@ export type Value
     value: ((vs: Value[]) => Value)
   } | {
     type: 'Function',
-    value: Fn
+    value: Func
   } | ValueError;
 
-export type Fn
+export type Func
   = {
     args: string[],
     env: Env,

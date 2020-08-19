@@ -1,7 +1,7 @@
 import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, Value,
-  DefOrExpr, ValueError, ExprError, DefinitionError
+  DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env
 } from './types';
 
 // ----------------------------------------------------------------------------
@@ -93,6 +93,8 @@ export const ExprErr = (
 export const DefnErr = (
   e: 'Invalid expression passed where function name was expected'
    | 'Invalid expression passed where function argument was expected'
+   | 'A definition requires two parts, but found none'
+   | 'A definition requires two parts, but found one' 
    | 'Passed a non-definition as definition'
    | 'Expected a variable name, or a function header'
    | 'Expected a function header with parameters in parentheses, received nothing in parentheses'
@@ -112,6 +114,22 @@ export const DefnErr = (
 export const NFn = (v: string|number|boolean): Value => {
   return { type: 'NonFunction', value: v };
 }
+
+export const BFn = (v: ((vs: Value[]) => Value)): Value => {
+  return { type: 'BuiltinFunction', value: v };
+}
+
+export function Fn(a: string[], e: Env, b: Expr): Value {
+  return {
+    type: 'Function',
+    value: {
+      args: a,
+      env: e,
+      body: b
+    }
+  };
+}
+
 
 export const ValErr = (e: 'Id not in environment', d: DefOrExpr[]): ValueError => {
   return { valueError: e, deforexprs: d };
