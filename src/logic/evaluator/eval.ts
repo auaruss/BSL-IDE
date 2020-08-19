@@ -1,112 +1,207 @@
 'use strict';
 
-import { DefOrExpr, Value } from '../types';
+import { DefOrExpr, Definition, Expr, Value, Env } from '../types';
+import { defOrExprIsExpr, isExprError, isDefinition } from '../predicates';
+import { parse } from './parse';
+import { BFn, Fn, NFn} from '../constructors';
 
 export const evaluate = (exp: string): Value[] => {
-  return [];
+  return evaluateDefOrExprs(parse(exp));
 }
 
 export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Value[] => {
-  return [];
+  let env = builtinEnv();
+
+  for (let d of deforexprs.filter(isDefinition)) {
+    env = populateEnv(d, env);
+  }
+
+  return deforexprs.filter(defOrExprIsExpr)
+                   .map(e => evaluateExpr(e, env));
 }
 
-// /**
-//  * Constructor for a BuiltinFunction case of Value.
-//  * @param v an anonymous function which takes a list of values and returns a value
-//  */
-// const NFn = (v: number|string|boolean): Value => {
-//   return {type: ValueType.NonFunction, value: v};
+const evaluateExpr = (e: Expr, env: Env): Value => {
+  if (isExprError(e)) {
+    return e;
+  } else if (Array.isArray(e)) {
+    let [f, exprs] = e;
+    if (isInEnv(f, env)) {
+      // ...
+    } else {
+      // return ValErr
+    }
+  } else if (e.type === 'String') {
+    return NFn(e.expr);
+  } else if (e.type === 'Num') {
+    return NFn(e.expr);
+  } else if (e.type === 'Id') {
+    if (isInEnv(e.expr, env)) {
+      // ...
+    } else {
+      // return ValErr
+    }
+  } else if (e.type === 'Bool') {
+    return NFn(e.expr);
+  }
+}
+
+const populateEnv = (d: Definition, env: Env): Env => {
+  if (Array.isArray(d)) {
+    if (typeof d[1] === 'string') {
+      let f = d[1], val = evaluateExpr(d[2], env);
+      extendEnv(f, val, env);
+      return env;
+    } else {
+      let [f, params] = d[1], body = d[2];
+      extendEnv(f, Fn(params, env, body), env);
+      return env;
+    }
+  } else {
+      // What do we do here so we don't lose the DefinitionError? 
+      // Idea: Return Env | DefinitionError.
+      return env;
+      /* ... */
+  }
+}
+
+/**
+ * Checks if an identifier is in an enviroment
+ * @param id 
+ * @param env 
+ */
+const isInEnv = (id: string, env: Env): boolean => {
+  return env.has(id);
+}
+
+/**
+ * Extends an enviroment with a new Id, Value pair.
+ * @param id key
+ * @param v value
+ * @param env 
+ */
+const extendEnv = (id: string, v: Value, env: Env): void => {
+  env.set(id, v);
+}
+
+// const processDefOrExpr = (d: DefOrExpr): any => {
+//   if (defOrExprIsExpr(d)) {
+//     return processExpr(d);
+//   } else {
+//     return processDefinition(d);
+//   }
 // }
 
-// /**
-//  * Constructor for a BuiltinFunction case of Value.
-//  * @param v an anonymous function which takes a list of values and returns a value
-//  */
-// const BFn = (v: (vs: Value[]) => Value): Value => {
-//   return {type: ValueType.BuiltinFunction, value: v};
+// const processExpr = (e: Expr): any => {
+//   if (isExprError(e)) {
+//     /* ... */
+//   } else if (Array.isArray(e)) {
+//     /* ... */
+//   } else if (e.type === 'String') {
+//     /* ... */
+//   } else if (e.type === 'Num') {
+//     /* ... */
+//   } else if (e.type === 'Id') {
+//     /* ... */
+//   } else if (e.type === 'Bool') {
+//     /* ... */
+//   }
 // }
 
-// const builtinEnv = (): Env => {
-//   let m = new Map<String, Value>();
+// const processDefinition = (d: Definition): any => {
+//   if (Array.isArray(d)) {
+//     if (typeof d[1] === 'string') {
+//       /* ... */
+//       processExpr(d[2]);
+//     } else {
+//       /* ... */
+//       processExpr(d[2]);
+//     }
+//   } else {
+//       /* ... */
+//   }
+// }
+
+const builtinEnv = (): Env => {
+  let m = new Map<String, Value>();
   
-//   m.set('+',
-//     BFn(
-//       (vs: Value[]) => {
-//         let ns = vs.map(v => v.value);
-//         if (isNumberArray(ns)) {
-//           return NFn(
-//             ns.reduce((acc: number, elem: number) => acc + elem, 0)
-//           );
-//         } else {
-//           throw new Error('+: All arguments to + must be numbers.');
-//         }
-//       }
-//     )
-//   );
+  // m.set('+',
+  //   BFn(
+  //     (vs: Value[]) => {
+  //       let ns = vs.map(v => v.value);
+  //       if (ns) {
+  //         return NFn(
+  //           ns.reduce((acc: number, elem: number) => acc + elem, 0)
+  //         );
+  //       } else {
+  //         throw new Error('+: All arguments to + must be numbers.');
+  //       }
+  //     }
+  //   )
+  // );
 
-//   m.set('*',
-//     BFn(
-//     (vs: Value[]) => {
-//         let ns = vs.map(v => v.value);
-//         if (isNumberArray(ns)) {
-//           return NFn(
-//             ns.reduce((acc: number, elem: number) => acc * elem, 1)
-//           );
-//         } else {
-//           throw new Error('*: All arguments to * must be numbers.');
-//         }
-//       }
-//     )
-//   );
+  // m.set('*',
+  //   BFn(
+  //   (vs: Value[]) => {
+  //       let ns = vs.map(v => v.value);
+  //       if (isNumberArray(ns)) {
+  //         return NFn(
+  //           ns.reduce((acc: number, elem: number) => acc * elem, 1)
+  //         );
+  //       } else {
+  //         throw new Error('*: All arguments to * must be numbers.');
+  //       }
+  //     }
+  //   )
+  // );
 
-//   m.set('-',
-//     BFn(
-//       (vs: Value[]) => {
-//         let ns = vs.map(v => v.value);
-//         if (isNumberArray(ns)) {
-//           if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
-//           if (ns.length === 1) return NFn(-ns[0]);
-//           return NFn(
-//             ns.slice(1).reduce((acc: number, elem: number) => acc - elem, ns[0])
-//           );
-//         } else {
-//           throw new Error('-: All arguments to - must be numbers.');
-//         }
-//       }
-//     )
-//   );
+  // m.set('-',
+  //   BFn(
+  //     (vs: Value[]) => {
+  //       let ns = vs.map(v => v.value);
+  //       if (isNumberArray(ns)) {
+  //         if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
+  //         if (ns.length === 1) return NFn(-ns[0]);
+  //         return NFn(
+  //           ns.slice(1).reduce((acc: number, elem: number) => acc - elem, ns[0])
+  //         );
+  //       } else {
+  //         throw new Error('-: All arguments to - must be numbers.');
+  //       }
+  //     }
+  //   )
+  // );
 
-//   m.set('/',
-//     BFn(
-//       (vs: Value[]) => {
-//         let ns = vs.map(v => v.value);
-//         if (isNumberArray(ns)) {
-//           if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
-//           if (ns.length === 1) return NFn(1/ns[0]);
-//           return NFn(
-//             ns.slice(1).reduce((acc: number, elem: number) => acc / elem, ns[0])
-//           );
-//         } else {
-//           throw new Error('/: All arguments to / must be numbers.');
-//         }
-//       }
-//     )
-//   );
+  // m.set('/',
+  //   BFn(
+  //     (vs: Value[]) => {
+  //       let ns = vs.map(v => v.value);
+  //       if (isNumberArray(ns)) {
+  //         if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
+  //         if (ns.length === 1) return NFn(1/ns[0]);
+  //         return NFn(
+  //           ns.slice(1).reduce((acc: number, elem: number) => acc / elem, ns[0])
+  //         );
+  //       } else {
+  //         throw new Error('/: All arguments to / must be numbers.');
+  //       }
+  //     }
+  //   )
+  // );
 
-//   m.set('=',
-//     BFn(
-//       (vs: Value[]) => {
-//         if (vs.length === 0) throw new Error('=: expects at least 1 argument, but found none');
-//         let valToBeEqualTo = vs[0].value;
-//         return NFn(
-//           vs.slice(1).reduce((acc: boolean, elem: Value) => acc && elem.value === valToBeEqualTo, true)
-//         );
-//       }
-//     )
-//   );
+  // m.set('=',
+  //   BFn(
+  //     (vs: Value[]) => {
+  //       if (vs.length === 0) throw new Error('=: expects at least 1 argument, but found none');
+  //       let valToBeEqualTo = vs[0].value;
+  //       return NFn(
+  //         vs.slice(1).reduce((acc: boolean, elem: Value) => acc && elem.value === valToBeEqualTo, true)
+  //       );
+  //     }
+  //   )
+  // );
 
-//   return m;
-// }
+  return m;
+}
 
 // /**
 //  * Computes the value of an expression with respect to an environment.
