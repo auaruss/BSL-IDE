@@ -1,7 +1,8 @@
 'use strict';
 
 import {
-  DefOrExpr, ReadError, TokenType, TokenError, Token, SExp, Value
+  DefOrExpr, Definition, Expr, ReadError,
+  TokenType, TokenError, Token, SExp, Value, ValueError
 } from '../src/logic/types';
 
 import { tokenize                     } from '../src/logic/evaluator/tokenize';
@@ -10,76 +11,19 @@ import { parse,    parseSexps         } from '../src/logic/evaluator/parse';
 import { evaluate, evaluateDefOrExprs } from '../src/logic/evaluator/eval';
 import { print,    printValues        } from '../src/logic/evaluator/print';
 
+import {
+  Tok,
+  NumTok, NumAtom, NumExpr, NFn,
+  StringTok, StringAtom, StringExpr,
+  IdTok, IdAtom, IdExpr,
+  BooleanTok, BooleanAtom, BooleanExpr,
+  TokErr, ReadErr, DefnErr, ExprErr, ValErr,
+  CP, OP, SPACE, OSP, CSP, OBP, CBP, NL
+} from '../src/logic/constructors';
+
 import { checkExpect } from './check-expect';
 
 import { assert } from 'chai';
-
-const Tok = (t: TokenType, v: string): Token => {
-  return { type: t, token: v};
-}
-
-const Atom = (t: 'String'|'Num'|'Id'|'Bool',
-              v: string|number|boolean): SExp => {
-  if ((t === 'String' || t === 'Id') && (typeof v === 'string')) {
-    return { type:  t, sexp: v };
-  } else if (t === 'Num' && (typeof v === 'number')) {
-    return { type:  t, sexp: v };
-  } else if (t === 'Bool' && (typeof v === 'boolean')) {
-    return { type:  t, sexp: v };
-  }
-  throw new Error('Mismatch in atom type/value');
-}
-
-const NumTok     = (v: string): Token => { return Tok(TokenType.Number,       v.toString()); }
-const IdTok      = (v: string): Token => { return Tok(TokenType.Identifier,   v);            }
-const StringTok  = (v: string): Token => { return Tok(TokenType.String, '"' + v + '"');      }
-const BooleanTok = (v: string): Token => { return Tok(TokenType.Boolean,      v);            }
-
-const NumAtom     = (v: number): SExp => { return Atom('Num',            v);  }
-const IdAtom      = (v: string): SExp => { return Atom('Id',             v);  }
-const StringAtom  = (v: string): SExp => { return Atom('String',         v);  }
-const BooleanAtom = (v: string): SExp => { return Atom('Bool', whichBool(v)); }
-
-const TokErr = (v: string): TokenError => { 
-  return { tokenError: 'Unidentified Token', string: v };
-}
-const ReadErr = (
-  e: 'No Valid SExp'
-  | 'No Closing Paren'
-  | 'No Open Paren'
-  | 'Mismatched Parens',
-  v: Token[]): ReadError => { 
-  return { readError: e, tokens: v }; 
-}
-
-const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ]: Token[] =
-    [
-        Tok(TokenType.CloseParen,       ')'),
-        Tok(TokenType.OpenParen,        '('), 
-        Tok(TokenType.Whitespace,       ' '),
-        Tok(TokenType.OpenSquareParen,  '['),
-        Tok(TokenType.CloseSquareParen, ']'),
-        Tok(TokenType.OpenBraceParen,   '{'),
-        Tok(TokenType.CloseBraceParen,  '}'),
-        Tok(TokenType.Whitespace,       '\n')
-    ];
-
-/**
- * Converts a boolean token into a Boolean SExp.
- * @param t token
- */
-const whichBool = (s: string): boolean => {
-  switch (s) {
-    case '#T':
-    case '#t':
-    case '#true':
-       return true;
-    case '#F':
-    case '#f':
-    case '#false':
-      return false;
-  }  
-}
 
 const t = (
   input?: string,
@@ -186,16 +130,89 @@ const t = (
  *****************************************************************************/
 
 t('', [], [], [], []);
-t('123', [ NumTok('123') ], [ NumAtom(123) ]);
-t('"hello"', [ StringTok('hello') ], [ StringAtom('hello') ]);
-t('#true', [ BooleanTok('#true') ], [ BooleanAtom('#true') ]);
 
-t('(', [ OP ], [ ReadErr('No Closing Paren', [ OP ]) ]);
-t('[', [ OSP ], [ ReadErr('No Closing Paren', [ OSP ]) ]);
-t('{', [ OBP ], [ ReadErr('No Closing Paren', [ OBP ]) ]);
-t(')', [ CP ], [ ReadErr('No Open Paren', [ CP ]) ]);
-t(']', [ CSP ], [ ReadErr('No Open Paren', [ CSP ]) ]);
-t('}', [ CBP ], [ ReadErr('No Open Paren', [ CBP ]) ]);
+t('()' /* ... */);
+
+t('123',
+  [ NumTok('123') ],
+  [ NumAtom(123) ],
+  [ NumExpr(123) ],
+  [ NFn(123) ], 
+  '123'
+);
+
+t('"hello"',
+  [ StringTok('hello') ],
+  [ StringAtom('hello') ],
+  [ StringExpr('hello')],
+  [ NFn('hello') ],
+  'hello'
+);
+
+t('hello',
+  [ IdTok('hello') ],
+  [ IdAtom('hello') ],
+  [ IdExpr('hello') ],
+  [ ValErr('Id not in environment', [ IdExpr('hello') ])],
+  'hello: Id not in environment'
+);
+
+t('#true',
+  [ BooleanTok('#true') ],
+  [ BooleanAtom('#true') ],
+  [ BooleanExpr(true) ],
+  [ NFn(true)],
+  '#t'
+);
+
+t('(', 
+  [ OP ],
+  [ ReadErr('No Closing Paren', [ OP ]) ],
+  [ ReadErr('No Closing Paren', [ OP ]) ],
+  [ ReadErr('No Closing Paren', [ OP ]) ],
+  'ReadError: No Closing Paren for ('
+);
+
+
+t('[',
+  [ OSP ],
+  [ ReadErr('No Closing Paren', [ OSP ]) ],
+  [ ReadErr('No Closing Paren', [ OSP ]) ],
+  [ ReadErr('No Closing Paren', [ OSP ]) ],
+  'ReadError: No Closing Paren for ['
+);
+
+t('{',
+  [ OBP ],
+  [ ReadErr('No Closing Paren', [ OBP ]) ],
+  [ ReadErr('No Closing Paren', [ OBP ]) ],
+  [ ReadErr('No Closing Paren', [ OBP ]) ],
+  'ReadError: No Closing Paren for {'
+);
+
+t(')',
+  [ CP ],
+  [ ReadErr('No Open Paren', [ CP ]) ],
+  [ ReadErr('No Open Paren', [ CP ]) ],
+  [ ReadErr('No Open Paren', [ CP ]) ],
+  'ReadError: No Open Paren for )'
+);
+
+t(']',
+  [ CSP ],
+  [ ReadErr('No Open Paren', [ CSP ]) ],
+  [ ReadErr('No Open Paren', [ CSP ]) ],
+  [ ReadErr('No Open Paren', [ CSP ]) ],
+  'ReadError: No Open Paren for ]'
+);
+
+t('}',
+  [ CBP ],
+  [ ReadErr('No Open Paren', [ CBP ]) ],
+  [ ReadErr('No Open Paren', [ CBP ]) ],
+  [ ReadErr('No Open Paren', [ CBP ]) ],
+  'ReadError: No Open Paren for }'
+);
 
 t('#t', [ BooleanTok('#t') ], [ BooleanAtom('#t') ]);
 t('#f', [ BooleanTok('#f') ], [ BooleanAtom('#f') ]);
@@ -351,8 +368,7 @@ t('(define bool #t123)',
     SPACE,
     IdTok('bool'),
     SPACE,
-    TokErr('#'),
-    IdTok('t123'),
+    TokErr('#t123'),
     CP
   ],
 
@@ -360,13 +376,23 @@ t('(define bool #t123)',
     [
       IdAtom('define'),
       IdAtom('bool'),
-      TokErr('#'),
-      IdAtom('t123')
+      TokErr('#t123')
     ]
+  ],
+  [
+    DefnErr('Cannot have a definition as the body of a definition',
+    [
+      [
+        IdAtom('define'),
+        IdAtom('bool'),
+        TokErr('#t123')
+      ]
+    ])
   ]
 );
 
 t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
+  
   [
     OP,
     IdTok('define'),
@@ -435,6 +461,35 @@ t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(1)
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  
+  [
+    [
+      'define',
+      ['fact', ['n']],
+      [
+        'if',
+        [
+          [
+            '=',
+            [ IdExpr('n'), NumExpr(0) ]
+          ],
+          NumExpr(1),
+          [
+            '*',
+            [
+              IdExpr('n'),
+              [
+                'fact',
+                [
+                  ['-', [IdExpr('n'), NumExpr(1)]]
+                ]
+              ]
             ]
           ]
         ]

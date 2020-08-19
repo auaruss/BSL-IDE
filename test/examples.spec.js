@@ -6,63 +6,9 @@ var read_1 = require("../src/logic/evaluator/read");
 var parse_1 = require("../src/logic/evaluator/parse");
 var eval_1 = require("../src/logic/evaluator/eval");
 var print_1 = require("../src/logic/evaluator/print");
+var constructors_1 = require("../src/logic/constructors");
 var check_expect_1 = require("./check-expect");
 var chai_1 = require("chai");
-var Tok = function (t, v) {
-    return { type: t, token: v };
-};
-var Atom = function (t, v) {
-    if ((t === 'String' || t === 'Id') && (typeof v === 'string')) {
-        return { type: t, sexp: v };
-    }
-    else if (t === 'Num' && (typeof v === 'number')) {
-        return { type: t, sexp: v };
-    }
-    else if (t === 'Bool' && (typeof v === 'boolean')) {
-        return { type: t, sexp: v };
-    }
-    throw new Error('Mismatch in atom type/value');
-};
-var NumTok = function (v) { return Tok(types_1.TokenType.Number, v.toString()); };
-var IdTok = function (v) { return Tok(types_1.TokenType.Identifier, v); };
-var StringTok = function (v) { return Tok(types_1.TokenType.String, '"' + v + '"'); };
-var BooleanTok = function (v) { return Tok(types_1.TokenType.Boolean, v); };
-var NumAtom = function (v) { return Atom('Num', v); };
-var IdAtom = function (v) { return Atom('Id', v); };
-var StringAtom = function (v) { return Atom('String', v); };
-var BooleanAtom = function (v) { return Atom('Bool', whichBool(v)); };
-var TokErr = function (v) {
-    return { tokenError: 'Unidentified Token', string: v };
-};
-var ReadErr = function (e, v) {
-    return { readError: e, tokens: v };
-};
-var _a = [
-    Tok(types_1.TokenType.CloseParen, ')'),
-    Tok(types_1.TokenType.OpenParen, '('),
-    Tok(types_1.TokenType.Whitespace, ' '),
-    Tok(types_1.TokenType.OpenSquareParen, '['),
-    Tok(types_1.TokenType.CloseSquareParen, ']'),
-    Tok(types_1.TokenType.OpenBraceParen, '{'),
-    Tok(types_1.TokenType.CloseBraceParen, '}'),
-    Tok(types_1.TokenType.Whitespace, '\n')
-], CP = _a[0], OP = _a[1], SPACE = _a[2], OSP = _a[3], CSP = _a[4], OBP = _a[5], CBP = _a[6], NL = _a[7];
-/**
- * Converts a boolean token into a Boolean SExp.
- * @param t token
- */
-var whichBool = function (s) {
-    switch (s) {
-        case '#T':
-        case '#t':
-        case '#true':
-            return true;
-        case '#F':
-        case '#f':
-        case '#false':
-            return false;
-    }
-};
 var t = function (input, tokens, sexps, deforexprs, values, output) {
     describe(input, function () {
         if (input) {
@@ -162,202 +108,237 @@ var t = function (input, tokens, sexps, deforexprs, values, output) {
  * regardless of live editing behavior.                                      *
  *****************************************************************************/
 t('', [], [], [], []);
-t('123', [NumTok('123')], [NumAtom(123)]);
-t('"hello"', [StringTok('hello')], [StringAtom('hello')]);
-t('#true', [BooleanTok('#true')], [BooleanAtom('#true')]);
-t('(', [OP], [ReadErr('No Closing Paren', [OP])]);
-t('[', [OSP], [ReadErr('No Closing Paren', [OSP])]);
-t('{', [OBP], [ReadErr('No Closing Paren', [OBP])]);
-t(')', [CP], [ReadErr('No Open Paren', [CP])]);
-t(']', [CSP], [ReadErr('No Open Paren', [CSP])]);
-t('}', [CBP], [ReadErr('No Open Paren', [CBP])]);
-t('#t', [BooleanTok('#t')], [BooleanAtom('#t')]);
-t('#f', [BooleanTok('#f')], [BooleanAtom('#f')]);
-t('#true', [BooleanTok('#true')], [BooleanAtom('#true')]);
-t('#false', [BooleanTok('#false')], [BooleanAtom('#false')]);
-t('x', [IdTok('x')], [IdAtom('x')]);
-t('+', [IdTok('+')], [IdAtom('+')]);
+t('()' /* ... */);
+t('123', [constructors_1.NumTok('123')], [constructors_1.NumAtom(123)], [constructors_1.NumExpr(123)], [constructors_1.NFn(123)], '123');
+t('"hello"', [constructors_1.StringTok('hello')], [constructors_1.StringAtom('hello')], [constructors_1.StringExpr('hello')], [constructors_1.NFn('hello')], 'hello');
+t('hello', [constructors_1.IdTok('hello')], [constructors_1.IdAtom('hello')], [constructors_1.IdExpr('hello')], [constructors_1.ValErr('Id not in environment', [constructors_1.IdExpr('hello')])], 'hello: Id not in environment');
+t('#true', [constructors_1.BooleanTok('#true')], [constructors_1.BooleanAtom('#true')], [constructors_1.BooleanExpr(true)], [constructors_1.NFn(true)], '#t');
+t('(', [constructors_1.OP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], 'ReadError: No Closing Paren for (');
+t('[', [constructors_1.OSP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], 'ReadError: No Closing Paren for [');
+t('{', [constructors_1.OBP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OBP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OBP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OBP])], 'ReadError: No Closing Paren for {');
+t(')', [constructors_1.CP], [constructors_1.ReadErr('No Open Paren', [constructors_1.CP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CP])], 'ReadError: No Open Paren for )');
+t(']', [constructors_1.CSP], [constructors_1.ReadErr('No Open Paren', [constructors_1.CSP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CSP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CSP])], 'ReadError: No Open Paren for ]');
+t('}', [constructors_1.CBP], [constructors_1.ReadErr('No Open Paren', [constructors_1.CBP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CBP])], [constructors_1.ReadErr('No Open Paren', [constructors_1.CBP])], 'ReadError: No Open Paren for }');
+t('#t', [constructors_1.BooleanTok('#t')], [constructors_1.BooleanAtom('#t')]);
+t('#f', [constructors_1.BooleanTok('#f')], [constructors_1.BooleanAtom('#f')]);
+t('#true', [constructors_1.BooleanTok('#true')], [constructors_1.BooleanAtom('#true')]);
+t('#false', [constructors_1.BooleanTok('#false')], [constructors_1.BooleanAtom('#false')]);
+t('x', [constructors_1.IdTok('x')], [constructors_1.IdAtom('x')]);
+t('+', [constructors_1.IdTok('+')], [constructors_1.IdAtom('+')]);
 t('"abc" def "ghi"', [
-    StringTok('abc'),
-    SPACE,
-    IdTok('def'),
-    SPACE,
-    StringTok('ghi')
+    constructors_1.StringTok('abc'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('def'),
+    constructors_1.SPACE,
+    constructors_1.StringTok('ghi')
 ], [
-    StringAtom('abc'),
-    IdAtom('def'),
-    StringAtom('ghi')
+    constructors_1.StringAtom('abc'),
+    constructors_1.IdAtom('def'),
+    constructors_1.StringAtom('ghi')
 ]);
 t('"abc"def"ghi"', [
-    StringTok('abc'),
-    IdTok('def'),
-    StringTok('ghi')
+    constructors_1.StringTok('abc'),
+    constructors_1.IdTok('def'),
+    constructors_1.StringTok('ghi')
 ], [
-    StringAtom('abc'),
-    IdAtom('def'),
-    StringAtom('ghi')
+    constructors_1.StringAtom('abc'),
+    constructors_1.IdAtom('def'),
+    constructors_1.StringAtom('ghi')
 ]);
 t('#t123', [
-    TokErr('#'),
-    IdTok('t123')
+    constructors_1.TokErr('#'),
+    constructors_1.IdTok('t123')
 ], [
-    TokErr('#'),
-    IdAtom('t123')
+    constructors_1.TokErr('#'),
+    constructors_1.IdAtom('t123')
 ]);
-t('(define x 10)', [OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok('10'), CP], [
-    [IdAtom('define'), IdAtom('x'), NumAtom(10)]
+t('(define x 10)', [constructors_1.OP, constructors_1.IdTok('define'), constructors_1.SPACE, constructors_1.IdTok('x'), constructors_1.SPACE, constructors_1.NumTok('10'), constructors_1.CP], [
+    [constructors_1.IdAtom('define'), constructors_1.IdAtom('x'), constructors_1.NumAtom(10)]
 ]);
 t('(123)', [
-    OP,
-    NumTok('123'),
-    CP
+    constructors_1.OP,
+    constructors_1.NumTok('123'),
+    constructors_1.CP
 ], [
-    [NumAtom(123)]
+    [constructors_1.NumAtom(123)]
 ]);
 t('([[[][][][][][])))[][])))){}{}{}', [
-    OP,
-    OSP,
-    OSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    CP,
-    CP,
-    CP,
-    OSP,
-    CSP,
-    OSP,
-    CSP,
-    CP,
-    CP,
-    CP,
-    CP,
-    OBP,
-    CBP,
-    OBP,
-    CBP,
-    OBP,
-    CBP
+    constructors_1.OP,
+    constructors_1.OSP,
+    constructors_1.OSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.OSP,
+    constructors_1.CSP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.OBP,
+    constructors_1.CBP,
+    constructors_1.OBP,
+    constructors_1.CBP,
+    constructors_1.OBP,
+    constructors_1.CBP
 ], [
     [
-        ReadErr('No Closing Paren', [OSP]),
-        ReadErr('No Closing Paren', [OSP]),
+        constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]),
+        constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]),
         [], [], [], [], [], []
     ],
-    ReadErr('No Open Paren', [CP]),
-    ReadErr('No Open Paren', [CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     [], [],
-    ReadErr('No Open Paren', [CP]),
-    ReadErr('No Open Paren', [CP]),
-    ReadErr('No Open Paren', [CP]),
-    ReadErr('No Open Paren', [CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     [],
     []
 ]);
 t(') (hello)', [
-    CP,
-    SPACE,
-    OP,
-    IdTok('hello'),
-    CP
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('hello'),
+    constructors_1.CP
 ], [
-    ReadErr('No Open Paren', [CP]),
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     [
-        IdAtom('hello')
+        constructors_1.IdAtom('hello')
     ]
 ]);
 t('(define bool #t123)', [
-    OP,
-    IdTok('define'),
-    SPACE,
-    IdTok('bool'),
-    SPACE,
-    TokErr('#'),
-    IdTok('t123'),
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('define'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('bool'),
+    constructors_1.SPACE,
+    constructors_1.TokErr('#t123'),
+    constructors_1.CP
 ], [
     [
-        IdAtom('define'),
-        IdAtom('bool'),
-        TokErr('#'),
-        IdAtom('t123')
+        constructors_1.IdAtom('define'),
+        constructors_1.IdAtom('bool'),
+        constructors_1.TokErr('#t123')
     ]
+], [
+    constructors_1.DefnErr('Cannot have a definition as the body of a definition', [
+        [
+            constructors_1.IdAtom('define'),
+            constructors_1.IdAtom('bool'),
+            constructors_1.TokErr('#t123')
+        ]
+    ])
 ]);
 t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
-    OP,
-    IdTok('define'),
-    SPACE,
-    OP,
-    IdTok('fact'),
-    SPACE,
-    IdTok('n'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('if'),
-    SPACE,
-    OP,
-    IdTok('='),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('0'),
-    CP,
-    SPACE,
-    NumTok('1'),
-    SPACE,
-    OP,
-    IdTok('*'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    OP,
-    IdTok('fact'),
-    SPACE,
-    OP,
-    IdTok('-'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('1'),
-    CP,
-    CP,
-    CP,
-    CP,
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('define'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('if'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('='),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('0'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('*'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('-'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP
 ], [
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('fact'),
-            IdAtom('n')
+            constructors_1.IdAtom('fact'),
+            constructors_1.IdAtom('n')
         ],
         [
-            IdAtom('if'),
+            constructors_1.IdAtom('if'),
             [
-                IdAtom('='),
-                IdAtom('n'),
-                NumAtom(0)
+                constructors_1.IdAtom('='),
+                constructors_1.IdAtom('n'),
+                constructors_1.NumAtom(0)
             ],
-            NumAtom(1),
+            constructors_1.NumAtom(1),
             [
-                IdAtom('*'),
-                IdAtom('n'),
+                constructors_1.IdAtom('*'),
+                constructors_1.IdAtom('n'),
                 [
-                    IdAtom('fact'),
+                    constructors_1.IdAtom('fact'),
                     [
-                        IdAtom('-'),
-                        IdAtom('n'),
-                        NumAtom(1)
+                        constructors_1.IdAtom('-'),
+                        constructors_1.IdAtom('n'),
+                        constructors_1.NumAtom(1)
+                    ]
+                ]
+            ]
+        ]
+    ]
+], [
+    [
+        'define',
+        ['fact', ['n']],
+        [
+            'if',
+            [
+                [
+                    '=',
+                    [constructors_1.IdExpr('n'), constructors_1.NumExpr(0)]
+                ],
+                constructors_1.NumExpr(1),
+                [
+                    '*',
+                    [
+                        constructors_1.IdExpr('n'),
+                        [
+                            'fact',
+                            [
+                                ['-', [constructors_1.IdExpr('n'), constructors_1.NumExpr(1)]]
+                            ]
+                        ]
                     ]
                 ]
             ]
@@ -365,228 +346,228 @@ t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
     ]
 ]);
 t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
-    IdTok('define'),
-    SPACE,
-    OP,
-    IdTok('fact'),
-    SPACE,
-    IdTok('n'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('if'),
-    SPACE,
-    OP,
-    IdTok('='),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('0'),
-    CP,
-    SPACE,
-    NumTok('1'),
-    SPACE,
-    OP,
-    IdTok('*'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    OP,
-    IdTok('fact'),
-    SPACE,
-    OP,
-    IdTok('-'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('1'),
-    CP,
-    CP,
-    CP,
-    CP,
-    CP
+    constructors_1.IdTok('define'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('if'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('='),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('0'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('*'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('-'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP
 ], [
-    IdAtom('define'),
+    constructors_1.IdAtom('define'),
     [
-        IdAtom('fact'),
-        IdAtom('n')
+        constructors_1.IdAtom('fact'),
+        constructors_1.IdAtom('n')
     ],
     [
-        IdAtom('if'),
+        constructors_1.IdAtom('if'),
         [
-            IdAtom('='),
-            IdAtom('n'),
-            NumAtom(0)
+            constructors_1.IdAtom('='),
+            constructors_1.IdAtom('n'),
+            constructors_1.NumAtom(0)
         ],
-        NumAtom(1),
+        constructors_1.NumAtom(1),
         [
-            IdAtom('*'),
-            IdAtom('n'),
+            constructors_1.IdAtom('*'),
+            constructors_1.IdAtom('n'),
             [
-                IdAtom('fact'),
+                constructors_1.IdAtom('fact'),
                 [
-                    IdAtom('-'),
-                    IdAtom('n'),
-                    NumAtom(1)
+                    constructors_1.IdAtom('-'),
+                    constructors_1.IdAtom('n'),
+                    constructors_1.NumAtom(1)
                 ]
             ]
         ]
     ],
-    ReadErr('No Open Paren', [CP])
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP])
 ]);
 t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
-    OP,
-    IdTok('fact'),
-    SPACE,
-    IdTok('n'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('if'),
-    SPACE,
-    OP,
-    IdTok('='),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('0'),
-    CP,
-    SPACE,
-    NumTok('1'),
-    SPACE,
-    OP,
-    IdTok('*'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    OP,
-    IdTok('fact'),
-    SPACE,
-    OP,
-    IdTok('-'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('1'),
-    CP,
-    CP,
-    CP,
-    CP,
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('if'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('='),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('0'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('*'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('-'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP
 ], [
     [
-        IdAtom('fact'),
-        IdAtom('n')
+        constructors_1.IdAtom('fact'),
+        constructors_1.IdAtom('n')
     ],
     [
-        IdAtom('if'),
+        constructors_1.IdAtom('if'),
         [
-            IdAtom('='),
-            IdAtom('n'),
-            NumAtom(0)
+            constructors_1.IdAtom('='),
+            constructors_1.IdAtom('n'),
+            constructors_1.NumAtom(0)
         ],
-        NumAtom(1),
+        constructors_1.NumAtom(1),
         [
-            IdAtom('*'),
-            IdAtom('n'),
+            constructors_1.IdAtom('*'),
+            constructors_1.IdAtom('n'),
             [
-                IdAtom('fact'),
+                constructors_1.IdAtom('fact'),
                 [
-                    IdAtom('-'),
-                    IdAtom('n'),
-                    NumAtom(1)
+                    constructors_1.IdAtom('-'),
+                    constructors_1.IdAtom('n'),
+                    constructors_1.NumAtom(1)
                 ]
             ]
         ]
     ],
-    ReadErr('No Open Paren', [CP])
+    constructors_1.ReadErr('No Open Paren', [constructors_1.CP])
 ]);
 t('(define (simple-choice x y z) (if x y z))\n'
     + '(simple-choice #t 10 20)\n'
     + '\n'
     + '(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))\n'
     + '(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))\n', tokenize_1.tokenize('(define (simple-choice x y z) (if x y z))')
-    .concat([NL])
+    .concat([constructors_1.NL])
     .concat(tokenize_1.tokenize('(simple-choice #t 10 20)'))
-    .concat([Tok(types_1.TokenType.Whitespace, '\n\n')])
+    .concat([constructors_1.Tok(types_1.TokenType.Whitespace, '\n\n')])
     .concat(tokenize_1.tokenize('(define (* m n) (if (= n 0) 0 (+ m (* m (- n 1)))))'))
-    .concat([NL])
+    .concat([constructors_1.NL])
     .concat(tokenize_1.tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
-    .concat([NL]), [
+    .concat([constructors_1.NL]), [
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('simple-choice'),
-            IdAtom('x'),
-            IdAtom('y'),
-            IdAtom('z')
+            constructors_1.IdAtom('simple-choice'),
+            constructors_1.IdAtom('x'),
+            constructors_1.IdAtom('y'),
+            constructors_1.IdAtom('z')
         ],
         [
-            IdAtom('if'),
-            IdAtom('x'),
-            IdAtom('y'),
-            IdAtom('z')
+            constructors_1.IdAtom('if'),
+            constructors_1.IdAtom('x'),
+            constructors_1.IdAtom('y'),
+            constructors_1.IdAtom('z')
         ]
     ],
     [
-        IdAtom('simple-choice'),
-        BooleanAtom('#t'),
-        NumAtom(10),
-        NumAtom(20)
+        constructors_1.IdAtom('simple-choice'),
+        constructors_1.BooleanAtom('#t'),
+        constructors_1.NumAtom(10),
+        constructors_1.NumAtom(20)
     ],
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('*'),
-            IdAtom('m'),
-            IdAtom('n')
+            constructors_1.IdAtom('*'),
+            constructors_1.IdAtom('m'),
+            constructors_1.IdAtom('n')
         ],
         [
-            IdAtom('if'),
+            constructors_1.IdAtom('if'),
             [
-                IdAtom('='),
-                IdAtom('n'),
-                NumAtom(0)
+                constructors_1.IdAtom('='),
+                constructors_1.IdAtom('n'),
+                constructors_1.NumAtom(0)
             ],
-            NumAtom(0),
+            constructors_1.NumAtom(0),
             [
-                IdAtom('+'),
-                IdAtom('m'),
+                constructors_1.IdAtom('+'),
+                constructors_1.IdAtom('m'),
                 [
-                    IdAtom('*'),
-                    IdAtom('m'),
+                    constructors_1.IdAtom('*'),
+                    constructors_1.IdAtom('m'),
                     [
-                        IdAtom('-'),
-                        IdAtom('n'),
-                        NumAtom(1)
+                        constructors_1.IdAtom('-'),
+                        constructors_1.IdAtom('n'),
+                        constructors_1.NumAtom(1)
                     ]
                 ]
             ]
         ]
     ],
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('fact'),
-            IdAtom('n')
+            constructors_1.IdAtom('fact'),
+            constructors_1.IdAtom('n')
         ],
         [
-            IdAtom('if'),
+            constructors_1.IdAtom('if'),
             [
-                IdAtom('='),
-                IdAtom('n'),
-                NumAtom(0)
+                constructors_1.IdAtom('='),
+                constructors_1.IdAtom('n'),
+                constructors_1.NumAtom(0)
             ],
-            NumAtom(1),
+            constructors_1.NumAtom(1),
             [
-                IdAtom('*'),
-                IdAtom('n'),
+                constructors_1.IdAtom('*'),
+                constructors_1.IdAtom('n'),
                 [
-                    IdAtom('fact'),
+                    constructors_1.IdAtom('fact'),
                     [
-                        IdAtom('-'),
-                        IdAtom('n'),
-                        NumAtom(1)
+                        constructors_1.IdAtom('-'),
+                        constructors_1.IdAtom('n'),
+                        constructors_1.NumAtom(1)
                     ]
                 ]
             ]
@@ -594,108 +575,108 @@ t('(define (simple-choice x y z) (if x y z))\n'
     ]
 ]);
 t('(define (mn x y) (if (< x y) x y))', [
-    OP,
-    IdTok('define'),
-    SPACE,
-    OP,
-    IdTok('mn'),
-    SPACE,
-    IdTok('x'),
-    SPACE,
-    IdTok('y'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('if'),
-    SPACE,
-    OP,
-    IdTok('<'),
-    SPACE,
-    IdTok('x'),
-    SPACE,
-    IdTok('y'),
-    CP,
-    SPACE,
-    IdTok('x'),
-    SPACE,
-    IdTok('y'),
-    CP,
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('define'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('mn'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('x'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('y'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('if'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('<'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('x'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('y'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.IdTok('x'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('y'),
+    constructors_1.CP,
+    constructors_1.CP
 ], [
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('mn'),
-            IdAtom('x'),
-            IdAtom('y')
+            constructors_1.IdAtom('mn'),
+            constructors_1.IdAtom('x'),
+            constructors_1.IdAtom('y')
         ],
         [
-            IdAtom('if'),
+            constructors_1.IdAtom('if'),
             [
-                IdAtom('<'),
-                IdAtom('x'),
-                IdAtom('y')
+                constructors_1.IdAtom('<'),
+                constructors_1.IdAtom('x'),
+                constructors_1.IdAtom('y')
             ],
-            IdAtom('x'),
-            IdAtom('y')
+            constructors_1.IdAtom('x'),
+            constructors_1.IdAtom('y')
         ]
     ]
 ]);
 t('(simple-choice #t 10 20)', [
-    OP,
-    IdTok('simple-choice'),
-    SPACE,
-    BooleanTok('#t'),
-    SPACE,
-    NumTok('10'),
-    SPACE,
-    NumTok('20'),
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('simple-choice'),
+    constructors_1.SPACE,
+    constructors_1.BooleanTok('#t'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('10'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('20'),
+    constructors_1.CP
 ], [
     [
-        IdAtom('simple-choice'),
-        BooleanAtom('#t'),
-        NumAtom(10),
-        NumAtom(20)
+        constructors_1.IdAtom('simple-choice'),
+        constructors_1.BooleanAtom('#t'),
+        constructors_1.NumAtom(10),
+        constructors_1.NumAtom(20)
     ]
 ]);
 t('(* 2 3)', [
-    OP,
-    IdTok('*'),
-    SPACE,
-    NumTok('2'),
-    SPACE,
-    NumTok('3'),
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('*'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('2'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('3'),
+    constructors_1.CP
 ], [
     [
-        IdAtom('*'),
-        NumAtom(2),
-        NumAtom(3)
+        constructors_1.IdAtom('*'),
+        constructors_1.NumAtom(2),
+        constructors_1.NumAtom(3)
     ]
 ]);
 t('(fact 5)', [
-    OP,
-    IdTok('fact'),
-    SPACE,
-    NumTok('5'),
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('fact'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('5'),
+    constructors_1.CP
 ], [
     [
-        IdAtom('fact'),
-        NumAtom(5)
+        constructors_1.IdAtom('fact'),
+        constructors_1.NumAtom(5)
     ]
 ]);
 t('(f 10)', [
-    OP,
-    IdTok('f'),
-    SPACE,
-    NumTok('10'),
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('f'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('10'),
+    constructors_1.CP
 ], [
     [
-        IdAtom('f'),
-        NumAtom(10)
+        constructors_1.IdAtom('f'),
+        constructors_1.NumAtom(10)
     ]
 ]);
 t('(define x 100)'
@@ -773,108 +754,108 @@ t('(define x 100)'
     .concat(read_1.read('(* 2)'))
     .concat(read_1.read('(/ 2)')));
 t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))', [
-    OP,
-    IdTok('define'),
-    SPACE,
-    OP,
-    IdTok('fib'),
-    SPACE,
-    IdTok('n'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('if'),
-    SPACE,
-    OP,
-    IdTok('or'),
-    SPACE,
-    OP,
-    IdTok('='),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('0'),
-    CP,
-    SPACE,
-    OP,
-    IdTok('='),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('1'),
-    CP,
-    CP,
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    OP,
-    IdTok('+'),
-    SPACE,
-    OP,
-    IdTok('fib'),
-    SPACE,
-    OP,
-    IdTok('-'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('1'),
-    CP,
-    CP,
-    SPACE,
-    OP,
-    IdTok('fib'),
-    SPACE,
-    OP,
-    IdTok('-'),
-    SPACE,
-    IdTok('n'),
-    SPACE,
-    NumTok('2'),
-    CP,
-    CP,
-    CP,
-    CP,
-    CP
+    constructors_1.OP,
+    constructors_1.IdTok('define'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fib'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('if'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('or'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('='),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('0'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('='),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('+'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fib'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('-'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('1'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('fib'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('-'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('n'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('2'),
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP,
+    constructors_1.CP
 ], [
     [
-        IdAtom('define'),
+        constructors_1.IdAtom('define'),
         [
-            IdAtom('fib'),
-            IdAtom('n')
+            constructors_1.IdAtom('fib'),
+            constructors_1.IdAtom('n')
         ],
         [
-            IdAtom('if'),
+            constructors_1.IdAtom('if'),
             [
-                IdAtom('or'),
+                constructors_1.IdAtom('or'),
                 [
-                    IdAtom('='),
-                    IdAtom('n'),
-                    NumAtom(0)
+                    constructors_1.IdAtom('='),
+                    constructors_1.IdAtom('n'),
+                    constructors_1.NumAtom(0)
                 ],
                 [
-                    IdAtom('='),
-                    IdAtom('n'),
-                    NumAtom(1)
+                    constructors_1.IdAtom('='),
+                    constructors_1.IdAtom('n'),
+                    constructors_1.NumAtom(1)
                 ]
             ],
-            NumAtom(1),
+            constructors_1.NumAtom(1),
             [
-                IdAtom('+'),
+                constructors_1.IdAtom('+'),
                 [
-                    IdAtom('fib'),
+                    constructors_1.IdAtom('fib'),
                     [
-                        IdAtom('-'),
-                        IdAtom('n'),
-                        NumAtom(1)
+                        constructors_1.IdAtom('-'),
+                        constructors_1.IdAtom('n'),
+                        constructors_1.NumAtom(1)
                     ]
                 ],
                 [
-                    IdAtom('fib'),
+                    constructors_1.IdAtom('fib'),
                     [
-                        IdAtom('-'),
-                        IdAtom('n'),
-                        NumAtom(2)
+                        constructors_1.IdAtom('-'),
+                        constructors_1.IdAtom('n'),
+                        constructors_1.NumAtom(2)
                     ]
                 ]
             ]
@@ -882,52 +863,52 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))'
     ]
 ]);
 t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))', [
-    OP,
-    StringTok('hello'),
-    SPACE,
-    IdTok('world'),
-    SPACE,
-    OP,
-    IdTok('this'),
-    SPACE,
-    StringTok('is'),
-    SPACE,
-    StringTok('some non'),
-    SPACE,
-    IdTok('sense'),
-    SPACE,
-    OP,
-    IdTok('which'),
-    SPACE,
-    IdTok('should'),
-    SPACE,
-    IdTok('be'),
-    CP,
-    SPACE,
-    BooleanTok('#t'),
-    SPACE,
-    NumTok('10'),
-    SPACE,
-    IdTok('readable'),
-    CP,
-    CP
+    constructors_1.OP,
+    constructors_1.StringTok('hello'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('world'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('this'),
+    constructors_1.SPACE,
+    constructors_1.StringTok('is'),
+    constructors_1.SPACE,
+    constructors_1.StringTok('some non'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('sense'),
+    constructors_1.SPACE,
+    constructors_1.OP,
+    constructors_1.IdTok('which'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('should'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('be'),
+    constructors_1.CP,
+    constructors_1.SPACE,
+    constructors_1.BooleanTok('#t'),
+    constructors_1.SPACE,
+    constructors_1.NumTok('10'),
+    constructors_1.SPACE,
+    constructors_1.IdTok('readable'),
+    constructors_1.CP,
+    constructors_1.CP
 ], [
     [
-        StringAtom('hello'),
-        IdAtom('world'),
+        constructors_1.StringAtom('hello'),
+        constructors_1.IdAtom('world'),
         [
-            IdAtom('this'),
-            StringAtom('is'),
-            StringAtom('some non'),
-            IdAtom('sense'),
+            constructors_1.IdAtom('this'),
+            constructors_1.StringAtom('is'),
+            constructors_1.StringAtom('some non'),
+            constructors_1.IdAtom('sense'),
             [
-                IdAtom('which'),
-                IdAtom('should'),
-                IdAtom('be')
+                constructors_1.IdAtom('which'),
+                constructors_1.IdAtom('should'),
+                constructors_1.IdAtom('be')
             ],
-            BooleanAtom('#t'),
-            NumAtom(10),
-            IdAtom('readable')
+            constructors_1.BooleanAtom('#t'),
+            constructors_1.NumAtom(10),
+            constructors_1.IdAtom('readable')
         ]
     ]
 ]);
