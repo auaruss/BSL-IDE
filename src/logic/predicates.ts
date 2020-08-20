@@ -1,6 +1,6 @@
 import {
   DefOrExpr, Definition, Expr, ReadError,
-  SExp, TokenError, ExprError
+  SExp, TokenError, ExprError, ValueError
 } from './types';
 
 export const isTokenError = (x: any): x is TokenError => {
@@ -30,7 +30,6 @@ export const isExprError = (x: any): x is ExprError => {
       || x.exprError === 'Defn inside Expr'
       || x.exprError === 'No function name after open paren'
       || x.exprError === 'Function call with no arguments';
-  
 }
 
 // Checks to see if a specific DefOrExpr is an Expr.
@@ -46,4 +45,15 @@ export const isDefinition = (x: any): x is Definition => {
 
 export const defOrExprArrayIsExprArray = (ds: DefOrExpr[]): ds is Expr[] => {
   return ds.every(defOrExprIsExpr);
+}
+
+export const isValueError = (x: any): x is ValueError => {
+  if (isExprError(x)) return true;
+  if (! (typeof x === 'object')) return false;
+  if (! (x.valueError && typeof x.valueError === 'string')) return false;
+  if (! x.deforexprs) return false;
+  return x.valueError === 'Empty Expr'
+      || x.valueError === 'Defn inside Expr'
+      || x.valueError === 'No function name after open paren'
+      || x.valueError === 'Function call with no arguments';
 }
