@@ -116,7 +116,7 @@ export type ExprError
 // ----------------------------------------------------------------------------
 
 export type Value
-  = {
+  = ValueError | {
     type: 'NonFunction',
     value: string | number | boolean
   } | {
@@ -125,7 +125,7 @@ export type Value
   } | {
     type: 'Function',
     value: Func
-  } | ValueError;
+  };
 
 export type Func
   = {
