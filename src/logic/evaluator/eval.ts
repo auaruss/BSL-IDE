@@ -1,9 +1,9 @@
 'use strict';
 
 import { DefOrExpr, Definition, Expr, Value, Env } from '../types';
-import { defOrExprIsExpr, isExprError, isDefinition } from '../predicates';
+import { defOrExprIsExpr, isExprError, isDefinition, isValueError } from '../predicates';
 import { parse } from './parse';
-import { BFn, Fn, NFn} from '../constructors';
+import { BFn, Fn, NFn, ValErr} from '../constructors';
 
 export const evaluate = (exp: string): Value[] => {
   return evaluateDefOrExprs(parse(exp));
@@ -25,10 +25,20 @@ const evaluateExpr = (e: Expr, env: Env): Value => {
     return e;
   } else if (Array.isArray(e)) {
     let [f, exprs] = e;
-    if (isInEnv(f, env)) {
-      // ...
+    let args = exprs.map(_ => evaluateExpr(_, env));
+    let val = getVal(f, env);
+    if (val) {
+      if (isValueError(val)) {
+        // return ValErr: body of function has err in it
+      } else if (val.type === 'Function') {
+          let params = val.value;
+      } else if (val.type === 'BuiltinFunction') {
+
+      } else {
+        // return ValErr: tried to call a constant as a function
+      }
     } else {
-      // return ValErr
+      // return ValErr : f not in env
     }
   } else if (e.type === 'String') {
     return NFn(e.expr);
@@ -81,6 +91,17 @@ const isInEnv = (id: string, env: Env): boolean => {
  */
 const extendEnv = (id: string, v: Value, env: Env): void => {
   env.set(id, v);
+}
+
+/**
+ * Gets an identifier's value from an environment if it's there.
+ * @param id 
+ * @param env
+ */
+const getVal = (id: string, env: Env): Value | false => {
+  const a = env.get(id);
+  if (a !== undefined) return a;
+  return false;
 }
 
 // const processDefOrExpr = (d: DefOrExpr): any => {
@@ -241,11 +262,11 @@ const builtinEnv = (): Env => {
 //     let vals = exp[1].map(ex => valOf(ex, env));
 
 //     if (f.type === ValueType.Function) {
-//       if (f.value.args.length !== exp[1].length) throw new Error('Arity mismatch.');
+//       if (f.value.params.length !== exp[1].length) throw new Error('Arity mismatch.');
 //       let e: Env = new Map<String, Value>(f.value.env);
       
 //       for (let i = 0; i < exp[1].length; i++) {
-//         extendEnv(f.value.args[i], vals[i], e);
+//         extendEnv(f.value.params[i], vals[i], e);
 //       }
 
 //       return valOf(f.value.body, e);
@@ -301,7 +322,7 @@ const builtinEnv = (): Env => {
 //         {
 //           type: ValueType.Function,
 //           value: {
-//             args: defn[1][1],
+//             params: defn[1][1],
 //             env: env,
 //             body: defn[2] 
 //           }
