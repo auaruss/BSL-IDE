@@ -1,11 +1,12 @@
 // Types used in the student language evaluator.
 
+import { isTokenError } from "./predicates";
+
 export type Token
-  = {
+  = TokenError | {
     type: TokenType
     token: string,
-  } 
-  | TokenError;
+  };
 
 export enum TokenType {
   OpenParen='OpenParen',
@@ -36,7 +37,10 @@ export type Result<T>
   };
 
 export type SExp
-  = ReadError | SExp[] | {
+  = ReadError | {
+    type: 'SExp Array',
+    sexp: SExp[]
+  } | {
     type: 'String'
     sexp: string
   } | {
@@ -65,18 +69,18 @@ export type DefOrExpr
   = Definition | Expr;
 
 export type Definition
-  = {
+  = DefinitionError | {
     type: 'define',
     header: string | {
       name: string,
       params: string[]
     },
     body: Expr
-  } | DefinitionError;
+  };
 
 
 export type Expr
-  = {
+  = ExprError | {
     type: 'String',
     expr: string
   } | {
@@ -94,10 +98,10 @@ export type Expr
       op: string,
       args:Expr[]
     },
-  } | ExprError;
+  };
 
 export type DefinitionError
-  = {
+  = ReadError | {
     defnError: 'Invalid expression passed where function name was expected'
              | 'Invalid expression passed where function argument was expected'
              | 'A definition requires two parts, but found none'
@@ -111,22 +115,22 @@ export type DefinitionError
              | 'Cannot have a definition as the body of a definition'
              | 'The body given is not a valid Expr',
     sexps: SExp[]
-  } | ReadError;
+  };
 
 export type ExprError
-  = {
+  = ReadError | {
     exprError: 'Empty Expr'
              | 'Defn inside Expr'
              | 'No function name after open paren'
              | 'Function call with no arguments',
     sexps: SExp[]
-  } | ReadError;
+  };
 
 // ----------------------------------------------------------------------------
 
 
 export type Value
-  = ExprValue | DefinitionValue;
+  = DefinitionValue | ExprValue;
 
 export type DefinitionValue
   = DefinitionError | {
@@ -158,7 +162,8 @@ export type Func
 export type Env = Map<String,Value>;
 
 export type ValueError
-  = {
+  = ExprError | {
     valueError: "Id not in environment"
     deforexprs: DefOrExpr[]
-  } | ExprError;
+  };
+
