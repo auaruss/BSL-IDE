@@ -65,9 +65,14 @@ export type DefOrExpr
   = Definition | Expr;
 
 export type Definition
-  = ['define', string, Expr]
-  | ['define', [string, string[]], Expr]
-  | DefinitionError;
+  = {
+    type: 'define',
+    header: string | {
+      name: string,
+      params: string[]
+    },
+    body: Expr
+  } | DefinitionError;
 
 
 export type Expr
@@ -83,9 +88,13 @@ export type Expr
   } | {
     type: 'Bool',
     expr: boolean
-  } 
-  | [string, Expr[]]
-  | ExprError;
+  } | {
+    type: 'Call',
+    expr: {
+      op: string,
+      args:Expr[]
+    },
+  } | ExprError;
 
 export type DefinitionError
   = {
@@ -120,7 +129,8 @@ export type Value
   = ExprValue | DefinitionValue;
 
 export type DefinitionValue
-  = DefinitionError | { 
+  = DefinitionError | {
+    type: 'define'
     defined: string,
     toBe: Value
   }
