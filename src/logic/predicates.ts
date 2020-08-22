@@ -1,59 +1,225 @@
 import {
-  DefOrExpr, Definition, Expr, ReadError,
-  SExp, TokenError, ExprError, ValueError
+  Token, TokenError,
+  SExp, ReadError,
+  DefOrExpr, Definition, Expr, DefinitionError, ExprError,
+  Value, DefinitionValue, ExprValue, Func, Env, ValueError
 } from './types';
 
+export const isToken = (x: any): x is Token => {
+  return (typeof x === 'object'
+    && x.type
+    && x.token
+    && ( x.type === 'OpenParen'
+      || x.type === 'OpenSquareParen'
+      || x.type === 'OpenBraceParen'
+      || x.type === 'CloseParen'
+      || x.type === 'CloseSquareParen'
+      || x.type === 'CloseBraceParen'
+      || x.type === 'Number'
+      || x.type === 'String'
+      || x.type === 'Identifier'
+      || x.type === 'Whitespace'
+      || x.type === 'Boolean')
+    && typeof x.token === 'string') || isTokenError(x);
+}
+
 export const isTokenError = (x: any): x is TokenError => {
-  if (! (typeof x === 'object')) return false;
-  if (! (x.tokenError && typeof x.tokenError === 'string')) return false;
-  if (! x.string) return false;
-  return x.tokenError === 'Unidentified Token';
+  return typeof x === 'object'
+    && x.tokenError
+    && x.string
+    && x.tokenError === 'Unidentified Token'
+    && typeof x.string === 'string';
+}
+
+// ----------------------------------------------------------------------------
+
+export const isSExp = (x: any): x is SExp => {
+  return (typeof x === 'object'
+    && x.type
+    && x.sexp
+    && ( x.type === 'SExp Array'
+      && Array.isArray(x.sexp)
+      && x.sexp.every(isSExp) 
+    )
+    || ( x.type === 'String'
+      && typeof x.sexp === 'string'
+    )
+    || ( x.type === 'Num'
+      && typeof x.sexp === 'number'
+    )
+    || ( x.type === 'Id'
+      && typeof x.sexp === 'string'
+    )
+    || ( x.type === 'Bool'
+      && typeof x.sexp === 'boolean'
+    )) || isReadError(x);
 }
 
 export const isReadError = (x: any): x is ReadError => {
-  if (isTokenError(x)) return true;
-  if (! (typeof x === 'object')) return false;
-  if (! (x.readError && typeof x.readError === 'string')) return false;
-  if (! x.tokens) return false;
-  return x.readError === 'No Valid SExp'
+  return (typeof x === 'object'
+    && x.readError
+    && x.tokens
+    && ( x.readError === 'No Valid SExp'
       || x.readError === 'No Closing Paren'
       || x.readError === 'No Open Paren'
-      || x.readError === 'Mismatched Parens';
+      || x.readError === 'Mismatched Parens'
+    )
+    && Array.isArray(x.tokens)
+    && x.tokens.every(isToken))
+    || isTokenError(x);
+}
+
+// ----------------------------------------------------------------------------
+
+export const isDefOrExpr = (x: any): x is DefOrExpr => {
+  return isDefinition(x) || isExpr(x);
+}
+
+
+export const isDefinition = (x: any): x is Definition => {
+  return (typeof x === 'object'
+    && x.type
+    && x.header
+    && x.body
+    && x.type === 'define'
+    && isHeader(x.header)
+    && isExpr(x.body)) || isDefinitionError(x);
+}
+
+const isHeader = (x: any): boolean => {
+  return typeof x === 'string'
+  || (
+    typeof x === 'object'
+    && x.name
+    && x.params
+    && typeof x.name === 'string'
+    && x.params.every((_: any) => typeof _ === 'string')
+  );
+}
+
+export const isExpr = (x: any): x is Expr => {
+  return (typeof x === 'object'
+  && x.type
+  && x.expr
+  && (
+    x.type === 'String'
+    && typeof x.expr === 'string'
+  )
+  && (
+    x.type === 'Num'
+    && typeof x.expr === 'number'
+  )
+  && (
+    x.type === 'Id'
+    && typeof x.expr === 'string'
+  )
+  && (
+    x.type === 'Bool'
+    && typeof x.expr === 'boolean'
+  )
+  && (
+    x.type === 'Call'
+    && isCall(x.expr)
+  )) || isExprError(x);
+}
+
+const isCall = (x: any): boolean => {
+  return typeof x === 'object'
+    && x.op
+    && x.args
+    && typeof x.op === 'string'
+    && Array.isArray(x.args)
+    && x.args.every(isExpr);
+}
+
+export const isDefinitionError = (x: any): x is DefinitionError => {
+  return (typeof x === 'object'
+    && x.defnError
+    && x.sexps
+    && ( x.defnError === 'Invalid expression passed where function name was expected'
+      || x.defnError === 'Invalid expression passed where function argument was expected'
+      || x.defnError === 'A definition requires two parts, but found none'
+      || x.defnError === 'A definition requires two parts, but found one'
+      || x.defnError === 'Passed a non-definition as definition'
+      || x.defnError === 'Expected a variable name, or a function header'
+      || x.defnError === 'Expected a function header with parameters in parentheses, received nothing in parentheses'
+      || x.defnError === 'Expected a function header with parameters in parentheses, received a function name with no parameters'
+      || x.defnError === 'A function in BSL cannot have zero parameters'
+      || x.defnError === 'A definition can\'t have more than 3 parts'
+      || x.defnError === 'Cannot have a definition as the body of a definition'
+      || x.defnError === 'The body given is not a valid Expr')
+    && Array.isArray(x.sexps)
+    && x.sexps.every(isSExp))
+    || isTokenError(x)
+    || isReadError(x);
 }
 
 export const isExprError = (x: any): x is ExprError => {
-  if (isReadError(x)) return true;
-  if (! (typeof x === 'object')) return false;
-  if (! (x.exprError && typeof x.exprError === 'string')) return false;
-  if (! x.sexps) return false;
-  return x.exprError === 'Empty Expr'
+  return (typeof x === 'object'
+    && x.exprError
+    && x.sexps
+    && ( x.exprError === 'Empty Expr'
       || x.exprError === 'Defn inside Expr'
       || x.exprError === 'No function name after open paren'
-      || x.exprError === 'Function call with no arguments';
+      || x.exprError === 'Function call with no arguments')
+    && Array.isArray(x.sexps)
+    && x.sexps.every(isSExp))
+    || isReadError(x);
 }
 
-// Checks to see if a specific DefOrExpr is an Expr.
-export const defOrExprIsExpr = (d: DefOrExpr): d is Expr => {
-  return (! isDefinition(d));
+// ----------------------------------------------------------------------------
+
+export const isValue = (x: any): x is Value => {
+  return isDefinitionValue(x) || isExprValue(x);
 }
 
-// Tells whether x is a Definition.
-export const isDefinition = (x: any): x is Definition => {
-  return Array.isArray(x) && x.length > 0 && x[0] === 'define';
+export const isDefinitionValue = (x: any): x is DefinitionValue => {
+  return (typeof x === 'object'
+    && x.type
+    && x.defined
+    && x.toBe
+    && x.type === 'define'
+    && typeof x.defined === 'string'
+    && isValue(x.toBe))
+  || isDefinitionError(x);
 }
 
+export const isExprValue = (x: any): x is ExprValue => {
+  return (typeof x === 'object'
+    && x.type
+    && x.value
+    && (( x.type === 'NonFunction'
+        && (typeof x.value === 'string'
+        ||  typeof x.value === 'number'
+        ||  typeof x.value === 'boolean'))
+      || ( x.type === 'BuiltinFunction'
+        && typeof x.value === 'function' )
+      || ( x.type === 'Function'
+        && isFunc(x.value))))
+  || isValueError(x);
+}
 
-export const defOrExprArrayIsExprArray = (ds: DefOrExpr[]): ds is Expr[] => {
-  return ds.every(defOrExprIsExpr);
+export const isFunc = (x: any): x is Func => {
+  return typeof x === 'object'
+    && x.args
+    && x.env
+    && x.body
+    && Array.isArray(x.args)
+    && x.args.every((_: any) => typeof _ === 'string')
+    && isEnv(x.env)
+    && isExpr(x.body);
+}
+
+export const isEnv = (x: any): x is Env => {
+  return x instanceof Map;
 }
 
 export const isValueError = (x: any): x is ValueError => {
-  if (isExprError(x)) return true;
-  if (! (typeof x === 'object')) return false;
-  if (! (x.valueError && typeof x.valueError === 'string')) return false;
-  if (! x.deforexprs) return false;
-  return x.valueError === 'Empty Expr'
-      || x.valueError === 'Defn inside Expr'
-      || x.valueError === 'No function name after open paren'
-      || x.valueError === 'Function call with no arguments';
+  return (typeof x === 'object'
+    && x.valueError
+    && x.deforexprs
+    && x.valueError === 'Id not in environment'
+    && Array.isArray(x.deforexprs)
+    && x.deforexprs.every(isDefOrExpr))
+  || isExprError(x);
 }
