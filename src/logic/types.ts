@@ -146,7 +146,7 @@ export type ExprValue
     value: string | number | boolean
   } | {
     type: 'BuiltinFunction',
-    value: ((vs: Value[]) => Value)
+    value: ((vs: ExprValue[]) => ExprValue)
   } | {
     type: 'Function',
     value: Func
@@ -163,7 +163,7 @@ export type Env = Map<String,Value>;
 
 export type ValueError
   = ExprError | {
-    valueError: "Id not in environment"
+    valueError: 'Id not in environment'
     deforexprs: DefOrExpr[]
   };
 
