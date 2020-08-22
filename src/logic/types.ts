@@ -115,7 +115,18 @@ export type ExprError
 
 // ----------------------------------------------------------------------------
 
+
 export type Value
+  = ExprValue | DefinitionValue;
+
+export type DefinitionValue
+  = DefinitionError | { 
+    defined: string,
+    toBe: Value
+  }
+
+
+export type ExprValue
   = ValueError | {
     type: 'NonFunction',
     value: string | number | boolean
@@ -140,4 +151,4 @@ export type ValueError
   = {
     valueError: "Id not in environment"
     deforexprs: DefOrExpr[]
-  } | DefinitionError | ExprError;
+  } | ExprError;
