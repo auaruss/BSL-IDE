@@ -2,7 +2,7 @@
 
 import {
   DefOrExpr, Definition, Expr, ReadError,
-  TokenType, TokenError, Token, SExp, Value, ValueError
+  TokenType, TokenError, Token, SExp, ExprValue, ValueError
 } from '../src/logic/types';
 
 import { tokenize                     } from '../src/logic/evaluator/tokenize';
@@ -18,7 +18,8 @@ import {
   IdTok, IdAtom, IdExpr,
   BooleanTok, BooleanAtom, BooleanExpr,
   TokErr, ReadErr, DefnErr, ExprErr, ValErr,
-  CP, OP, SPACE, OSP, CSP, OBP, CBP, NL
+  CP, OP, SPACE, OSP, CSP, OBP, CBP, NL,
+  SExps, VarDefn, FnDefn, Call
 } from '../src/logic/constructors';
 
 import { checkExpect } from './check-expect';
@@ -30,7 +31,7 @@ const t = (
   tokens?: Token[],
   sexps?: SExp[],
   deforexprs?: DefOrExpr[],
-  values?: Value[],
+  values?: ExprValue[],
   output?: string
 ) => {
   describe(input, () => {
@@ -270,7 +271,7 @@ t(
   '(define x 10)',
   [ OP, IdTok('define'), SPACE, IdTok('x'), SPACE, NumTok('10'), CP ],
   [ 
-    [ IdAtom('define'), IdAtom('x'), NumAtom(10) ]
+    SExps(IdAtom('define'), IdAtom('x'), NumAtom(10))
   ]
 );
 
@@ -283,7 +284,7 @@ t('(123)',
   ],
 
   [
-    [ NumAtom(123) ]
+    SExps(NumAtom(123))
   ]
 );
 
@@ -325,20 +326,20 @@ t('([[[][][][][][])))[][])))){}{}{}',
   ],
 
   [
-    [
+    SExps(
       ReadErr('No Closing Paren', [ OSP ]),
       ReadErr('No Closing Paren', [ OSP ]),
-      [],[],[],[],[],[]
-    ],
+      SExps(), SExps(), SExps(), SExps(), SExps(), SExps()
+    ),
     ReadErr('No Open Paren', [ CP ]),
     ReadErr('No Open Paren', [ CP ]),
-    [],[],
+    SExps(), SExps(),
     ReadErr('No Open Paren', [ CP ]),
     ReadErr('No Open Paren', [ CP ]),
     ReadErr('No Open Paren', [ CP ]),
     ReadErr('No Open Paren', [ CP ]),
-    [],
-    []
+    SExps(),
+    SExps()
   ]
 );
 
@@ -354,9 +355,7 @@ t(') (hello)',
 
   [
     ReadErr('No Open Paren', [ CP ]),
-    [
-      IdAtom('hello')
-    ]
+    SExps(IdAtom('hello'))
   ],
 );
 
@@ -373,20 +372,21 @@ t('(define bool #t123)',
   ],
 
   [
-    [
+    SExps(
       IdAtom('define'),
       IdAtom('bool'),
       TokErr('#t123')
-    ]
+    )
   ],
+
   [
     DefnErr('Cannot have a definition as the body of a definition',
     [
-      [
+      SExps(
         IdAtom('define'),
         IdAtom('bool'),
         TokErr('#t123')
-      ]
+      )
     ])
   ]
 );
@@ -438,63 +438,61 @@ t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
   ],
 
   [
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('fact'),
         IdAtom('n')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
-        [
+        SExps(
           IdAtom('='),
           IdAtom('n'),
           NumAtom(0)
-        ],
+        ),
         NumAtom(1),
-        [
+        SExps(
           IdAtom('*'),
           IdAtom('n'),
-          [
+          SExps(
             IdAtom('fact'),
-            [
+            SExps(
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(1)
-            ]
-          ]
-        ]
-      ]
-    ]
+            )
+          )
+        )
+      )
+    )
   ],
   
   [
-    [
-      'define',
-      ['fact', ['n']],
-      [
+    FnDefn(
+      'fact',
+      ['n'],
+      Call(
         'if',
         [
-          [
+          Call(
             '=',
             [ IdExpr('n'), NumExpr(0) ]
-          ],
+          ),
           NumExpr(1),
-          [
+          Call(
             '*',
             [
               IdExpr('n'),
-              [
+              Call(
                 'fact',
-                [
-                  ['-', [IdExpr('n'), NumExpr(1)]]
-                ]
-              ]
+                [ Call('-', [IdExpr('n'), NumExpr(1)]) ]
+              )
             ]
-          ]
+          )
         ]
-      ]
-    ]
+      )
+    )
   ]
 );
 
@@ -545,33 +543,33 @@ t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
 
   [
     IdAtom('define'),
-    [
+    SExps(
       IdAtom('fact'),
       IdAtom('n')
-    ],
-    [
+    ),
+    SExps(
       IdAtom('if'),
-      [
+      SExps(
         IdAtom('='),
         IdAtom('n'),
         NumAtom(0)
-      ],
+      ),
       NumAtom(1),
-      [
+      SExps(
         IdAtom('*'),
         IdAtom('n'),
-        [
+        SExps(
           IdAtom('fact'),
-          [
+          SExps(
             IdAtom('-'),
             IdAtom('n'),
             NumAtom(1)
-          ]
-        ]
-      ]
-    ],
+          )
+        )
+      )
+    ),
     ReadErr('No Open Paren', [ CP ])
-  ]
+  ],
 );
 
 t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
@@ -617,31 +615,31 @@ t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))',
   ],
 
   [
-    [
+    SExps(
       IdAtom('fact'),
       IdAtom('n')
-    ],
-    [
+    ),
+    SExps(
       IdAtom('if'),
-      [
+      SExps(
         IdAtom('='),
         IdAtom('n'),
         NumAtom(0)
-      ],
+      ),
       NumAtom(1),
-      [
+      SExps(
         IdAtom('*'),
         IdAtom('n'),
-        [
+        SExps(
           IdAtom('fact'),
-          [
+          SExps(
             IdAtom('-'),
             IdAtom('n'),
             NumAtom(1)
-          ]
-        ]
-      ]
-    ],
+          )
+        )
+      )
+    ),
     ReadErr('No Open Paren', [ CP ])
   ]
 );
@@ -662,88 +660,88 @@ t('(define (simple-choice x y z) (if x y z))\n'
   .concat([ NL ]),
 
   [
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('simple-choice'),
         IdAtom('x'),
         IdAtom('y'),
         IdAtom('z')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
         IdAtom('x'),
         IdAtom('y'),
         IdAtom('z')
-      ]
-    ],
+      )
+    ),
 
-    [
+    SExps(
         IdAtom('simple-choice'),
         BooleanAtom('#t'),
         NumAtom(10),
         NumAtom(20)
-    ],
+    ),
 
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('*'),
         IdAtom('m'),
         IdAtom('n')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
-        [
+        SExps(
           IdAtom('='),
           IdAtom('n'),
           NumAtom(0)
-        ],
+        ),
         NumAtom(0),
-        [
+        SExps(
           IdAtom('+'),
           IdAtom('m'),
-          [
+          SExps(
             IdAtom('*'),
             IdAtom('m'),
-            [
+            SExps(
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(1)
-            ]
-          ]
-        ]
-      ]
-    ],
+            )
+          )
+        )
+      )
+    ),
 
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('fact'),
         IdAtom('n')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
-        [
+        SExps(
           IdAtom('='),
           IdAtom('n'),
           NumAtom(0)
-        ],
+        ),
         NumAtom(1),
-        [
+        SExps(
           IdAtom('*'),
           IdAtom('n'),
-          [
+          SExps(
             IdAtom('fact'),
-            [
+            SExps(
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(1)
-            ]
-          ]
-        ]
-      ]
-    ]
+            )
+          )
+        )
+      )
+    )
   ]
 );
 
@@ -780,24 +778,24 @@ t(
   ],
 
   [
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('mn'),
         IdAtom('x'),
         IdAtom('y')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
-        [
+        SExps(
           IdAtom('<'),
           IdAtom('x'),
           IdAtom('y')
-        ],
+        ),
         IdAtom('x'),
         IdAtom('y')
-      ]
-    ]
+      )
+    )
   ]
 );
 
@@ -819,12 +817,12 @@ t('(simple-choice #t 10 20)',
   ],
 
   [
-    [ 
+    SExps(
       IdAtom('simple-choice'),
       BooleanAtom('#t'),
       NumAtom(10),
       NumAtom(20)
-    ]
+    )
   ]
 );
 
@@ -840,11 +838,11 @@ t('(* 2 3)',
   ],
 
   [
-    [
+    SExps(
       IdAtom('*'),
       NumAtom(2),
       NumAtom(3)
-    ]
+    )
   ]
 );
 
@@ -859,10 +857,10 @@ t('(fact 5)',
   ],
 
   [
-    [
+    SExps(
       IdAtom('fact'),
       NumAtom(5)
-    ]
+    )
   ]
 );
 
@@ -877,10 +875,10 @@ t('(f 10)',
   ],
 
   [
-    [
+    SExps(
       IdAtom('f'),
       NumAtom(10)
-    ]
+    )
   ]
 );
 
@@ -1032,49 +1030,49 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))'
   ],
 
   [
-    [
+    SExps(
       IdAtom('define'),
-      [
+      SExps(
         IdAtom('fib'),
         IdAtom('n')
-      ],
-      [
+      ),
+      SExps(
         IdAtom('if'),
-        [ 
+        SExps(
           IdAtom('or'),
-          [
+          SExps(
             IdAtom('='),
             IdAtom('n'),
             NumAtom(0)
-          ],
-          [
+          ),
+          SExps(
             IdAtom('='),
             IdAtom('n'),
             NumAtom(1)
-          ]
-        ],
+          )
+        ),
         NumAtom(1),
-        [
+        SExps(
           IdAtom('+'),
-          [
+          SExps(
             IdAtom('fib'),
-            [
+            SExps(
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(1)
-            ]
-          ],
-          [
+            )
+          ),
+          SExps(
             IdAtom('fib'),
-            [
+            SExps(
               IdAtom('-'),
               IdAtom('n'),
               NumAtom(2)
-            ]
-          ]
-        ]
-      ]
-    ]
+            )
+          )
+        )
+      )
+    )
   ]
 );
 
@@ -1113,24 +1111,24 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
   ],
 
   [
-    [
+    SExps(
       StringAtom('hello'),
       IdAtom('world'),
-      [
+      SExps(
         IdAtom('this'),
         StringAtom('is'),
         StringAtom('some non'),
         IdAtom('sense'),
-        [
+        SExps(
           IdAtom('which'),
           IdAtom('should'),
           IdAtom('be')
-        ],
+        ),
         BooleanAtom('#t'),
         NumAtom(10),
         IdAtom('readable')
-      ]
-    ]
+      )
+    )
   ]
 );
 
@@ -1139,6 +1137,8 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
 // 'background-image\n' +
 // '(define (f x) (+ 1 x))\n',
 // );
+
+// (define)
 
 /*****************************************************************************
  *                   Test cases for live editing behavior.                   *
