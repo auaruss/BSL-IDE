@@ -1,7 +1,8 @@
 import {
   TokenType, Token, TokenError,
-  SExp, ReadError, Expr, Value,
-  DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env
+  SExp, ReadError, Expr, ExprValue,
+  DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env,
+  Value, Definition
 } from './types';
 
 // ----------------------------------------------------------------------------
@@ -42,6 +43,13 @@ export const IdAtom      = (v: string): SExp => { return Atom('Id',             
 export const StringAtom  = (v: string): SExp => { return Atom('String',         v);  }
 export const BooleanAtom = (v: string): SExp => { return Atom('Bool', whichBool(v)); }
 
+export const SExps = (...args: SExp[]): SExp => {
+  return {
+    type: 'SExp Array',
+    sexp: args
+  };
+}
+
 export const ReadErr = (
   e: 'No Valid SExp'
   | 'No Closing Paren'
@@ -78,7 +86,46 @@ export const StringExpr  = (v: string):  Expr => { return PrimitiveExpr('String'
 export const BooleanExpr = (v: boolean): Expr => { return PrimitiveExpr('Bool',   v); }
 
 export const FunctionExpr = (fid: string, args: Expr[]): Expr => {
-  return [fid, args];
+  return {
+    type: 'Call',
+    expr: {
+      op: fid,
+      args: args
+    }
+  };
+}
+
+export const VarDefn = (varName: string, body: Expr): Definition => {
+  return {
+    type: 'define',
+    header: varName,
+    body: body
+  };
+}
+
+export const FnDefn = (
+  name: string,
+  params: string[],
+  body: Expr
+): Definition => {
+  return {
+    type: 'define',
+    header: {
+      name: name,
+      params: params
+    },
+    body: body
+  };
+}
+
+export const Call = (op: string, args: Expr[]): Expr => {
+  return {
+    type: 'Call',
+    expr: {
+      op: op,
+      args: args
+    },
+  }
 }
 
 export const ExprErr = (
@@ -111,15 +158,15 @@ export const DefnErr = (
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
 
-export const NFn = (v: string|number|boolean): Value => {
+export const NFn = (v: string|number|boolean): ExprValue => {
   return { type: 'NonFunction', value: v };
 }
 
-export const BFn = (v: ((vs: Value[]) => Value)): Value => {
+export const BFn = (v: ((vs: ExprValue[]) => ExprValue)): ExprValue => {
   return { type: 'BuiltinFunction', value: v };
 }
 
-export function Fn(a: string[], e: Env, b: Expr): Value {
+export function Fn(a: string[], e: Env, b: Expr): ExprValue {
   return {
     type: 'Function',
     value: {
