@@ -153,14 +153,14 @@ t('#t123', [
     constructors_1.IdAtom('t123')
 ]);
 t('(define x 10)', [constructors_1.OP, constructors_1.IdTok('define'), constructors_1.SPACE, constructors_1.IdTok('x'), constructors_1.SPACE, constructors_1.NumTok('10'), constructors_1.CP], [
-    [constructors_1.IdAtom('define'), constructors_1.IdAtom('x'), constructors_1.NumAtom(10)]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.IdAtom('x'), constructors_1.NumAtom(10))
 ]);
 t('(123)', [
     constructors_1.OP,
     constructors_1.NumTok('123'),
     constructors_1.CP
 ], [
-    [constructors_1.NumAtom(123)]
+    constructors_1.SExps(constructors_1.NumAtom(123))
 ]);
 t('([[[][][][][][])))[][])))){}{}{}', [
     constructors_1.OP,
@@ -196,20 +196,16 @@ t('([[[][][][][][])))[][])))){}{}{}', [
     constructors_1.OBP,
     constructors_1.CBP
 ], [
-    [
-        constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]),
-        constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]),
-        [], [], [], [], [], []
-    ],
+    constructors_1.SExps(constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]), constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP]), constructors_1.SExps(), constructors_1.SExps(), constructors_1.SExps(), constructors_1.SExps(), constructors_1.SExps(), constructors_1.SExps()),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
-    [], [],
+    constructors_1.SExps(), constructors_1.SExps(),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
-    [],
-    []
+    constructors_1.SExps(),
+    constructors_1.SExps()
 ]);
 t(') (hello)', [
     constructors_1.CP,
@@ -219,9 +215,7 @@ t(') (hello)', [
     constructors_1.CP
 ], [
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP]),
-    [
-        constructors_1.IdAtom('hello')
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('hello'))
 ]);
 t('(define bool #t123)', [
     constructors_1.OP,
@@ -232,18 +226,10 @@ t('(define bool #t123)', [
     constructors_1.TokErr('#t123'),
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('define'),
-        constructors_1.IdAtom('bool'),
-        constructors_1.TokErr('#t123')
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.IdAtom('bool'), constructors_1.TokErr('#t123'))
 ], [
     constructors_1.DefnErr('Cannot have a definition as the body of a definition', [
-        [
-            constructors_1.IdAtom('define'),
-            constructors_1.IdAtom('bool'),
-            constructors_1.TokErr('#t123')
-        ]
+        constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.IdAtom('bool'), constructors_1.TokErr('#t123'))
     ])
 ]);
 t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
@@ -289,61 +275,16 @@ t('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
     constructors_1.CP,
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('fact'),
-            constructors_1.IdAtom('n')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            [
-                constructors_1.IdAtom('='),
-                constructors_1.IdAtom('n'),
-                constructors_1.NumAtom(0)
-            ],
-            constructors_1.NumAtom(1),
-            [
-                constructors_1.IdAtom('*'),
-                constructors_1.IdAtom('n'),
-                [
-                    constructors_1.IdAtom('fact'),
-                    [
-                        constructors_1.IdAtom('-'),
-                        constructors_1.IdAtom('n'),
-                        constructors_1.NumAtom(1)
-                    ]
-                ]
-            ]
-        ]
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.IdAtom('n')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.NumAtom(1), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('n'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))))))
 ], [
-    [
-        'define',
-        ['fact', ['n']],
-        [
-            'if',
-            [
-                [
-                    '=',
-                    [constructors_1.IdExpr('n'), constructors_1.NumExpr(0)]
-                ],
-                constructors_1.NumExpr(1),
-                [
-                    '*',
-                    [
-                        constructors_1.IdExpr('n'),
-                        [
-                            'fact',
-                            [
-                                ['-', [constructors_1.IdExpr('n'), constructors_1.NumExpr(1)]]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-    ]
+    constructors_1.FnDefn('fact', ['n'], constructors_1.Call('if', [
+        constructors_1.Call('=', [constructors_1.IdExpr('n'), constructors_1.NumExpr(0)]),
+        constructors_1.NumExpr(1),
+        constructors_1.Call('*', [
+            constructors_1.IdExpr('n'),
+            constructors_1.Call('fact', [constructors_1.Call('-', [constructors_1.IdExpr('n'), constructors_1.NumExpr(1)])])
+        ])
+    ]))
 ]);
 t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
     constructors_1.IdTok('define'),
@@ -388,31 +329,8 @@ t('define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
     constructors_1.CP
 ], [
     constructors_1.IdAtom('define'),
-    [
-        constructors_1.IdAtom('fact'),
-        constructors_1.IdAtom('n')
-    ],
-    [
-        constructors_1.IdAtom('if'),
-        [
-            constructors_1.IdAtom('='),
-            constructors_1.IdAtom('n'),
-            constructors_1.NumAtom(0)
-        ],
-        constructors_1.NumAtom(1),
-        [
-            constructors_1.IdAtom('*'),
-            constructors_1.IdAtom('n'),
-            [
-                constructors_1.IdAtom('fact'),
-                [
-                    constructors_1.IdAtom('-'),
-                    constructors_1.IdAtom('n'),
-                    constructors_1.NumAtom(1)
-                ]
-            ]
-        ]
-    ],
+    constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.IdAtom('n')),
+    constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.NumAtom(1), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('n'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))))),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP])
 ]);
 t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
@@ -455,31 +373,8 @@ t('(fact n) (if (= n 0) 1 (* n (fact (- n 1)))))', [
     constructors_1.CP,
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('fact'),
-        constructors_1.IdAtom('n')
-    ],
-    [
-        constructors_1.IdAtom('if'),
-        [
-            constructors_1.IdAtom('='),
-            constructors_1.IdAtom('n'),
-            constructors_1.NumAtom(0)
-        ],
-        constructors_1.NumAtom(1),
-        [
-            constructors_1.IdAtom('*'),
-            constructors_1.IdAtom('n'),
-            [
-                constructors_1.IdAtom('fact'),
-                [
-                    constructors_1.IdAtom('-'),
-                    constructors_1.IdAtom('n'),
-                    constructors_1.NumAtom(1)
-                ]
-            ]
-        ]
-    ],
+    constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.IdAtom('n')),
+    constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.NumAtom(1), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('n'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))))),
     constructors_1.ReadErr('No Open Paren', [constructors_1.CP])
 ]);
 t('(define (simple-choice x y z) (if x y z))\n'
@@ -494,85 +389,10 @@ t('(define (simple-choice x y z) (if x y z))\n'
     .concat([constructors_1.NL])
     .concat(tokenize_1.tokenize('(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))'))
     .concat([constructors_1.NL]), [
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('simple-choice'),
-            constructors_1.IdAtom('x'),
-            constructors_1.IdAtom('y'),
-            constructors_1.IdAtom('z')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            constructors_1.IdAtom('x'),
-            constructors_1.IdAtom('y'),
-            constructors_1.IdAtom('z')
-        ]
-    ],
-    [
-        constructors_1.IdAtom('simple-choice'),
-        constructors_1.BooleanAtom('#t'),
-        constructors_1.NumAtom(10),
-        constructors_1.NumAtom(20)
-    ],
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('*'),
-            constructors_1.IdAtom('m'),
-            constructors_1.IdAtom('n')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            [
-                constructors_1.IdAtom('='),
-                constructors_1.IdAtom('n'),
-                constructors_1.NumAtom(0)
-            ],
-            constructors_1.NumAtom(0),
-            [
-                constructors_1.IdAtom('+'),
-                constructors_1.IdAtom('m'),
-                [
-                    constructors_1.IdAtom('*'),
-                    constructors_1.IdAtom('m'),
-                    [
-                        constructors_1.IdAtom('-'),
-                        constructors_1.IdAtom('n'),
-                        constructors_1.NumAtom(1)
-                    ]
-                ]
-            ]
-        ]
-    ],
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('fact'),
-            constructors_1.IdAtom('n')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            [
-                constructors_1.IdAtom('='),
-                constructors_1.IdAtom('n'),
-                constructors_1.NumAtom(0)
-            ],
-            constructors_1.NumAtom(1),
-            [
-                constructors_1.IdAtom('*'),
-                constructors_1.IdAtom('n'),
-                [
-                    constructors_1.IdAtom('fact'),
-                    [
-                        constructors_1.IdAtom('-'),
-                        constructors_1.IdAtom('n'),
-                        constructors_1.NumAtom(1)
-                    ]
-                ]
-            ]
-        ]
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('simple-choice'), constructors_1.IdAtom('x'), constructors_1.IdAtom('y'), constructors_1.IdAtom('z')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.IdAtom('x'), constructors_1.IdAtom('y'), constructors_1.IdAtom('z'))),
+    constructors_1.SExps(constructors_1.IdAtom('simple-choice'), constructors_1.BooleanAtom('#t'), constructors_1.NumAtom(10), constructors_1.NumAtom(20)),
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('m'), constructors_1.IdAtom('n')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.NumAtom(0), constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.IdAtom('m'), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('m'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1)))))),
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.IdAtom('n')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.NumAtom(1), constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.IdAtom('n'), constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))))))
 ]);
 t('(define (mn x y) (if (< x y) x y))', [
     constructors_1.OP,
@@ -603,24 +423,7 @@ t('(define (mn x y) (if (< x y) x y))', [
     constructors_1.CP,
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('mn'),
-            constructors_1.IdAtom('x'),
-            constructors_1.IdAtom('y')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            [
-                constructors_1.IdAtom('<'),
-                constructors_1.IdAtom('x'),
-                constructors_1.IdAtom('y')
-            ],
-            constructors_1.IdAtom('x'),
-            constructors_1.IdAtom('y')
-        ]
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('mn'), constructors_1.IdAtom('x'), constructors_1.IdAtom('y')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('<'), constructors_1.IdAtom('x'), constructors_1.IdAtom('y')), constructors_1.IdAtom('x'), constructors_1.IdAtom('y')))
 ]);
 t('(simple-choice #t 10 20)', [
     constructors_1.OP,
@@ -633,12 +436,7 @@ t('(simple-choice #t 10 20)', [
     constructors_1.NumTok('20'),
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('simple-choice'),
-        constructors_1.BooleanAtom('#t'),
-        constructors_1.NumAtom(10),
-        constructors_1.NumAtom(20)
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('simple-choice'), constructors_1.BooleanAtom('#t'), constructors_1.NumAtom(10), constructors_1.NumAtom(20))
 ]);
 t('(* 2 3)', [
     constructors_1.OP,
@@ -649,11 +447,7 @@ t('(* 2 3)', [
     constructors_1.NumTok('3'),
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('*'),
-        constructors_1.NumAtom(2),
-        constructors_1.NumAtom(3)
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('*'), constructors_1.NumAtom(2), constructors_1.NumAtom(3))
 ]);
 t('(fact 5)', [
     constructors_1.OP,
@@ -662,10 +456,7 @@ t('(fact 5)', [
     constructors_1.NumTok('5'),
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('fact'),
-        constructors_1.NumAtom(5)
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('fact'), constructors_1.NumAtom(5))
 ]);
 t('(f 10)', [
     constructors_1.OP,
@@ -674,10 +465,7 @@ t('(f 10)', [
     constructors_1.NumTok('10'),
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('f'),
-        constructors_1.NumAtom(10)
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('f'), constructors_1.NumAtom(10))
 ]);
 t('(define x 100)'
     + '(define testNum 10)'
@@ -818,49 +606,7 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))'
     constructors_1.CP,
     constructors_1.CP
 ], [
-    [
-        constructors_1.IdAtom('define'),
-        [
-            constructors_1.IdAtom('fib'),
-            constructors_1.IdAtom('n')
-        ],
-        [
-            constructors_1.IdAtom('if'),
-            [
-                constructors_1.IdAtom('or'),
-                [
-                    constructors_1.IdAtom('='),
-                    constructors_1.IdAtom('n'),
-                    constructors_1.NumAtom(0)
-                ],
-                [
-                    constructors_1.IdAtom('='),
-                    constructors_1.IdAtom('n'),
-                    constructors_1.NumAtom(1)
-                ]
-            ],
-            constructors_1.NumAtom(1),
-            [
-                constructors_1.IdAtom('+'),
-                [
-                    constructors_1.IdAtom('fib'),
-                    [
-                        constructors_1.IdAtom('-'),
-                        constructors_1.IdAtom('n'),
-                        constructors_1.NumAtom(1)
-                    ]
-                ],
-                [
-                    constructors_1.IdAtom('fib'),
-                    [
-                        constructors_1.IdAtom('-'),
-                        constructors_1.IdAtom('n'),
-                        constructors_1.NumAtom(2)
-                    ]
-                ]
-            ]
-        ]
-    ]
+    constructors_1.SExps(constructors_1.IdAtom('define'), constructors_1.SExps(constructors_1.IdAtom('fib'), constructors_1.IdAtom('n')), constructors_1.SExps(constructors_1.IdAtom('if'), constructors_1.SExps(constructors_1.IdAtom('or'), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(0)), constructors_1.SExps(constructors_1.IdAtom('='), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))), constructors_1.NumAtom(1), constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.SExps(constructors_1.IdAtom('fib'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(1))), constructors_1.SExps(constructors_1.IdAtom('fib'), constructors_1.SExps(constructors_1.IdAtom('-'), constructors_1.IdAtom('n'), constructors_1.NumAtom(2))))))
 ]);
 t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))', [
     constructors_1.OP,
@@ -893,22 +639,5 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
     constructors_1.CP,
     constructors_1.CP
 ], [
-    [
-        constructors_1.StringAtom('hello'),
-        constructors_1.IdAtom('world'),
-        [
-            constructors_1.IdAtom('this'),
-            constructors_1.StringAtom('is'),
-            constructors_1.StringAtom('some non'),
-            constructors_1.IdAtom('sense'),
-            [
-                constructors_1.IdAtom('which'),
-                constructors_1.IdAtom('should'),
-                constructors_1.IdAtom('be')
-            ],
-            constructors_1.BooleanAtom('#t'),
-            constructors_1.NumAtom(10),
-            constructors_1.IdAtom('readable')
-        ]
-    ]
+    constructors_1.SExps(constructors_1.StringAtom('hello'), constructors_1.IdAtom('world'), constructors_1.SExps(constructors_1.IdAtom('this'), constructors_1.StringAtom('is'), constructors_1.StringAtom('some non'), constructors_1.IdAtom('sense'), constructors_1.SExps(constructors_1.IdAtom('which'), constructors_1.IdAtom('should'), constructors_1.IdAtom('be')), constructors_1.BooleanAtom('#t'), constructors_1.NumAtom(10), constructors_1.IdAtom('readable')))
 ]);

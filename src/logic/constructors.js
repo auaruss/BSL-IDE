@@ -34,6 +34,16 @@ exports.NumAtom = function (v) { return exports.Atom('Num', v); };
 exports.IdAtom = function (v) { return exports.Atom('Id', v); };
 exports.StringAtom = function (v) { return exports.Atom('String', v); };
 exports.BooleanAtom = function (v) { return exports.Atom('Bool', whichBool(v)); };
+exports.SExps = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    return {
+        type: 'SExp Array',
+        sexp: args
+    };
+};
 exports.ReadErr = function (e, v) {
     return { readError: e, tokens: v };
 };
@@ -60,7 +70,39 @@ exports.IdExpr = function (v) { return exports.PrimitiveExpr('Id', v); };
 exports.StringExpr = function (v) { return exports.PrimitiveExpr('String', v); };
 exports.BooleanExpr = function (v) { return exports.PrimitiveExpr('Bool', v); };
 exports.FunctionExpr = function (fid, args) {
-    return [fid, args];
+    return {
+        type: 'Call',
+        expr: {
+            op: fid,
+            args: args
+        }
+    };
+};
+exports.VarDefn = function (varName, body) {
+    return {
+        type: 'define',
+        header: varName,
+        body: body
+    };
+};
+exports.FnDefn = function (name, params, body) {
+    return {
+        type: 'define',
+        header: {
+            name: name,
+            params: params
+        },
+        body: body
+    };
+};
+exports.Call = function (op, args) {
+    return {
+        type: 'Call',
+        expr: {
+            op: op,
+            args: args
+        }
+    };
 };
 exports.ExprErr = function (e, v) {
     return { exprError: e, sexps: v };

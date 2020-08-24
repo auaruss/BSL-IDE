@@ -1,9 +1,45 @@
 'use strict';
 
-import { DefOrExpr, Definition, Expr, Value, Env } from '../types';
-import { defOrExprIsExpr, isExprError, isDefinition, isValueError } from '../predicates';
+import { DefOrExpr, Definition, Expr, ExprValue, Env, Value, DefinitionValue } from '../types';
+import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError } from '../predicates';
 import { parse } from './parse';
-import { BFn, Fn, NFn, ValErr} from '../constructors';
+import { DefnVal, BFn, Fn, NFn, ValErr} from '../constructors';
+
+const processDefOrExpr = (d: DefOrExpr): any => {
+  if (isDefinition(d)) {
+    processDefinition(d);
+  } else {
+    processExpr(d);
+  }
+}
+
+const processDefinition = (d: Definition): any => {
+  if (isDefinitionError(d)) {
+    /* ... */
+  } else if (typeof d.header === 'string') {
+    processExpr(d.body);
+  } else {
+    processExpr(d.body);
+  }
+}
+
+const processExpr = (e: Expr): any => {
+  if (isExprError(e)) {
+    /* ... */
+  } else switch (e.type) {
+    case 'String':
+      break;
+    case 'Num':
+      break;
+    case 'Id':
+      break;
+    case 'Bool':
+      break;
+    case 'Call':
+      e.expr.args.map(processExpr);
+      break;
+  }
+}
 
 export const evaluate = (exp: string): Value[] => {
   return evaluateDefOrExprs(parse(exp));
@@ -16,11 +52,26 @@ export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Value[] => {
     env = populateEnv(d, env);
   }
 
-  return deforexprs.filter(defOrExprIsExpr)
-                   .map(e => evaluateExpr(e, env));
+  return deforexprs.map(e => evaluateDefOrExpr(e, env));
 }
 
-const evaluateExpr = (e: Expr, env: Env): Value => {
+const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Value => {
+  if (isDefinition(d)) {
+    return evaluateDefinition(d, env);
+  } else {
+    return evaluateExpr(d, env);
+  }
+}
+
+const evaluateDefinition = (d: Definition, env: Env): DefinitionValue => {
+  if (isDefinitionError(d)) {
+    return d;
+  } else if (typeof d.header === 'string') {
+  } else {
+  }
+}
+
+const evaluateExpr = (e: Expr, env: Env): ExprValue => {
   if (isExprError(e)) {
     return e;
   } else if (Array.isArray(e)) {
@@ -55,6 +106,11 @@ const evaluateExpr = (e: Expr, env: Env): Value => {
   }
 }
 
+/**
+ * Puts a definition into an environment.
+ * @param d 
+ * @param env 
+ */
 const populateEnv = (d: Definition, env: Env): Env => {
   if (Array.isArray(d)) {
     if (typeof d[1] === 'string') {
@@ -67,10 +123,7 @@ const populateEnv = (d: Definition, env: Env): Env => {
       return env;
     }
   } else {
-      // What do we do here so we don't lose the DefinitionError? 
-      // Idea: Return Env | DefinitionError.
-      return env;
-      /* ... */
+    return env;
   }
 }
 
@@ -89,7 +142,7 @@ const isInEnv = (id: string, env: Env): boolean => {
  * @param v value
  * @param env 
  */
-const extendEnv = (id: string, v: Value, env: Env): void => {
+const extendEnv = (id: string, v: ExprValue, env: Env): void => {
   env.set(id, v);
 }
 
@@ -98,52 +151,14 @@ const extendEnv = (id: string, v: Value, env: Env): void => {
  * @param id 
  * @param env
  */
-const getVal = (id: string, env: Env): Value | false => {
+const getVal = (id: string, env: Env): ExprValue | false => {
   const a = env.get(id);
   if (a !== undefined) return a;
   return false;
 }
 
-// const processDefOrExpr = (d: DefOrExpr): any => {
-//   if (defOrExprIsExpr(d)) {
-//     return processExpr(d);
-//   } else {
-//     return processDefinition(d);
-//   }
-// }
-
-// const processExpr = (e: Expr): any => {
-//   if (isExprError(e)) {
-//     /* ... */
-//   } else if (Array.isArray(e)) {
-//     /* ... */
-//   } else if (e.type === 'String') {
-//     /* ... */
-//   } else if (e.type === 'Num') {
-//     /* ... */
-//   } else if (e.type === 'Id') {
-//     /* ... */
-//   } else if (e.type === 'Bool') {
-//     /* ... */
-//   }
-// }
-
-// const processDefinition = (d: Definition): any => {
-//   if (Array.isArray(d)) {
-//     if (typeof d[1] === 'string') {
-//       /* ... */
-//       processExpr(d[2]);
-//     } else {
-//       /* ... */
-//       processExpr(d[2]);
-//     }
-//   } else {
-//       /* ... */
-//   }
-// }
-
 const builtinEnv = (): Env => {
-  let m = new Map<String, Value>();
+  let m = new Map<String, ExprValue>();
   
   // m.set('+',
   //   BFn(

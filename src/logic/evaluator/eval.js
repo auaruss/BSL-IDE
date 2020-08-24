@@ -8,44 +8,55 @@ exports.evaluate = function (exp) {
 };
 exports.evaluateDefOrExprs = function (deforexprs) {
     var env = builtinEnv();
-    for (var _i = 0, _a = deforexprs.filter(predicates_1.isDefinition); _i < _a.length; _i++) {
+    for (var _i = 0, _a = deforexprs.filter(predicates_1.isDefinitionWithoutError); _i < _a.length; _i++) {
         var d = _a[_i];
         env = populateEnv(d, env);
     }
     return deforexprs.filter(predicates_1.defOrExprIsExpr)
         .map(function (e) { return evaluateExpr(e, env); });
 };
-var evaluateExpr = function (e, env) {
-    if (predicates_1.isExprError(e)) {
-        return e;
-    }
-    else if (Array.isArray(e)) {
-        var f = e[0], exprs = e[1];
-        if (isInEnv(f, env)) {
-            // ...
-        }
-        else {
-            // return ValErr
-        }
-    }
-    else if (e.type === 'String') {
-        return constructors_1.NFn(e.expr);
-    }
-    else if (e.type === 'Num') {
-        return constructors_1.NFn(e.expr);
-    }
-    else if (e.type === 'Id') {
-        if (isInEnv(e.expr, env)) {
-            // ...
-        }
-        else {
-            // return ValErr
-        }
-    }
-    else if (e.type === 'Bool') {
-        return constructors_1.NFn(e.expr);
-    }
-};
+// const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Value => {
+// }
+// const evaluateDefinition = (d: Definition, env: Env): DefinitionValue {
+// }
+// const evaluateExpr = (e: Expr, env: Env): ExprValue => {
+//   if (isExprError(e)) {
+//     return e;
+//   } else if (Array.isArray(e)) {
+//     let [f, exprs] = e;
+//     let args = exprs.map(_ => evaluateExpr(_, env));
+//     let val = getVal(f, env);
+//     if (val) {
+//       if (isValueError(val)) {
+//         // return ValErr: body of function has err in it
+//       } else if (val.type === 'Function') {
+//           let params = val.value;
+//       } else if (val.type === 'BuiltinFunction') {
+//       } else {
+//         // return ValErr: tried to call a constant as a function
+//       }
+//     } else {
+//       // return ValErr : f not in env
+//     }
+//   } else if (e.type === 'String') {
+//     return NFn(e.expr);
+//   } else if (e.type === 'Num') {
+//     return NFn(e.expr);
+//   } else if (e.type === 'Id') {
+//     if (isInEnv(e.expr, env)) {
+//       // ...
+//     } else {
+//       // return ValErr
+//     }
+//   } else if (e.type === 'Bool') {
+//     return NFn(e.expr);
+//   }
+// }
+/**
+ * Puts a definition into an environment.
+ * @param d
+ * @param env
+ */
 var populateEnv = function (d, env) {
     if (Array.isArray(d)) {
         if (typeof d[1] === 'string') {
@@ -60,10 +71,7 @@ var populateEnv = function (d, env) {
         }
     }
     else {
-        // What do we do here so we don't lose the DefinitionError? 
-        // Idea: Return Env | DefinitionError.
         return env;
-        /* ... */
     }
 };
 /**
@@ -83,41 +91,60 @@ var isInEnv = function (id, env) {
 var extendEnv = function (id, v, env) {
     env.set(id, v);
 };
-// const processDefOrExpr = (d: DefOrExpr): any => {
-//   if (defOrExprIsExpr(d)) {
-//     return processExpr(d);
-//   } else {
-//     return processDefinition(d);
-//   }
-// }
-// const processExpr = (e: Expr): any => {
-//   if (isExprError(e)) {
-//     /* ... */
-//   } else if (Array.isArray(e)) {
-//     /* ... */
-//   } else if (e.type === 'String') {
-//     /* ... */
-//   } else if (e.type === 'Num') {
-//     /* ... */
-//   } else if (e.type === 'Id') {
-//     /* ... */
-//   } else if (e.type === 'Bool') {
-//     /* ... */
-//   }
-// }
-// const processDefinition = (d: Definition): any => {
-//   if (Array.isArray(d)) {
-//     if (typeof d[1] === 'string') {
-//       /* ... */
-//       processExpr(d[2]);
-//     } else {
-//       /* ... */
-//       processExpr(d[2]);
-//     }
-//   } else {
-//       /* ... */
-//   }
-// }
+/**
+ * Gets an identifier's value from an environment if it's there.
+ * @param id
+ * @param env
+ */
+var getVal = function (id, env) {
+    var a = env.get(id);
+    if (a !== undefined)
+        return a;
+    return false;
+};
+var processDefOrExpr = function (d) {
+    if (predicates_1.defOrExprIsExpr(d)) {
+        return processExpr(d);
+    }
+    else {
+        return processDefinition(d);
+    }
+};
+var processExpr = function (e) {
+    if (predicates_1.isExprError(e)) {
+        /* ... */
+    }
+    else if (Array.isArray(e)) {
+        /* ... */
+    }
+    else if (e.type === 'String') {
+        /* ... */
+    }
+    else if (e.type === 'Num') {
+        /* ... */
+    }
+    else if (e.type === 'Id') {
+        /* ... */
+    }
+    else if (e.type === 'Bool') {
+        /* ... */
+    }
+};
+var processDefinition = function (d) {
+    if (Array.isArray(d)) {
+        if (typeof d[1] === 'string') {
+            /* ... */
+            processExpr(d[2]);
+        }
+        else {
+            /* ... */
+            processExpr(d[2]);
+        }
+    }
+    else {
+        /* ... */
+    }
+};
 var builtinEnv = function () {
     var m = new Map();
     // m.set('+',
