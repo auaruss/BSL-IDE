@@ -134,7 +134,7 @@ export type Value
 
 export type DefinitionValue
   = DefinitionError | {
-    type: 'define'
+    type: 'define',
     defined: string,
     toBe: Value
   }
