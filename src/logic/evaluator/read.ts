@@ -18,7 +18,7 @@ import {
 } from '../predicates';
 
 import {
-  Atom, NumAtom, IdAtom, StringAtom, BooleanAtom, ReadErr
+  Atom, NumAtom, IdAtom, StringAtom, BooleanAtom, ReadErr, SExps, Res
 } from '../constructors';
 
 /**
@@ -73,7 +73,7 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
                   || firstUnprocessedToken.type === TokenType.CloseSquareParen
                   || firstUnprocessedToken.type === TokenType.CloseBraceParen) {
             if (parensMatch(firstToken.type, firstUnprocessedToken.type))
-              return { thing: readRest.thing, remain: readRest.remain.slice(1) }
+              return Res(SExps(readRest.thing), readRest.remain.slice(1)))
             return {
               thing: ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
               remain: readRest.remain.slice(1)
