@@ -123,6 +123,10 @@ export const isExpr = (x: any): x is Expr => {
   )) || isExprError(x);
 }
 
+export const isExprArray = (x: any): x is Expr[] => {
+  return Array.isArray(x) && x.every(isExpr);
+}
+
 const isCall = (x: any): boolean => {
   return typeof x === 'object'
     && x.op
