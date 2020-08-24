@@ -2,8 +2,9 @@ import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, ExprValue,
   DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env,
-  Value, Definition, Result
+  Value, Definition, Result, DefinitionValue
 } from './types';
+import { isDefinitionValue } from './predicates';
 
 // ----------------------------------------------------------------------------
 // | Token constructors                                                       |
@@ -161,6 +162,14 @@ export const DefnErr = (
 // ----------------------------------------------------------------------------
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
+
+export const DefnVal = (d: string, v: ExprValue): DefinitionValue => {
+  return {
+    type: 'define',
+    defined: d,
+    toBe: v
+  }
+}
 
 export const NFn = (v: string|number|boolean): ExprValue => {
   return { type: 'NonFunction', value: v };
