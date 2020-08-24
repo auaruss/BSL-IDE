@@ -2,7 +2,7 @@ import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, ExprValue,
   DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env,
-  Value, Definition
+  Value, Definition, Result
 } from './types';
 
 // ----------------------------------------------------------------------------
@@ -50,7 +50,7 @@ export const SExps = (sexps: SExp[]=[], ...args: SExp[]): SExp => {
   };
 }
 
-export function Result<T> (t: T, r: Token[]) {
+export function Res<T> (t: T, r: Token[]): Result<T> {
   return { thing: t, remain: r };
 }
 
