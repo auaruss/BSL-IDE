@@ -2,12 +2,12 @@ import { SExp, DefOrExpr, Expr, Definition } from '../types';
 import { read } from './read';
 
 import {
-  isReadError, isTokenError, isDefinition, defOrExprArrayIsExprArray, defOrExprIsExpr
+  isReadError, isExpr, isExprArray, 
 } from '../predicates';
 
 import {
   IdAtom, StringExpr, NumExpr, IdExpr, BooleanExpr,
-  ExprErr, FunctionExpr, DefnErr
+  ExprErr, FunctionExpr, DefnErr, FnDefn, VarDefn
 } from '../constructors';
 
 /**
@@ -33,31 +33,35 @@ export const parseSexps = (sexps: SExp[]): DefOrExpr[] => {
 export const parseSexp = (sexp: SExp): DefOrExpr => {
   if (isReadError(sexp)) { 
     return sexp;
-  } else if (Array.isArray(sexp)) {
-    if (sexp.length === 0)  return ExprErr('Empty Expr', []);
-    let firstSexp = sexp[0];
-    if (isReadError(firstSexp) || Array.isArray(firstSexp)) {
-      return ExprErr('No function name after open paren', sexp);
-    } else if (firstSexp.type === 'Id') {
-      if (firstSexp.sexp === 'define') {
-        return parseDefinition({type: 'Id', sexp: 'define'}, sexp.slice(1));
-      }
-      if (sexp.length === 1) return ExprErr('Function call with no arguments', sexp);
-      let parseRest = parseSexps(sexp.slice(1));
-      if (defOrExprArrayIsExprArray(parseRest))
-        return FunctionExpr(firstSexp.sexp, parseRest);
-      return ExprErr('Defn inside Expr', sexp);
-    } else {
-      return ExprErr('No function name after open paren', sexp);
+  } else { 
+    switch (sexp.type) {
+      case 'SExp Array':
+        let sexps = sexp.sexp;
+        if (sexps.length === 0)  return ExprErr('Empty Expr', []);
+        let firstSexp = sexps[0];
+        if (isReadError(firstSexp) || Array.isArray(firstSexp)) {
+          return ExprErr('No function name after open paren', sexps);
+        } else if (firstSexp.type === 'Id') {
+          if (firstSexp.sexp === 'define') {
+            return parseDefinition({type: 'Id', sexp: 'define'}, sexps.slice(1));
+          }
+          if (sexps.length === 1) return ExprErr('Function call with no arguments', sexp);
+          let parseRest = parseSexps(sexps.slice(1));
+          if (isExprArray(parseRest))
+            return FunctionExpr(firstSexp.sexp, parseRest);
+          return ExprErr('Defn inside Expr', sexps);
+        } else {
+          return ExprErr('No function name after open paren', sexps);
+        }
+      case 'String':
+        return StringExpr(sexp.sexp)
+      case 'Num':
+        return NumExpr(sexp.sexp);
+      case 'Id':
+        return IdExpr(sexp.sexp);
+      case 'Bool':
+        return BooleanExpr(sexp.sexp);  
     }
-  } else if (sexp.type === 'String') {
-    return StringExpr(sexp.sexp);
-  } else if (sexp.type === 'Num') {
-    return NumExpr(sexp.sexp);
-  } else if (sexp.type === 'Id') {
-    return IdExpr(sexp.sexp);
-  } else {
-    return BooleanExpr(sexp.sexp);
   }
 }
 
@@ -75,7 +79,7 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'} , sexp: SExp[]):
     return DefnErr('A definition requires two parts, but found one', sexp);
   } else if (sexp.length === 2) {
     let varOrHeader = sexp[0], body = parseSexp(sexp[1]);
-    if (defOrExprIsExpr(body)) {
+    if (isExpr(body)) {
       if (isReadError(varOrHeader)) { 
         return DefnErr('Expected a variable name, or a function header', sexp);
       } else if (Array.isArray(varOrHeader)) {
@@ -118,10 +122,10 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'} , sexp: SExp[]):
             }
           }
     
-          return ['define', [functionName, functionArgs], body];
+          return FnDefn(functionName, functionArgs, body);
         }
       } else if (varOrHeader.type === 'String') {
-          return ['define', varOrHeader.sexp, body];
+          return VarDefn(varOrHeader.sexp, body);
       } else {
         return DefnErr('Expected a variable name, or a function header', sexp);
       }
@@ -132,21 +136,4 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'} , sexp: SExp[]):
 
   sexp.unshift(d);
   return DefnErr('A definition can\'t have more than 3 parts', sexp);
-}
-
-
-export const processSexp = (sexp: SExp): any => {
-  if (isReadError(sexp)) { 
-    /* ... */
-  } else if (Array.isArray(sexp)) {
-    /* ... */
-  } else if (sexp.type === 'String') {
-    /* ... */
-  } else if (sexp.type === 'Num') {
-    /* ... */
-  } else if (sexp.type === 'Id') {
-    /* ... */
-  } else if (sexp.type === 'Bool') {
-    /* ... */
-  }
 }
