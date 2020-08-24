@@ -67,6 +67,29 @@ export const ReadErr = (
 // | Definition constructors                                                  |
 // ----------------------------------------------------------------------------
 
+export const VarDefn = (varName: string, body: Expr): Definition => {
+  return {
+    type: 'define',
+    header: varName,
+    body: body
+  };
+}
+
+export const FnDefn = (
+  name: string,
+  params: string[],
+  body: Expr
+): Definition => {
+  return {
+    type: 'define',
+    header: {
+      name: name,
+      params: params
+    },
+    body: body
+  };
+}
+
 
 // ----------------------------------------------------------------------------
 // | Expr constructors                                                        |
@@ -96,29 +119,6 @@ export const FunctionExpr = (fid: string, args: Expr[]): Expr => {
       op: fid,
       args: args
     }
-  };
-}
-
-export const VarDefn = (varName: string, body: Expr): Definition => {
-  return {
-    type: 'define',
-    header: varName,
-    body: body
-  };
-}
-
-export const FnDefn = (
-  name: string,
-  params: string[],
-  body: Expr
-): Definition => {
-  return {
-    type: 'define',
-    header: {
-      name: name,
-      params: params
-    },
-    body: body
   };
 }
 
