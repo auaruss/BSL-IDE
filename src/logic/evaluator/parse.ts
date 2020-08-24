@@ -45,7 +45,7 @@ export const parseSexp = (sexp: SExp): DefOrExpr => {
           if (firstSexp.sexp === 'define') {
             return parseDefinition({type: 'Id', sexp: 'define'}, sexps.slice(1));
           }
-          if (sexps.length === 1) return ExprErr('Function call with no arguments', sexp);
+          if (sexps.length === 1) return ExprErr('Function call with no arguments', sexps);
           let parseRest = parseSexps(sexps.slice(1));
           if (isExprArray(parseRest))
             return FunctionExpr(firstSexp.sexp, parseRest);
