@@ -136,7 +136,7 @@ export type DefinitionValue
   = DefinitionError | {
     type: 'define',
     defined: string,
-    toBe: Value
+    toBe: ExprValue
   }
 
 
