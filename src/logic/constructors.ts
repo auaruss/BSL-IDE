@@ -43,11 +43,15 @@ export const IdAtom      = (v: string): SExp => { return Atom('Id',             
 export const StringAtom  = (v: string): SExp => { return Atom('String',         v);  }
 export const BooleanAtom = (v: string): SExp => { return Atom('Bool', whichBool(v)); }
 
-export const SExps = (...args: SExp[]): SExp => {
+export const SExps = (sexps: SExp[]=[], ...args: SExp[]): SExp => {
   return {
     type: 'SExp Array',
-    sexp: args
+    sexp: sexps.concat(args)
   };
+}
+
+export function Result<T> (t: T, r: Token[]) {
+  return { thing: t, remain: r };
 }
 
 export const ReadErr = (
