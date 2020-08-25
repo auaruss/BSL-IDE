@@ -30,7 +30,7 @@ export type TokenError
 
 // ----------------------------------------------------------------------------
 
-export type Result<T>
+export type ReadResult<T>
   = {
     thing: T,
     remain: Token[]
@@ -70,11 +70,13 @@ export type DefOrExpr
 
 export type Definition
   = DefinitionError | {
-    type: 'define',
-    header: string | {
-      name: string,
-      params: string[]
-    },
+    type: 'define-function',
+    name: string,
+    params: string[]
+    body: Expr
+  } | {
+    type: 'define-constant',
+    name:  string,
     body: Expr
   };
 
@@ -82,22 +84,20 @@ export type Definition
 export type Expr
   = ExprError | {
     type: 'String',
-    expr: string
+    const: string
   } | {
     type: 'Num',
-    expr: number
+    const: number
   } | {
     type: 'Id',
-    expr: string
+    const: string
   } | {
     type: 'Bool',
-    expr: boolean
+    const: boolean
   } | {
     type: 'Call',
-    expr: {
-      op: string,
-      args:Expr[]
-    },
+    op: string,
+    args: Expr[],
   };
 
 export type DefinitionError
@@ -128,42 +128,55 @@ export type ExprError
 
 // ----------------------------------------------------------------------------
 
+export type Result
+  = DefinitionResult | ExprResult;
 
-export type Value
-  = DefinitionValue | ExprValue;
+export type DefinitionResult
+  = BindingError | Binding;
 
-export type DefinitionValue
-  = DefinitionError | {
+export type ExprResult
+  = ValueError | Value;
+
+export type Binding
+  = {
     type: 'define',
     defined: string,
-    toBe: ExprValue
-  }
+    toBe: ExprResult
+  };
 
-
-export type ExprValue
-  = ValueError | {
+export type Value
+  = {
     type: 'NonFunction',
     value: string | number | boolean
   } | {
     type: 'BuiltinFunction',
-    value: ((vs: ExprValue[]) => ExprValue)
+    value: ((vs: Value[]) => ExprResult)
   } | {
     type: 'Function',
-    value: Func
+    value: Closure
   };
 
-export type Func
+export type BindingError
+ = DefinitionError | {
+   bindingError: 'Repeated definition of the same name',
+   definition: Definition
+ }; // ...
+
+export type ValueError
+   = ExprError | {
+    valueError: 'Id not in environment'
+    expr: Expr // put identifier for expr in this thing
+  };
+
+export type Closure
   = {
     args: string[],
     env: Env,
     body: Expr
   };
 
-export type Env = Map<String,Value>;
+export type Env = Map<String, ExprResult>;
 
-export type ValueError
-  = ExprError | {
-    valueError: 'Id not in environment'
-    deforexprs: DefOrExpr[]
-  };
 
+
+// Every templated part should be a field in the errors
