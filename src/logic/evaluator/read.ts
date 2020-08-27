@@ -73,7 +73,7 @@ export const readSexp = (tokens: Token[]): ReadResult<SExp> | ReadResult<ReadErr
                   || firstUnprocessedToken.type === TokenType.CloseSquareParen
                   || firstUnprocessedToken.type === TokenType.CloseBraceParen) {
             if (parensMatch(firstToken.type, firstUnprocessedToken.type))
-              return Res(SExpsFromArray(readRest.thing), readRest.remain.slice(1))
+              return Res(SExpsFromArray(readRest.thing), readRest.remain.slice(1));
             return {
               thing: ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
               remain: readRest.remain.slice(1)
