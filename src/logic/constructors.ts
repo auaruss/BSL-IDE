@@ -2,7 +2,8 @@ import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, ExprResult,
   DefOrExpr, ExprError, DefinitionError, Closure, Env,
-  Definition, ReadResult, DefinitionResult, ValueError
+  Definition, ReadResult, DefinitionResult, ValueError,
+  Binding
 } from './types';
 import { isDefinitionResult } from './predicates';
 
@@ -156,7 +157,7 @@ export const DefnErr = (
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
 
-export const DefnVal = (d: string, v: ExprResult): DefinitionResult => {
+export const DefnVal = (d: string, v: ExprResult): Binding => {
   return {
     type: 'define',
     defined: d,

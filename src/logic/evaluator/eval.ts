@@ -77,7 +77,6 @@ const evaluateDefinition = (d: Definition, env: Env): DefinitionResult => {
     case 'define-function':
       return DefnVal(d.name, Clos(d.params, env, d.body));
     case 'define-constant':
-      processExpr(d.body);
       return DefnVal(d.name, evaluateExpr(d.body, env));
   }
 }
