@@ -79,47 +79,40 @@ export const isDefOrExpr = (x: any): x is DefOrExpr => {
 export const isDefinition = (x: any): x is Definition => {
   return (typeof x === 'object'
     && x.type
-    && x.header
-    && x.body
-    && x.type === 'define'
-    && isHeader(x.header)
-    && isExpr(x.body)) || isDefinitionError(x);
-}
-
-const isHeader = (x: any): boolean => {
-  return typeof x === 'string'
-  || (
-    typeof x === 'object'
     && x.name
-    && x.params
-    && typeof x.name === 'string'
-    && x.params.every((_: any) => typeof _ === 'string')
-  );
+    && x.body
+    && (   x.type === 'define-constant' 
+       || (   x.type === 'define-function'
+           && x.params && x.params.every((_: any) => typeof _ === 'string')))
+    && isExpr(x.body)) || isDefinitionError(x);
 }
 
 export const isExpr = (x: any): x is Expr => {
   return (typeof x === 'object'
   && x.type
-  && x.expr
   && (
     x.type === 'String'
-    && typeof x.expr === 'string'
+    && x.const && typeof x.const === 'string'
   )
   && (
     x.type === 'Num'
-    && typeof x.expr === 'number'
+    && x.const && typeof x.const === 'number'
   )
   && (
     x.type === 'Id'
-    && typeof x.expr === 'string'
+    && x.const && typeof x.const === 'string'
   )
   && (
     x.type === 'Bool'
-    && typeof x.expr === 'boolean'
+    && x.const && typeof x.const === 'boolean'
   )
   && (
     x.type === 'Call'
-    && isCall(x.expr)
+    && x.op
+    && x.args
+    && typeof x.op === 'string'
+    && Array.isArray(x.args)
+    && x.args.every(isExpr)
   )) || isExprError(x);
 }
 
@@ -154,7 +147,6 @@ export const isDefinitionError = (x: any): x is DefinitionError => {
       || x.defnError === 'The body given is not a valid Expr')
     && Array.isArray(x.sexps)
     && x.sexps.every(isSExp))
-    || isTokenError(x)
     || isReadError(x);
 }
 
