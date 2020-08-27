@@ -1168,7 +1168,7 @@ t('(define (fib n)\n' +
 '      (n 1)\n' + 
 '      (else if (= fib 1)\n' +
 '            (n 1)\n' +
-'            (else (n (fib n - 2) + (fib n - 1))))))')
+'            (else (n (fib n - 2) + (fib n - 1))))))');
 
 // ...
 // The student is reminded of prefix notation
