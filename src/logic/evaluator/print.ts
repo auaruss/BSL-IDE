@@ -1,9 +1,9 @@
-import { ExprValue } from '../types';
+import { ExprResult } from '../types';
 
 export const print = (exp: string) => {
   return '';
 }
 
-export const printValues = (values: ExprValue[]): string => {
+export const printValues = (values: ExprResult[]): string => {
   return '';
 }
