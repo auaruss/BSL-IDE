@@ -1,8 +1,8 @@
 import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, ExprResult,
-  DefOrExpr, ResultError, ExprError, DefinitionError, Closure, Env,
-  ResultError, Definition, ReadResult, DefinitionResult
+  DefOrExpr, ExprError, DefinitionError, Closure, Env,
+  Definition, ReadResult, DefinitionResult, ValueError
 } from './types';
 import { isDefinitionValue } from './predicates';
 
@@ -75,10 +75,10 @@ export const ReadErr = (
 // | Definition constructors                                                  |
 // ----------------------------------------------------------------------------
 
-export const VarDefn = (varName: string, body: Expr): Definition => {
+export const VarDefn = (name: string, body: Expr): Definition => {
   return {
-    type: 'define',
-    header: varName,
+    type: 'define-constant',
+    name: name,
     body: body
   };
 }
@@ -89,11 +89,9 @@ export const FnDefn = (
   body: Expr
 ): Definition => {
   return {
-    type: 'define',
-    header: {
-      name: name,
-      params: params
-    },
+    type: 'define-function',
+    name: name,
+    params: params,
     body: body
   };
 }
@@ -104,13 +102,13 @@ export const FnDefn = (
 // ----------------------------------------------------------------------------
 
 export const PrimitiveExpr = (t:'String'|'Num'|'Id'|'Bool',
-              v: string|number|boolean) => {
+              v: string|number|boolean): Expr => {
   if ((t === 'String' || t === 'Id') && (typeof v === 'string')) {
-    return { type:  t, expr: v };
+    return { type:  t, const: v };
   } else if (t === 'Num' && (typeof v === 'number')) {
-    return { type:  t, expr: v };
+    return { type:  t, const: v };
   } else if (t === 'Bool' && (typeof v === 'boolean')) {
-    return { type:  t, expr: v };
+    return { type:  t, const: v };
   }
   throw new Error('Mismatch in primitive Expr type/value');
 }
@@ -120,23 +118,11 @@ export const IdExpr      = (v: string):  Expr => { return PrimitiveExpr('Id',   
 export const StringExpr  = (v: string):  Expr => { return PrimitiveExpr('String', v);  }
 export const BooleanExpr = (v: boolean): Expr => { return PrimitiveExpr('Bool',   v); }
 
-export const FunctionExpr = (fid: string, args: Expr[]): Expr => {
-  return {
-    type: 'Call',
-    expr: {
-      op: fid,
-      args: args
-    }
-  };
-}
-
 export const Call = (op: string, args: Expr[]): Expr => {
   return {
     type: 'Call',
-    expr: {
-      op: op,
-      args: args
-    },
+    op: op,
+    args: args
   }
 }
 
@@ -198,8 +184,8 @@ export function Fn(a: string[], e: Env, b: Expr): ExprResult {
 }
 
 
-export const ValErr = (e: 'Id not in environment', d: DefOrExpr[]): ResultError => {
-  return { valueError: e, deforexprs: d };
+export const ValErr = (err: 'Id not in environment', e: Expr): ValueError => {
+  return { valueError: err, expr: e };
 }
 
 
