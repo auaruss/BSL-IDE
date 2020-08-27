@@ -2,7 +2,7 @@
 
 import {
   DefOrExpr, Definition, Expr, ReadError,
-  TokenType, TokenError, Token, SExp, ExprValue, ValueError
+  TokenType, TokenError, Token, SExp, ExprResult, ResultError
 } from '../src/logic/types';
 
 import { tokenize                     } from '../src/logic/evaluator/tokenize';
@@ -31,7 +31,7 @@ const t = (
   tokens?: Token[],
   sexps?: SExp[],
   deforexprs?: DefOrExpr[],
-  values?: ExprValue[],
+  values?: ExprResult[],
   output?: string
 ) => {
   describe(input, () => {
