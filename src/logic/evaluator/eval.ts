@@ -1,9 +1,9 @@
 'use strict';
 
-import { DefOrExpr, Definition, Expr, ExprValue, Env, Value, DefinitionValue } from '../types';
-import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError } from '../predicates';
+import { DefOrExpr, Definition, Expr, ExprResult, Env, ValueError, DefinitionResult, Result } from '../types';
+import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError, isDefinitionValue } from '../predicates';
 import { parse } from './parse';
-import { DefnVal, BFn, Fn, NFn, ValErr} from '../constructors';
+import { DefnVal, BFn, Clos, NFn, ValErr, StringAtom} from '../constructors';
 
 const processDefOrExpr = (d: DefOrExpr): any => {
   if (isDefinition(d)) {
@@ -16,10 +16,13 @@ const processDefOrExpr = (d: DefOrExpr): any => {
 const processDefinition = (d: Definition): any => {
   if (isDefinitionError(d)) {
     /* ... */
-  } else if (typeof d.header === 'string') {
-    processExpr(d.body);
-  } else {
-    processExpr(d.body);
+  } else switch (d.type) {
+    case 'define-function':
+      processExpr(d.body);
+      return;
+    case 'define-constant':
+      processExpr(d.body);
+      return;
   }
 }
 
@@ -28,24 +31,28 @@ const processExpr = (e: Expr): any => {
     /* ... */
   } else switch (e.type) {
     case 'String':
-      break;
+      return;
     case 'Num':
-      break;
+      return;
     case 'Id':
-      break;
+      return;
     case 'Bool':
-      break;
+      return;
     case 'Call':
-      e.expr.args.map(processExpr);
-      break;
+      e.args.map(processExpr);
+      return;
   }
 }
 
-export const evaluate = (exp: string): Value[] => {
+const processExprResult = (e: ExprResult): any => {
+  // if ()
+}
+
+export const evaluate = (exp: string): Result[] => {
   return evaluateDefOrExprs(parse(exp));
 }
 
-export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Value[] => {
+export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Result[] => {
   let env = builtinEnv();
 
   for (let d of deforexprs.filter(isDefinition)) {
@@ -55,7 +62,7 @@ export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Value[] => {
   return deforexprs.map(e => evaluateDefOrExpr(e, env));
 }
 
-const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Value => {
+const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Result => {
   if (isDefinition(d)) {
     return evaluateDefinition(d, env);
   } else {
@@ -63,46 +70,31 @@ const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Value => {
   }
 }
 
-const evaluateDefinition = (d: Definition, env: Env): DefinitionValue => {
+const evaluateDefinition = (d: Definition, env: Env): DefinitionResult => {
   if (isDefinitionError(d)) {
     return d;
-  } else if (typeof d.header === 'string') {
-  } else {
+  } else switch (d.type) {
+    case 'define-function':
+      return DefnVal(d.name, Clos(d.params, env, d.body));
+    case 'define-constant':
+      processExpr(d.body);
+      return DefnVal(d.name, evaluateExpr(d.body, env));
   }
 }
 
-const evaluateExpr = (e: Expr, env: Env): ExprValue => {
+const evaluateExpr = (e: Expr, env: Env): ExprResult => {
   if (isExprError(e)) {
-    return e;
-  } else if (Array.isArray(e)) {
-    let [f, exprs] = e;
-    let args = exprs.map(_ => evaluateExpr(_, env));
-    let val = getVal(f, env);
-    if (val) {
-      if (isValueError(val)) {
-        // return ValErr: body of function has err in it
-      } else if (val.type === 'Function') {
-          let params = val.value;
-      } else if (val.type === 'BuiltinFunction') {
-
-      } else {
-        // return ValErr: tried to call a constant as a function
-      }
-    } else {
-      // return ValErr : f not in env
-    }
-  } else if (e.type === 'String') {
-    return NFn(e.expr);
-  } else if (e.type === 'Num') {
-    return NFn(e.expr);
-  } else if (e.type === 'Id') {
-    if (isInEnv(e.expr, env)) {
-      // ...
-    } else {
-      // return ValErr
-    }
-  } else if (e.type === 'Bool') {
-    return NFn(e.expr);
+    /* ... */
+  } else switch (e.type) {
+    case 'String':
+    case 'Num':
+    case 'Id':
+    case 'Bool':
+      return NFn(e.const);
+    case 'Call':
+      let args = e.args.map((_: Expr) => evaluateExpr(_, env));
+      let f = getVal(e.op, env);
+      // process ExprResult
   }
 }
 
@@ -112,18 +104,15 @@ const evaluateExpr = (e: Expr, env: Env): ExprValue => {
  * @param env 
  */
 const populateEnv = (d: Definition, env: Env): Env => {
-  if (Array.isArray(d)) {
-    if (typeof d[1] === 'string') {
-      let f = d[1], val = evaluateExpr(d[2], env);
-      extendEnv(f, val, env);
-      return env;
-    } else {
-      let [f, params] = d[1], body = d[2];
-      extendEnv(f, Fn(params, env, body), env);
-      return env;
-    }
-  } else {
+  if (isDefinitionError(d)) {
     return env;
+  } else switch (d.type) {
+    case 'define-function':
+      extendEnv(d.name, Clos(d.params, env, d.body), env);
+      return env;
+    case 'define-constant':
+      extendEnv(d.name, evaluateExpr(d.body, env), env);
+      return env;
   }
 }
 
@@ -142,7 +131,7 @@ const isInEnv = (id: string, env: Env): boolean => {
  * @param v value
  * @param env 
  */
-const extendEnv = (id: string, v: ExprValue, env: Env): void => {
+const extendEnv = (id: string, v: ExprResult, env: Env): void => {
   env.set(id, v);
 }
 
@@ -151,14 +140,14 @@ const extendEnv = (id: string, v: ExprValue, env: Env): void => {
  * @param id 
  * @param env
  */
-const getVal = (id: string, env: Env): ExprValue | false => {
+const getVal = (id: string, env: Env): ExprResult | false => {
   const a = env.get(id);
   if (a !== undefined) return a;
   return false;
 }
 
 const builtinEnv = (): Env => {
-  let m = new Map<String, ExprValue>();
+  let m = new Map<String, ExprResult>();
   
   // m.set('+',
   //   BFn(
