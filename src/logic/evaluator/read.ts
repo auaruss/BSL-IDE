@@ -7,7 +7,7 @@
 
 
 import {
-  ReadError, Result,
+  ReadError, ReadResult,
   SExp, Token, TokenType
 } from '../types';
 
@@ -18,7 +18,7 @@ import {
 } from '../predicates';
 
 import {
-  Atom, NumAtom, IdAtom, StringAtom, BooleanAtom, ReadErr, SExps, Res
+  Atom, NumAtom, IdAtom, StringAtom, BooleanAtom, ReadErr, SExps, SExpsFromArray, Res
 } from '../constructors';
 
 /**
@@ -28,7 +28,7 @@ import {
  *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
-export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
+export const readSexp = (tokens: Token[]): ReadResult<SExp> | ReadResult<ReadError> => {
   if (tokens.length === 0) {
     return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
   }
@@ -36,7 +36,7 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
   const firstToken = tokens[0];
 
   if (isTokenError(firstToken)) {
-    const result: Result<ReadError> = {
+    const result: ReadResult<ReadError> = {
       thing: firstToken,
       remain: tokens.slice(1)
     }
@@ -73,7 +73,7 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
                   || firstUnprocessedToken.type === TokenType.CloseSquareParen
                   || firstUnprocessedToken.type === TokenType.CloseBraceParen) {
             if (parensMatch(firstToken.type, firstUnprocessedToken.type))
-              return Res(SExps(readRest.thing), readRest.remain.slice(1)))
+              return Res(SExpsFromArray(readRest.thing), readRest.remain.slice(1)))
             return {
               thing: ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
               remain: readRest.remain.slice(1)
@@ -116,7 +116,7 @@ export const readSexp = (tokens: Token[]): Result<SExp> | Result<ReadError> => {
  * Reads as many SExp as possible from the start of the list of tokens.
  * @param tokens
  */
-export const readSexps = (tokens: Token[]): Result<SExp[]> => {
+export const readSexps = (tokens: Token[]): ReadResult<SExp[]> => {
   if (tokens.length === 0) return { thing: [], remain: [] };
   
   let firstToken = tokens[0];

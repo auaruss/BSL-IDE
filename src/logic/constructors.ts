@@ -1,8 +1,8 @@
 import {
   TokenType, Token, TokenError,
-  SExp, ReadError, Expr, ExprValue,
-  DefOrExpr, ValueError, ExprError, DefinitionError, Func, Env,
-  Value, Definition, Result, DefinitionValue
+  SExp, ReadError, Expr, ExprResult,
+  DefOrExpr, ResultError, ExprError, DefinitionError, Closure, Env,
+  ResultError, Definition, ReadResult, DefinitionResult
 } from './types';
 import { isDefinitionValue } from './predicates';
 
@@ -44,14 +44,21 @@ export const IdAtom      = (v: string): SExp => { return Atom('Id',             
 export const StringAtom  = (v: string): SExp => { return Atom('String',         v);  }
 export const BooleanAtom = (v: string): SExp => { return Atom('Bool', whichBool(v)); }
 
-export const SExps = (sexps: SExp[]=[], ...args: SExp[]): SExp => {
+export const SExps = (...args: SExp[]): SExp => {
   return {
     type: 'SExp Array',
-    sexp: sexps.concat(args)
+    sexp: args
   };
 }
 
-export function Res<T> (t: T, r: Token[]): Result<T> {
+export const SExpsFromArray = (sexps: SExp[]): SExp => {
+  return {
+    type: 'SExp Array',
+    sexp: sexps
+  };
+}
+
+export function Res<T> (t: T, r: Token[]): ReadResult<T> {
   return { thing: t, remain: r };
 }
 
@@ -163,7 +170,7 @@ export const DefnErr = (
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
 
-export const DefnVal = (d: string, v: ExprValue): DefinitionValue => {
+export const DefnVal = (d: string, v: ExprResult): DefinitionResult => {
   return {
     type: 'define',
     defined: d,
@@ -171,15 +178,15 @@ export const DefnVal = (d: string, v: ExprValue): DefinitionValue => {
   }
 }
 
-export const NFn = (v: string|number|boolean): ExprValue => {
+export const NFn = (v: string|number|boolean): ExprResult => {
   return { type: 'NonFunction', value: v };
 }
 
-export const BFn = (v: ((vs: ExprValue[]) => ExprValue)): ExprValue => {
+export const BFn = (v: ((vs: ExprResult[]) => ExprResult)): ExprResult => {
   return { type: 'BuiltinFunction', value: v };
 }
 
-export function Fn(a: string[], e: Env, b: Expr): ExprValue {
+export function Fn(a: string[], e: Env, b: Expr): ExprResult {
   return {
     type: 'Function',
     value: {
@@ -191,7 +198,7 @@ export function Fn(a: string[], e: Env, b: Expr): ExprValue {
 }
 
 
-export const ValErr = (e: 'Id not in environment', d: DefOrExpr[]): ValueError => {
+export const ValErr = (e: 'Id not in environment', d: DefOrExpr[]): ResultError => {
   return { valueError: e, deforexprs: d };
 }
 
