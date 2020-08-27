@@ -152,7 +152,7 @@ export type Value
     type: 'BuiltinFunction',
     value: ((vs: Value[]) => ExprResult)
   } | {
-    type: 'Function',
+    type: 'Closure',
     value: Closure
   };
 

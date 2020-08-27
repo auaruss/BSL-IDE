@@ -172,9 +172,9 @@ export const BFn = (v: ((vs: ExprResult[]) => ExprResult)): ExprResult => {
   return { type: 'BuiltinFunction', value: v };
 }
 
-export function Fn(a: string[], e: Env, b: Expr): ExprResult {
+export function Clos(a: string[], e: Env, b: Expr): ExprResult {
   return {
-    type: 'Function',
+    type: 'Closure',
     value: {
       args: a,
       env: e,
