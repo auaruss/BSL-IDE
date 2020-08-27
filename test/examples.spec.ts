@@ -2,7 +2,7 @@
 
 import {
   DefOrExpr, Definition, Expr, ReadError,
-  TokenType, TokenError, Token, SExp, ExprResult, ResultError
+  TokenType, TokenError, Token, SExp, ExprResult, Result
 } from '../src/logic/types';
 
 import { tokenize                     } from '../src/logic/evaluator/tokenize';
@@ -31,7 +31,7 @@ const t = (
   tokens?: Token[],
   sexps?: SExp[],
   deforexprs?: DefOrExpr[],
-  values?: ExprResult[],
+  values?: Result[],
   output?: string
 ) => {
   describe(input, () => {
@@ -154,7 +154,7 @@ t('hello',
   [ IdTok('hello') ],
   [ IdAtom('hello') ],
   [ IdExpr('hello') ],
-  [ ValErr('Id not in environment', [ IdExpr('hello') ])],
+  [ ValErr('Id not in environment', IdExpr('hello') )],
   'hello: Id not in environment'
 );
 
@@ -1147,8 +1147,99 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
  * behavior and the intended output of the live editor with that behavior.   *
  *****************************************************************************/
 
+/** 
+ * Our demo: Someone tries to define fib.
+ */
 
-/**
+// ''
+// '('
+// ...
+t('(define (fib n)\n' +
+'  (if (= fib 0)\n' + 
+'      (n 1)\n' + 
+'      (else if (= fib 1)\n' +
+'            (n 1)\n' +
+'            (else (n (fib n - 2) + (fib n - 1))))');
+
+// ...
+// missing parens
+t('(define (fib n)\n' +
+'  (if (= fib 0)\n' + 
+'      (n 1)\n' + 
+'      (else if (= fib 1)\n' +
+'            (n 1)\n' +
+'            (else (n (fib n - 2) + (fib n - 1))))))')
+
+// ...
+// The student is reminded of prefix notation
+
+t('(define (fib n)\n' +
+'  (if (= fib 0)\n' + 
+'      (n 1)\n' + 
+'      (else if (= fib 1)\n' +
+'            (n 1)\n' +
+'            (else (n (fib (- n 2) + (fib (- n 1))))))');
+
+// ...
+// The student is told fib cant equal 0
+
+t('(define (fib n)\n' +
+'  (if (= n 0)\n' + 
+'      (n 1)\n' + 
+'      (else if (= fib 1)\n' +
+'            (n 1)\n' +
+'            (else (n (fib (- n 2) + (fib (- n 1))))))');
+
+// ...
+// Student is told 'you can't call n'
+
+t('(define (fib n)\n' +
+'  (if (= n 0)\n' + 
+'      n 1\n' + 
+'      (else if (= fib 1)\n' +
+'            n 1\n' +
+'            (else n (fib (- n 2) + (fib (- n 1)))))');
+
+// ...
+// Student is told something like 'now get rid of those n'
+t('(define (fib)\n' +
+'  (if (= 0)\n' + 
+'      1\n' + 
+'      (else if (= fib 1)\n' +
+'            1\n' +
+'            (else (fib (- 2) + (fib (- 1)))))');
+
+// ...
+// 'No, not all the n.' 
+
+t('(define (fib n)\n' +
+'  (if (= n 0)\n' + 
+'      1\n' + 
+'      (else if (= fib 1)\n' +
+'            1\n' +
+'            (else (fib (- n 2) + (fib (- n 1)))))');
+
+// ...
+// Prefix notation again.
+
+t('(define (fib n)\n' +
+'  (if (= n 0)\n' + 
+'      1\n' + 
+'      (else if (= fib 1)\n' +
+'            1\n' +
+'            (else (+ (fib (- n 2)) (fib (- n 1)))))))');
+
+// ...
+// Else isn't a thing here.
+
+t('(define (fib n)\n' +
+'  (if (= n 0)\n' + 
+'      1\n' + 
+'      (if (= fib 1)\n' +
+'           1\n' +
+'           (+ (fib (- n 2)) (fib (- n 1))))))');
+
+ /**
  * Behavior:
  * Someone uses an editor that inserts matching parens automatically.
  * when they write (fib 10), it goes from () to (fib 10) one character at a time.
