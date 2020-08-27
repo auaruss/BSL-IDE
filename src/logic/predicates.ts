@@ -2,7 +2,8 @@ import {
   Token, TokenError,
   SExp, ReadError,
   DefOrExpr, Definition, Expr, DefinitionError, ExprError,
-  Value, DefinitionValue, ExprValue, Func, Env, ValueError
+  Value, Result, DefinitionResult, ExprResult, 
+  Binding, BindingError, Closure, Env, ValueError
 } from './types';
 
 export const isToken = (x: any): x is Token => {
@@ -165,23 +166,20 @@ export const isExprError = (x: any): x is ExprError => {
 
 // ----------------------------------------------------------------------------
 
-export const isValue = (x: any): x is Value => {
-  return isDefinitionValue(x) || isExprValue(x);
+export const isResult = (x: any): x is Result => {
+  return isDefinitionResult(x) || isExprValue(x);
 }
 
-export const isDefinitionValue = (x: any): x is DefinitionValue => {
-  return (typeof x === 'object'
-    && x.type
-    && x.defined
-    && x.toBe
-    && x.type === 'define'
-    && typeof x.defined === 'string'
-    && isValue(x.toBe))
-  || isDefinitionError(x);
+export const isDefinitionResult = (x: any): x is DefinitionResult => {
+  return isBinding(x) || isBindingError(x);
 }
 
-export const isExprValue = (x: any): x is ExprValue => {
-  return (typeof x === 'object'
+export const isExprValue = (x: any): x is ExprResult => {
+  return isValue(x) || isValueError(x);
+}
+
+export const isValue = (x: any): x is ValueError => {
+  return typeof x === 'object'
     && x.type
     && x.value
     && (( x.type === 'NonFunction'
@@ -191,11 +189,10 @@ export const isExprValue = (x: any): x is ExprValue => {
       || ( x.type === 'BuiltinFunction'
         && typeof x.value === 'function' )
       || ( x.type === 'Function'
-        && isFunc(x.value))))
-  || isValueError(x);
+        && isClos(x.value)));
 }
 
-export const isFunc = (x: any): x is Func => {
+export const isClos = (x: any): x is Closure => {
   return typeof x === 'object'
     && x.args
     && x.env
@@ -204,6 +201,16 @@ export const isFunc = (x: any): x is Func => {
     && x.args.every((_: any) => typeof _ === 'string')
     && isEnv(x.env)
     && isExpr(x.body);
+}
+
+export const isBinding = (x: any): x is Binding => {
+  return typeof x === 'object'
+    && x.type
+    && x.defined
+    && x.toBe
+    && x.type === 'define'
+    && typeof x.defined === 'string'
+    && isExprValue(x.toBe);
 }
 
 export const isEnv = (x: any): x is Env => {
@@ -218,4 +225,13 @@ export const isValueError = (x: any): x is ValueError => {
     && Array.isArray(x.deforexprs)
     && x.deforexprs.every(isDefOrExpr))
   || isExprError(x);
+}
+
+export const isBindingError = (x: any): x is BindingError => {
+  return (typeof x === 'object'
+    && x.bindingError
+    && x.definition
+    && x.bindingError === 'Repeated definition of the same name'
+    && isDefinition(x.definition))
+  || isDefinitionError(x);
 }
