@@ -70,13 +70,13 @@ export type DefOrExpr
 
 export type Definition
   = DefinitionError | {
+    type: 'define-constant',
+    name:  string,
+    body: Expr
+  } | {
     type: 'define-function',
     name: string,
     params: string[]
-    body: Expr
-  } | {
-    type: 'define-constant',
-    name:  string,
     body: Expr
   };
 
