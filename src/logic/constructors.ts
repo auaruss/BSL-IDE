@@ -4,7 +4,7 @@ import {
   DefOrExpr, ExprError, DefinitionError, Closure, Env,
   Definition, ReadResult, DefinitionResult, ValueError
 } from './types';
-import { isDefinitionValue } from './predicates';
+import { isDefinitionResult } from './predicates';
 
 // ----------------------------------------------------------------------------
 // | Token constructors                                                       |
