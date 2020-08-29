@@ -124,7 +124,7 @@ export const Call = (op: string, args: Expr[]): Expr => {
     type: 'Call',
     op: op,
     args: args
-  }
+  };
 }
 
 export const ExprErr = (
