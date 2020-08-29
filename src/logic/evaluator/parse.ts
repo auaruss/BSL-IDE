@@ -7,7 +7,7 @@ import {
 
 import {
   IdAtom, StringExpr, NumExpr, IdExpr, BooleanExpr,
-  ExprErr, FunctionExpr, DefnErr, FnDefn, VarDefn
+  ExprErr, Call, DefnErr, FnDefn, VarDefn
 } from '../constructors';
 
 /**
@@ -47,7 +47,7 @@ export const parseSexp = (sexp: SExp): DefOrExpr => {
         if (sexps.length === 1) return ExprErr('Function call with no arguments', sexps);
         let parseRest = parseSexps(sexps.slice(1));
         if (isExprArray(parseRest))
-          return FunctionExpr(firstSexp.sexp, parseRest);
+          return Call(firstSexp.sexp, parseRest);
         return ExprErr('Defn inside Expr', sexps);
       } else {
         return ExprErr('No function name after open paren', sexps);
@@ -70,11 +70,9 @@ export const parseSexp = (sexp: SExp): DefOrExpr => {
  */
 export const parseDefinition = (d: {type: 'Id', sexp: 'define'}, sexps: SExp[]): Definition => {
   if (sexps.length === 0) {
-    sexps.unshift(d);
-    return DefnErr('A definition requires two parts, but found none', sexps);
+    return DefnErr('A definition requires two parts, but found none', [d, ...sexps]);
   } else if (sexps.length === 1) {
-    sexps.unshift(d);
-    return DefnErr('A definition requires two parts, but found one', sexps);
+    return DefnErr('A definition requires two parts, but found one', [d, ...sexps]);
   } else if (sexps.length === 2) {
     let varOrHeader = sexps[0], body = parseSexp(sexps[1]);
     if (isExpr(body)) {
@@ -101,27 +99,22 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'}, sexps: SExp[]):
             let functionArgsSExp = header.slice(1);
 
             if (isReadError(functionNameSExp)) {
-              sexps.unshift(d);
-              return DefnErr('Invalid expression passed where function name was expected', sexps);
+              return DefnErr('Invalid expression passed where function name was expected', [d, ...sexps]);
             } else switch (functionNameSExp.type) {
               case 'SExp Array':
-                sexps.unshift(d);
-                return DefnErr('Invalid expression passed where function name was expected', sexps);
+                return DefnErr('Invalid expression passed where function name was expected', [d, ...sexps]);
               case 'Id':
                 let functionArgs: string[] = [];
 
                 for (let s of functionArgsSExp) {
                   if (isReadError(s)) { 
-                    sexps.unshift(d);
-                    return DefnErr('Invalid expression passed where function argument was expected', sexps);
+                    return DefnErr('Invalid expression passed where function argument was expected', [d, ...sexps]);
                   } else if (Array.isArray(s)) {
-                    sexps.unshift(d);
-                    return DefnErr('Invalid expression passed where function argument was expected', sexps);
+                    return DefnErr('Invalid expression passed where function argument was expected', [d, ...sexps]);
                   } else if (s.type === 'Id') {
                     functionArgs.push(s.sexp);
                   } else {
-                    sexps.unshift(d);
-                    return DefnErr('Invalid expression passed where function argument was expected', sexps);
+                    return DefnErr('Invalid expression passed where function argument was expected', [d, ...sexps]);
                   }
                 }
           
@@ -129,8 +122,7 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'}, sexps: SExp[]):
               case 'String':
               case 'Num':
               case 'Bool':
-                sexps.unshift(d);
-                return DefnErr('Invalid expression passed where function name was expected', sexps);
+                return DefnErr('Invalid expression passed where function name was expected', [d, ...sexps]);
             }
           }
         case 'String':
@@ -139,15 +131,12 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'}, sexps: SExp[]):
         case 'Num':
         case 'Id':
         case 'Bool':
-          sexps.unshift(d);
-          return DefnErr('Expected a variable name, or a function header', sexps);
+          return DefnErr('Expected a variable name, or a function header', [d, ...sexps]);
       }
     } else {
-      sexps.unshift(d);
-      return DefnErr('Cannot have a definition as the body of a definition', sexps);
+      return DefnErr('Cannot have a definition as the body of a definition', [d, ...sexps]);
     }
   } else {
-    sexps.unshift(d);
-    return DefnErr('A definition can\'t have more than 3 parts', sexps);
+    return DefnErr('A definition can\'t have more than 3 parts', [d, ...sexps]);
   }
 }
