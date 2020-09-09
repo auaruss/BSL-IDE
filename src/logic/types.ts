@@ -137,6 +137,12 @@ export type DefinitionResult
 export type ExprResult
   = ValueError | Value;
 
+export type MaybeExprResult
+  = ExprResult | Nothing;
+
+export type Nothing
+ = { type: 'nothing' };
+
 export type Binding
   = {
     type: 'define',
@@ -175,7 +181,7 @@ export type Closure
     body: Expr
   };
 
-export type Env = Map<String, ExprResult>;
+export type Env = Map<String, MaybeExprResult>;
 
 
 

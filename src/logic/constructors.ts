@@ -3,7 +3,7 @@ import {
   SExp, ReadError, Expr, ExprResult,
   DefOrExpr, ExprError, DefinitionError, Closure, Env,
   Definition, ReadResult, DefinitionResult, ValueError,
-  Binding, Value
+  Binding, Value, Nothing
 } from './types';
 import { isDefinitionResult } from './predicates';
 
@@ -219,3 +219,5 @@ export const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ]: Token[] =
         Tok(TokenType.CloseBraceParen,  '}'),
         Tok(TokenType.Whitespace,       '\n')
     ];
+
+export const NOP: Nothing = { type: 'nothing' };
