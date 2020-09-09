@@ -1244,13 +1244,13 @@ t('(+ 2 4) (+ 4',
 // t('(+ 2 4) (+ 4 ');
 
 t('(+ 2 4) (+ 4 7',
-[OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')],
-[ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')])],
-[ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
-[ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
-'6\n'
-+ 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-+ 'Found in: "(+ 4 7".'
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
+  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
+  '6\n'
+  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+ 4 7".'
 );
 
 t('(+ 2 4) (+ 4 7)',
