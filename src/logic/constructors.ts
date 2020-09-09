@@ -3,7 +3,7 @@ import {
   SExp, ReadError, Expr, ExprResult,
   DefOrExpr, ExprError, DefinitionError, Closure, Env,
   Definition, ReadResult, DefinitionResult, ValueError,
-  Binding
+  Binding, Value
 } from './types';
 import { isDefinitionResult } from './predicates';
 
@@ -157,7 +157,7 @@ export const DefnErr = (
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
 
-export const DefnVal = (d: string, v: ExprResult): Binding => {
+export const Bind = (d: string, v: ExprResult): Binding => {
   return {
     type: 'define',
     defined: d,
@@ -165,15 +165,15 @@ export const DefnVal = (d: string, v: ExprResult): Binding => {
   }
 }
 
-export const NFn = (v: string|number|boolean): ExprResult => {
+export const NFn = (v: string|number|boolean): Value => {
   return { type: 'NonFunction', value: v };
 }
 
-export const BFn = (v: ((vs: ExprResult[]) => ExprResult)): ExprResult => {
+export const BFn = (v: ((vs: Value[]) => ExprResult)): Value => {
   return { type: 'BuiltinFunction', value: v };
 }
 
-export function Clos(a: string[], e: Env, b: Expr): ExprResult {
+export function Clos(a: string[], e: Env, b: Expr): Value {
   return {
     type: 'Closure',
     value: {
