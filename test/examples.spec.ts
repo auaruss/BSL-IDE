@@ -1132,13 +1132,10 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
   ]
 );
 
-// t('(define background-image (empty-scene 100 100))\n' +
-// '(define\n' +
-// 'background-image\n' +
-// '(define (f x) (+ 1 x))\n',
-// );
 
-// (define)
+t('(define y x)\n' + 
+'(define x 3)');
+
 
 /*****************************************************************************
  *                   Test cases for live editing behavior.                   *
@@ -1146,6 +1143,126 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
  * These test cases are intended to illustrate specific live editing         *
  * behavior and the intended output of the live editor with that behavior.   *
  *****************************************************************************/
+
+/**
+ * Our demo: (+ 2 3)
+ */
+t('', [], [], [], [], '');
+
+t('(',
+  [OP],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(".'
+);
+
+t('(+',
+  [OP, Tok(TokenType.Identifier, '+')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+".'
+);
+
+// t('(+ ');
+
+t('(+ 2',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
+  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+ 2".'
+);
+
+t('(+ 2 3',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
+  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+ 2 3".'
+);
+
+
+t('(+ 2 3)',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3'), CP],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(3)) ],
+  [ Call('+', [NumExpr(2), NumExpr(3)]) ],
+  [ NFn(5) ],
+  '5'
+);
+
+// t('(+ 2 3');
+// t('(+ 2 ');
+
+
+t('(+ 2 4',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
+  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+ 2 4".'
+);
+
+t('(+ 2 4)',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)) ],
+  [ Call('+', [NumExpr(2), NumExpr(4)]) ],
+  [ NFn(6) ],
+  '6'
+);
+
+// t('(+ 2 4) ');
+
+t('(+ 2 4) (+',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
+  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
+  '6\n'
+  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+".'
+);
+
+// t('(+ 2 4) (+ ');
+
+t('(+ 2 4) (+ 4',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')]) ],
+  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')]) ],
+  '6\n'
+  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+  + 'Found in: "(+ 4".'
+);
+
+// t('(+ 2 4) (+ 4 ');
+
+t('(+ 2 4) (+ 4 7',
+[OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')],
+[ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')])],
+[ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
+[ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
+'6\n'
++ 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
++ 'Found in: "(+ 4 7".'
+);
+
+t('(+ 2 4) (+ 4 7)',
+  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7'), CP],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), SExps(IdAtom('+'), NumAtom(4), NumAtom(7))],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), Call('+', [NumExpr(2), NumExpr(4)]) ],
+  [ NFn(6), NFn(11)],
+  '6\n' +
+  '11'
+);
+
+
 
 /** 
  * Our demo: Someone tries to define fib.
