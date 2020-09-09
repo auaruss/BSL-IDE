@@ -23,9 +23,6 @@ import {
 
 /**
  * Attempts to read the first SExp from a list of tokens.
- * @remark A failure is produced when no starting SExp is found.
- * @remark Note that this function does not deal with whitespace as we expect to always be calling read
- *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
 export const readSexp = (tokens: Token[]): ReadResult<SExp> | ReadResult<ReadError> => {
