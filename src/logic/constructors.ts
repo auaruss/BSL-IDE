@@ -2,8 +2,8 @@ import {
   TokenType, Token, TokenError,
   SExp, ReadError, Expr, ExprResult,
   DefOrExpr, ExprError, DefinitionError, Closure, Env,
-  Definition, ReadResult, DefinitionResult, ValueError,
-  Binding, Value, Nothing
+  Definition, ReadResult, DefinitionResult, ValueError, BindingError,
+  Binding, Value, Nothing, Just, Maybe
 } from './types';
 import { isDefinitionResult } from './predicates';
 
@@ -157,6 +157,14 @@ export const DefnErr = (
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
 
+export const MakeNothing = (): Nothing => {
+  return { type: 'nothing' };
+}
+
+export function MakeJust<T>(t: T): Just<T> {
+  return { type: 'just', thing: t };
+}
+
 export const Bind = (d: string, v: ExprResult): Binding => {
   return {
     type: 'define',
@@ -184,11 +192,18 @@ export function Clos(a: string[], e: Env, b: Expr): Value {
   };
 }
 
-
 export const ValErr = (err: 'Id not in environment', e: Expr): ValueError => {
   return { valueError: err, expr: e };
 }
 
+export const BindingErr = (
+  err: 'Repeated definition of the same name',
+  d: Definition): BindingError => {
+  return {
+    bindingError: err,
+    definition: d
+  };
+}
 
 /**
  * Converts a boolean string in BSL into a boolean.

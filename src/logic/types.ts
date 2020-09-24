@@ -137,11 +137,14 @@ export type DefinitionResult
 export type ExprResult
   = ValueError | Value;
 
-export type MaybeExprResult
-  = ExprResult | Nothing;
-
 export type Nothing
  = { type: 'nothing' };
+
+export type Just<T>
+ = { type: 'just', thing: T};
+
+export type Maybe<T>
+ = Nothing | Just<T>;
 
 export type Binding
   = {
@@ -181,7 +184,7 @@ export type Closure
     body: Expr
   };
 
-export type Env = Map<String, MaybeExprResult>;
+export type Env = Map<String, Maybe<ExprResult>>;
 
 
 

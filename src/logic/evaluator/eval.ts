@@ -1,67 +1,45 @@
 'use strict';
 
-import { DefOrExpr, Definition, Expr, ExprResult, Env, ValueError, DefinitionResult, Result } from '../types';
-import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError, isDefinitionValue } from '../predicates';
+import {
+  DefOrExpr, Definition, Expr, ExprResult,
+  Env, ValueError, DefinitionResult, Result,
+  Nothing, Just, Maybe
+} from '../types';
+import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError } from '../predicates';
 import { parse } from './parse';
-import { DefnVal, BFn, Clos, NFn, ValErr, StringAtom} from '../constructors';
+import {
+  Bind, BFn, Clos, NFn, ValErr, StringAtom,
+  MakeNothing, MakeJust, BindingErr
+} from '../constructors';
+import Definitions from '../../frames/Definitions';
 
-const processDefOrExpr = (d: DefOrExpr): any => {
-  if (isDefinition(d)) {
-    processDefinition(d);
-  } else {
-    processExpr(d);
-  }
-}
-
-const processDefinition = (d: Definition): any => {
-  if (isDefinitionError(d)) {
-    /* ... */
-  } else switch (d.type) {
-    case 'define-function':
-      processExpr(d.body);
-      return;
-    case 'define-constant':
-      processExpr(d.body);
-      return;
-  }
-}
-
-const processExpr = (e: Expr): any => {
-  if (isExprError(e)) {
-    /* ... */
-  } else switch (e.type) {
-    case 'String':
-      return;
-    case 'Num':
-      return;
-    case 'Id':
-      return;
-    case 'Bool':
-      return;
-    case 'Call':
-      e.args.map(processExpr);
-      return;
-  }
-}
-
-const processExprResult = (e: ExprResult): any => {
-  // if ()
-}
-
+/**
+ * Evaluates a string into a list of results.
+ * @param exp 
+ */
 export const evaluate = (exp: string): Result[] => {
   return evaluateDefOrExprs(parse(exp));
 }
 
+/**
+ * Evaluates a list of DefOrExpr into a list of results,
+ * with a first pass which populates the environment.
+ * @param deforexprs 
+ */
 export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Result[] => {
-  let env = builtinEnv();
-
-  for (let d of deforexprs.filter(isDefinition)) {
-    env = populateEnv(d, env);
-  }
+  let env = builtinEnv()
+  deforexprs.filter(isDefinition).forEach(
+    (d: Definition) => env = extendEnv(d, env)
+  );
 
   return deforexprs.map(e => evaluateDefOrExpr(e, env));
 }
 
+/**
+ * Evaluates a DefOrExpr into a result.
+ * @param d 
+ * @param env 
+ */
 const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Result => {
   if (isDefinition(d)) {
     return evaluateDefinition(d, env);
@@ -70,16 +48,39 @@ const evaluateDefOrExpr = (d: DefOrExpr, env: Env): Result => {
   }
 }
 
+/**
+ * Second pass over the definitions, which produces a value to be printed. Mutates the env.
+ * @param d 
+ * @param env 
+ */
 const evaluateDefinition = (d: Definition, env: Env): DefinitionResult => {
   if (isDefinitionError(d)) {
     return d;
-  } else switch (d.type) {
-    case 'define-function':
-      return DefnVal(d.name, Clos(d.params, env, d.body));
-    case 'define-constant':
-      return DefnVal(d.name, evaluateExpr(d.body, env));
+  } else {
+    let defnVal = env.get(d.name);
+    switch (d.type) {
+      case 'define-function':
+        if (defnVal === undefined) {} // It can't be undefined, but the typechecker doesn't know that
+        else if (defnVal.type === 'nothing') {
+          mutateEnv(d.name, MakeJust(Clos(d.params, env, d.body)), env);
+          return Bind(d.name, Clos(d.params, env, d.body));
+        } else {
+          return BindingErr('Repeated definition of the same name', d);
+        }
+      case 'define-constant':
+        if (defnVal === undefined) {} // It can't be undefined, but the typechecker doesn't know that
+        else if (defnVal.type === 'nothing') {
+          let e = evaluateExpr(d.body, env);
+          mutateEnv(d.name, MakeJust(e), env);
+          return Bind(d.name, e);
+        } else {
+          // TODO
+        }
+    }
   }
 }
+
+
 
 const evaluateExpr = (e: Expr, env: Env): ExprResult => {
   if (isExprError(e)) {
@@ -102,18 +103,27 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
  * @param d 
  * @param env 
  */
-const populateEnv = (d: Definition, env: Env): Env => {
+const extendEnv = (d: Definition, env: Env): Env => {
   if (isDefinitionError(d)) {
     return env;
-  } else switch (d.type) {
-    case 'define-function':
-      extendEnv(d.name, Clos(d.params, env, d.body), env);
-      return env;
-    case 'define-constant':
-      extendEnv(d.name, evaluateExpr(d.body, env), env);
-      return env;
+  } else {
+    let e: Env = new Map(env);
+    e.set(d.name, MakeNothing());
+    return e;
   }
 }
+
+/**
+ * Mutates a definition in the environment.
+ * @param name definition name
+ * @param v definition closure
+ * @param env
+ */
+const mutateEnv = (name: String, v: Maybe<ExprResult>, env: Env): void => {
+  env.set(name, v);
+};
+
+
 
 /**
  * Checks if an identifier is in an enviroment
@@ -122,16 +132,6 @@ const populateEnv = (d: Definition, env: Env): Env => {
  */
 const isInEnv = (id: string, env: Env): boolean => {
   return env.has(id);
-}
-
-/**
- * Extends an enviroment with a new Id, Value pair.
- * @param id key
- * @param v value
- * @param env 
- */
-const extendEnv = (id: string, v: ExprResult, env: Env): void => {
-  env.set(id, v);
 }
 
 /**

@@ -1136,6 +1136,12 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
 t('(define y x)\n' + 
 '(define x 3)');
 
+// f used before its definition
+// must know its got a defn but that it hasnt been 'filled in'
+
+t('(define x (f 3)) (define (f y) y)'
+
+);
 
 /*****************************************************************************
  *                   Test cases for live editing behavior.                   *
