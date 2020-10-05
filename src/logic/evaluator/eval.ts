@@ -210,7 +210,7 @@ const getVal = (id: string, env: Env): Maybe<ExprResult> | false => {
 }
 
 const builtinEnv = (): Env => {
-  let m = new Map<String, ExprResult>();
+  let m = new Map<String, Maybe<ExprResult>>();
   
   // m.set('+',
   //   BFn(
