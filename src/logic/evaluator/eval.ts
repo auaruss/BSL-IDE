@@ -124,11 +124,22 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
   if (isExprError(e)) {
     return e;
   } else switch (e.type) {
+
     case 'String':
     case 'Num':
-    case 'Id':
     case 'Bool':
       return NFn(e.const);
+    case 'Id':
+      let x = getVal(e.const, env);
+      if (!x) {
+        // Error x not in env
+        throw new Error();
+      } else if (x.type === 'nothing') {
+        // Error x referenced before definition
+        throw new Error();
+      } else {
+        return x.thing;
+      }
     case 'Call':
       let maybeBody = getVal(e.op, env);
       if (!maybeBody) {
@@ -137,10 +148,17 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
         // Error f defined later in the program
       } else {
         let body = maybeBody.thing;
-        if body.
+        if (isValueError(body)) {
+          return body;
+        } else if (body.type === 'NonFunction') {
+          // Error nonfunction applied to arguments
+        } else if (body.type === 'BuiltinFunction') {
+          
+        } else {
+          
+        }
       }
-      let args = e.args.map((_: Expr) => evaluateExpr(_, env));
-      // process ExprResult
+
   }
 }
 
