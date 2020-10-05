@@ -1,5 +1,45 @@
 'use strict';
 
+const processDefOrExpr = (d: DefOrExpr): any => {
+  if (isDefinition(d)) {
+    processDefinition(d);
+  } else {
+    processExpr(d);
+  }
+}
+
+const processDefinition = (d: Definition): any => {
+  if (isDefinitionError(d)) {
+    /* ... */
+  } else switch (d.type) {
+    case 'define-function':
+      processExpr(d.body);
+      return;
+    case 'define-constant':
+      processExpr(d.body);
+      return;
+  }
+}
+
+const processExpr = (e: Expr): any => {
+  if (isExprError(e)) {
+    /* ... */
+  } else switch (e.type) {
+    case 'String':
+      return;
+    case 'Num':
+      return;
+    case 'Id':
+      return;
+    case 'Bool':
+      return;
+    case 'Call':
+      e.args.map(processExpr);
+      return;
+  }
+}
+
+
 import {
   DefOrExpr, Definition, Expr, ExprResult,
   Env, ValueError, DefinitionResult, Result,
@@ -27,7 +67,7 @@ export const evaluate = (exp: string): Result[] => {
  * @param deforexprs 
  */
 export const evaluateDefOrExprs = (deforexprs: DefOrExpr[]): Result[] => {
-  let env = builtinEnv()
+  let env = builtinEnv();
   deforexprs.filter(isDefinition).forEach(
     (d: Definition) => env = extendEnv(d, env)
   );
@@ -58,33 +98,31 @@ const evaluateDefinition = (d: Definition, env: Env): DefinitionResult => {
     return d;
   } else {
     let defnVal = env.get(d.name);
-    switch (d.type) {
-      case 'define-function':
-        if (defnVal === undefined) {} // It can't be undefined, but the typechecker doesn't know that
-        else if (defnVal.type === 'nothing') {
-          mutateEnv(d.name, MakeJust(Clos(d.params, env, d.body)), env);
-          return Bind(d.name, Clos(d.params, env, d.body));
-        } else {
-          return BindingErr('Repeated definition of the same name', d);
-        }
-      case 'define-constant':
-        if (defnVal === undefined) {} // It can't be undefined, but the typechecker doesn't know that
-        else if (defnVal.type === 'nothing') {
-          let e = evaluateExpr(d.body, env);
-          mutateEnv(d.name, MakeJust(e), env);
-          return Bind(d.name, e);
-        } else {
-          // TODO
-        }
+    if (defnVal === undefined) {
+      throw new Error('Somehow, the environment was not populated correctly by the first pass');
+    } else {
+      let sndarg: Maybe<ExprResult>;
+      switch (d.type) {
+        case 'define-function':
+          sndarg = MakeJust(Clos(d.params, env, d.body));
+          break;
+        case 'define-constant':
+          sndarg = MakeJust(evaluateExpr(d.body, env));
+      }
+      if (defnVal.type === 'nothing') {
+        mutateEnv(d.name, sndarg, env);
+        return Bind(d.name, sndarg.thing);
+      } else {
+        return BindingErr('Repeated definition of the same name', d);
+      }
     }
   }
 }
 
 
-
 const evaluateExpr = (e: Expr, env: Env): ExprResult => {
   if (isExprError(e)) {
-    /* ... */
+    return e;
   } else switch (e.type) {
     case 'String':
     case 'Num':
@@ -92,8 +130,16 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
     case 'Bool':
       return NFn(e.const);
     case 'Call':
+      let maybeBody = getVal(e.op, env);
+      if (!maybeBody) {
+        // Error f not defined in the program
+      } else if (maybeBody.type === 'nothing') {
+        // Error f defined later in the program
+      } else {
+        let body = maybeBody.thing;
+        if body.
+      }
       let args = e.args.map((_: Expr) => evaluateExpr(_, env));
-      let f = getVal(e.op, env);
       // process ExprResult
   }
 }
@@ -139,7 +185,7 @@ const isInEnv = (id: string, env: Env): boolean => {
  * @param id 
  * @param env
  */
-const getVal = (id: string, env: Env): ExprResult | false => {
+const getVal = (id: string, env: Env): Maybe<ExprResult> | false => {
   const a = env.get(id);
   if (a !== undefined) return a;
   return false;
