@@ -1143,6 +1143,8 @@ t('(define x (f 3)) (define (f y) y)'
 
 );
 
+t('(define x (+ (+) 3)');
+
 /*****************************************************************************
  *                   Test cases for live editing behavior.                   *
  *                                                                           *
