@@ -6,8 +6,10 @@ import {
   Value, DefinitionError, ExprError
 } from '../types';
 
+import { evaluate } from './eval';
+
 export const print = (exp: string): string => {
-  return '';
+  return printResults(evaluate(exp));
 }
 
 export const printResults = (rs: Result[]): string => {
