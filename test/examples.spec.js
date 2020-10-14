@@ -86,7 +86,7 @@ var t = function (input, tokens, sexps, deforexprs, values, output) {
         }
         if (values) {
             try {
-                var o_1 = print_1.printValues(values);
+                var o_1 = print_1.printResults(values);
                 if (output) {
                     it('should output correctly', function () {
                         check_expect_1.checkExpect(o_1, output);

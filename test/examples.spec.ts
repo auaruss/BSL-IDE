@@ -9,7 +9,7 @@ import { tokenize                     } from '../src/logic/evaluator/tokenize';
 import { read,     readTokens         } from '../src/logic/evaluator/read';
 import { parse,    parseSexps         } from '../src/logic/evaluator/parse';
 import { evaluate, evaluateDefOrExprs } from '../src/logic/evaluator/eval';
-import { print,    printValues        } from '../src/logic/evaluator/print';
+import { print,    printResults       } from '../src/logic/evaluator/print';
 
 import {
   Tok,
@@ -107,7 +107,7 @@ const t = (
 
     if (values) {
       try {
-        let o = printValues(values);
+        let o = printResults(values);
         if (output) {
           it('should output correctly', () => {
             checkExpect(o, output);
