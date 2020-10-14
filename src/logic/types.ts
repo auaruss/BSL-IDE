@@ -174,6 +174,13 @@ export type BindingError
 export type ValueError
    = ExprError | {
     valueError: 'Id not in environment'
+              | 'Id referenced before definition'
+              | 'Arity mismatch'
+              | 'Function used as a predicate'
+              | 'Non-boolean value used as a predicate'
+              | 'Expression undefined in program'
+              | 'Expression defined later in program'
+              | 'Nonfunction applied as a function'
     expr: Expr // put identifier for expr in this thing
   };
 

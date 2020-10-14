@@ -192,7 +192,16 @@ export function Clos(a: string[], e: Env, b: Expr): Value {
   };
 }
 
-export const ValErr = (err: 'Id not in environment', e: Expr): ValueError => {
+export const ValErr = (
+  err: 'Id not in environment'
+     | 'Id referenced before definition'
+     | 'Arity mismatch'
+     | 'Function used as a predicate'
+     | 'Non-boolean value used as a predicate'
+     | 'Expression undefined in program'
+     | 'Expression defined later in program'
+     | 'Nonfunction applied as a function',
+     e: Expr): ValueError => {
   return { valueError: err, expr: e };
 }
 
