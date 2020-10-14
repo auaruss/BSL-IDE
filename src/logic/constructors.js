@@ -167,7 +167,7 @@ var whichBool = function (s) {
     }
     return false;
 };
-exports.CP = (_a = [
+exports.CP = ((_a = [
     exports.Tok(types_1.TokenType.CloseParen, ')'),
     exports.Tok(types_1.TokenType.OpenParen, '('),
     exports.Tok(types_1.TokenType.Whitespace, ' '),
@@ -176,5 +176,5 @@ exports.CP = (_a = [
     exports.Tok(types_1.TokenType.OpenBraceParen, '{'),
     exports.Tok(types_1.TokenType.CloseBraceParen, '}'),
     exports.Tok(types_1.TokenType.Whitespace, '\n')
-], _a[0]), exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7];
+], _a[0]), exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7]);
 exports.NOP = { type: 'nothing' };
