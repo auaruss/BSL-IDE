@@ -111,7 +111,7 @@ t('', [], [], [], []);
 t('()' /* ... */);
 t('123', [constructors_1.NumTok('123')], [constructors_1.NumAtom(123)], [constructors_1.NumExpr(123)], [constructors_1.NFn(123)], '123');
 t('"hello"', [constructors_1.StringTok('hello')], [constructors_1.StringAtom('hello')], [constructors_1.StringExpr('hello')], [constructors_1.NFn('hello')], 'hello');
-t('hello', [constructors_1.IdTok('hello')], [constructors_1.IdAtom('hello')], [constructors_1.IdExpr('hello')], [constructors_1.ValErr('Id not in environment', [constructors_1.IdExpr('hello')])], 'hello: Id not in environment');
+t('hello', [constructors_1.IdTok('hello')], [constructors_1.IdAtom('hello')], [constructors_1.IdExpr('hello')], [constructors_1.ValErr('Id not in environment', constructors_1.IdExpr('hello'))], 'hello: Id not in environment');
 t('#true', [constructors_1.BooleanTok('#true')], [constructors_1.BooleanAtom('#true')], [constructors_1.BooleanExpr(true)], [constructors_1.NFn(true)], '#t');
 t('(', [constructors_1.OP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], 'ReadError: No Closing Paren for (');
 t('[', [constructors_1.OSP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OSP])], 'ReadError: No Closing Paren for [');
@@ -641,3 +641,124 @@ t('("hello" world (this "is" "some non" sense (which should be) #t 10 readable))
 ], [
     constructors_1.SExps(constructors_1.StringAtom('hello'), constructors_1.IdAtom('world'), constructors_1.SExps(constructors_1.IdAtom('this'), constructors_1.StringAtom('is'), constructors_1.StringAtom('some non'), constructors_1.IdAtom('sense'), constructors_1.SExps(constructors_1.IdAtom('which'), constructors_1.IdAtom('should'), constructors_1.IdAtom('be')), constructors_1.BooleanAtom('#t'), constructors_1.NumAtom(10), constructors_1.IdAtom('readable')))
 ]);
+t('(define y x)\n' +
+    '(define x 3)');
+// f used before its definition
+// must know its got a defn but that it hasnt been 'filled in'
+t('(define x (f 3)) (define (f y) y)');
+t('(define x (+ (+) 3)');
+/*****************************************************************************
+ *                   Test cases for live editing behavior.                   *
+ *                                                                           *
+ * These test cases are intended to illustrate specific live editing         *
+ * behavior and the intended output of the live editor with that behavior.   *
+ *****************************************************************************/
+/**
+ * Our demo: (+ 2 3)
+ */
+t('', [], [], [], [], '');
+t('(', [constructors_1.OP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(".');
+t('(+', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+".');
+// t('(+ ');
+t('(+ 2', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2')], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2')])], 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+ 2".');
+t('(+ 2 3', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '3')], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '3')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '3')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '3')])], 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+ 2 3".');
+t('(+ 2 3)', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '3'), constructors_1.CP], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(3))], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(3)])], [constructors_1.NFn(5)], '5');
+// t('(+ 2 3');
+// t('(+ 2 ');
+t('(+ 2 4', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4')], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4')])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4')])], 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+ 2 4".');
+t('(+ 2 4)', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.CP], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(4))], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)])], [constructors_1.NFn(6)], '6');
+// t('(+ 2 4) ');
+t('(+ 2 4) (+', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.CP, constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(4)), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)]), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], [constructors_1.NFn(6), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+')])], '6\n'
+    + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+".');
+// t('(+ 2 4) (+ ');
+t('(+ 2 4) (+ 4', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.CP, constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4')], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(4)), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4')])], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)]), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4')])], [constructors_1.NFn(6), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4')])], '6\n'
+    + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+ 4".');
+// t('(+ 2 4) (+ 4 ');
+t('(+ 2 4) (+ 4 7', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.CP, constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.Tok(types_1.TokenType.Number, '7')], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(4)), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.Tok(types_1.TokenType.Number, '7')])], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)]), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.Tok(types_1.TokenType.Number, '7')])], [constructors_1.NFn(6), constructors_1.ReadErr('No Open Paren', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.Tok(types_1.TokenType.Number, '7')])], '6\n'
+    + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
+    + 'Found in: "(+ 4 7".');
+t('(+ 2 4) (+ 4 7)', [constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '2'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.CP, constructors_1.OP, constructors_1.Tok(types_1.TokenType.Identifier, '+'), constructors_1.Tok(types_1.TokenType.Number, '4'), constructors_1.Tok(types_1.TokenType.Number, '7'), constructors_1.CP], [constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(2), constructors_1.NumAtom(4)), constructors_1.SExps(constructors_1.IdAtom('+'), constructors_1.NumAtom(4), constructors_1.NumAtom(7))], [constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)]), constructors_1.Call('+', [constructors_1.NumExpr(2), constructors_1.NumExpr(4)])], [constructors_1.NFn(6), constructors_1.NFn(11)], '6\n' +
+    '11');
+/**
+ * Our demo: Someone tries to define fib.
+ */
+// ''
+// '('
+// ...
+t('(define (fib n)\n' +
+    '  (if (= fib 0)\n' +
+    '      (n 1)\n' +
+    '      (else if (= fib 1)\n' +
+    '            (n 1)\n' +
+    '            (else (n (fib n - 2) + (fib n - 1))))');
+// ...
+// missing parens
+t('(define (fib n)\n' +
+    '  (if (= fib 0)\n' +
+    '      (n 1)\n' +
+    '      (else if (= fib 1)\n' +
+    '            (n 1)\n' +
+    '            (else (n (fib n - 2) + (fib n - 1))))))');
+// ...
+// The student is reminded of prefix notation
+t('(define (fib n)\n' +
+    '  (if (= fib 0)\n' +
+    '      (n 1)\n' +
+    '      (else if (= fib 1)\n' +
+    '            (n 1)\n' +
+    '            (else (n (fib (- n 2) + (fib (- n 1))))))');
+// ...
+// The student is told fib cant equal 0
+t('(define (fib n)\n' +
+    '  (if (= n 0)\n' +
+    '      (n 1)\n' +
+    '      (else if (= fib 1)\n' +
+    '            (n 1)\n' +
+    '            (else (n (fib (- n 2) + (fib (- n 1))))))');
+// ...
+// Student is told 'you can't call n'
+t('(define (fib n)\n' +
+    '  (if (= n 0)\n' +
+    '      n 1\n' +
+    '      (else if (= fib 1)\n' +
+    '            n 1\n' +
+    '            (else n (fib (- n 2) + (fib (- n 1)))))');
+// ...
+// Student is told something like 'now get rid of those n'
+t('(define (fib)\n' +
+    '  (if (= 0)\n' +
+    '      1\n' +
+    '      (else if (= fib 1)\n' +
+    '            1\n' +
+    '            (else (fib (- 2) + (fib (- 1)))))');
+// ...
+// 'No, not all the n.' 
+t('(define (fib n)\n' +
+    '  (if (= n 0)\n' +
+    '      1\n' +
+    '      (else if (= fib 1)\n' +
+    '            1\n' +
+    '            (else (fib (- n 2) + (fib (- n 1)))))');
+// ...
+// Prefix notation again.
+t('(define (fib n)\n' +
+    '  (if (= n 0)\n' +
+    '      1\n' +
+    '      (else if (= fib 1)\n' +
+    '            1\n' +
+    '            (else (+ (fib (- n 2)) (fib (- n 1)))))))');
+// ...
+// Else isn't a thing here.
+t('(define (fib n)\n' +
+    '  (if (= n 0)\n' +
+    '      1\n' +
+    '      (if (= fib 1)\n' +
+    '           1\n' +
+    '           (+ (fib (- n 2)) (fib (- n 1))))))');

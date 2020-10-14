@@ -16,3 +16,4 @@ var TokenType;
     TokenType["Boolean"] = "Boolean";
 })(TokenType = exports.TokenType || (exports.TokenType = {}));
 ;
+// Every templated part should be a field in the errors

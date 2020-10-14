@@ -9,9 +9,6 @@ var predicates_1 = require("../predicates");
 var constructors_1 = require("../constructors");
 /**
  * Attempts to read the first SExp from a list of tokens.
- * @remark A failure is produced when no starting SExp is found.
- * @remark Note that this function does not deal with whitespace as we expect to always be calling read
- *         first and we deal with the whitespace completely in there.
  * @param tokens
  */
 exports.readSexp = function (tokens) {
@@ -58,7 +55,7 @@ exports.readSexp = function (tokens) {
                         || firstUnprocessedToken.type === types_1.TokenType.CloseSquareParen
                         || firstUnprocessedToken.type === types_1.TokenType.CloseBraceParen) {
                         if (parensMatch(firstToken.type, firstUnprocessedToken.type))
-                            return { thing: readRest.thing, remain: readRest.remain.slice(1) };
+                            return constructors_1.Res(constructors_1.SExpsFromArray(readRest.thing), readRest.remain.slice(1));
                         return {
                             thing: constructors_1.ReadErr('Mismatched Parens', [firstToken, firstUnprocessedToken]),
                             remain: readRest.remain.slice(1)

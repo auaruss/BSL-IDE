@@ -1,57 +1,18 @@
 'use strict';
 
-const processDefOrExpr = (d: DefOrExpr): any => {
-  if (isDefinition(d)) {
-    processDefinition(d);
-  } else {
-    processExpr(d);
-  }
-}
-
-const processDefinition = (d: Definition): any => {
-  if (isDefinitionError(d)) {
-    /* ... */
-  } else switch (d.type) {
-    case 'define-function':
-      processExpr(d.body);
-      return;
-    case 'define-constant':
-      processExpr(d.body);
-      return;
-  }
-}
-
-const processExpr = (e: Expr): any => {
-  if (isExprError(e)) {
-    /* ... */
-  } else switch (e.type) {
-    case 'String':
-      return;
-    case 'Num':
-      return;
-    case 'Id':
-      return;
-    case 'Bool':
-      return;
-    case 'Call':
-      e.args.map(processExpr);
-      return;
-  }
-}
 
 
 import {
   DefOrExpr, Definition, Expr, ExprResult,
   Env, ValueError, DefinitionResult, Result,
-  Nothing, Just, Maybe
+  Nothing, Just, Maybe, Value
 } from '../types';
 import { isDefinition, isExpr, isExprError, isValueError, isDefinitionError } from '../predicates';
 import { parse } from './parse';
 import {
-  Bind, BFn, Clos, NFn, ValErr, StringAtom,
+  Bind, BFn, Clos, NFn, ValErr,
   MakeNothing, MakeJust, BindingErr
 } from '../constructors';
-import Definitions from '../../frames/Definitions';
 
 /**
  * Evaluates a string into a list of results.
@@ -132,35 +93,88 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
     case 'Id':
       let x = getVal(e.const, env);
       if (!x) {
-        // Error x not in env
-        throw new Error();
+        return ValErr('Id not in environment', e);
       } else if (x.type === 'nothing') {
-        // Error x referenced before definition
-        throw new Error();
+        return ValErr('Id referenced before definition', e);
       } else {
         return x.thing;
       }
     case 'Call':
+      if (e.op === 'if') {
+        if (e.args.length !== 3) {
+          return ValErr('Arity mismatch', e);
+        } else {
+          let pred = evaluateExpr(e.args[0], env);
+          if (isValueError(pred)) {
+            return pred;
+          } else if (! (pred.type === 'NonFunction')) {
+            return ValErr('Function used as a predicate', e);
+          } else if (pred.value === true) {
+            return evaluateExpr(e.args[1], env);
+          } else if (pred.value === false) {
+            return evaluateExpr(e.args[2], env);
+          } else {
+            return ValErr('Non-boolean value used as a predicate', e);
+          }
+        }
+      }
       let maybeBody = getVal(e.op, env);
       if (!maybeBody) {
-        // Error f not defined in the program
+        return ValErr('Expression undefined in program', e);
       } else if (maybeBody.type === 'nothing') {
-        // Error f defined later in the program
+        return ValErr('Expression defined later in program', e);
       } else {
         let body = maybeBody.thing;
         if (isValueError(body)) {
           return body;
         } else if (body.type === 'NonFunction') {
-          // Error nonfunction applied to arguments
+          return ValErr('Nonfunction applied as a function', e);
         } else if (body.type === 'BuiltinFunction') {
-          
+          let valuesWithoutError:Value[] = [];
+          let possibleErrors: ValueError[] = []; 
+          valuesWithoutError = e.args.reduce(
+            (acc, elem) => {
+              let t = evaluateExpr(elem, env);
+              if (!isValueError(t)) acc.push(t);
+              else possibleErrors.push(t);
+              return acc;
+            },
+            valuesWithoutError
+          );
+
+          if (possibleErrors.length === 0) {
+            return body.value(valuesWithoutError);
+          } else {
+            return possibleErrors[0]; // This could return more info, but this works for now.
+          }
         } else {
-          
+          let clos = body.value;
+          if (clos.args.length === e.args.length) {
+            let localEnv = new Map<String, Maybe<ExprResult>>(clos.env);
+            let zipped: [string, Expr][] = clos.args.map(
+              (_, i) => [_, e.args[i]]
+            );
+
+            for (let elem of zipped) {
+              let [param, exp] = elem;
+              let arg = evaluateExpr(exp, clos.env);
+              if (isValueError(arg)) {
+                return arg;
+              } else {
+                mutateEnv(param, MakeJust(arg), localEnv);
+              }
+            }
+            
+            return evaluateExpr(clos.body, env);
+          } else {
+            return ValErr('Arity mismatch', e);
+          }
         }
       }
-
   }
 }
+
+
 
 /**
  * Puts a definition into an environment.
@@ -212,20 +226,29 @@ const getVal = (id: string, env: Env): Maybe<ExprResult> | false => {
 const builtinEnv = (): Env => {
   let m = new Map<String, Maybe<ExprResult>>();
   
-  // m.set('+',
-  //   BFn(
-  //     (vs: Value[]) => {
-  //       let ns = vs.map(v => v.value);
-  //       if (ns) {
-  //         return NFn(
-  //           ns.reduce((acc: number, elem: number) => acc + elem, 0)
-  //         );
-  //       } else {
-  //         throw new Error('+: All arguments to + must be numbers.');
-  //       }
-  //     }
-  //   )
-  // );
+  m.set('+',
+    MakeJust(BFn(
+      (vs: Value[]) => {
+        let ns:number[] = vs.map( v => {
+          if (typeof v.value == 'number') {
+            return v.value;
+          } else {
+            return 0;
+            // error non-num passed to +
+          }
+        });
+
+        if (ns) {
+          return NFn(
+            ns.reduce((acc: number, elem: number) => acc + elem, 0)
+          );
+        } else {
+          //  Error '+: All arguments to + must be numbers.'
+          return NFn(0);
+        }
+      }
+    ))
+  );
 
   // m.set('*',
   //   BFn(

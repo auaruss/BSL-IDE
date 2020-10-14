@@ -44,24 +44,49 @@ exports.SExps = function () {
         sexp: args
     };
 };
+exports.SExpsFromArray = function (sexps) {
+    return {
+        type: 'SExp Array',
+        sexp: sexps
+    };
+};
+function Res(t, r) {
+    return { thing: t, remain: r };
+}
+exports.Res = Res;
 exports.ReadErr = function (e, v) {
     return { readError: e, tokens: v };
 };
 // ----------------------------------------------------------------------------
 // | Definition constructors                                                  |
 // ----------------------------------------------------------------------------
+exports.VarDefn = function (name, body) {
+    return {
+        type: 'define-constant',
+        name: name,
+        body: body
+    };
+};
+exports.FnDefn = function (name, params, body) {
+    return {
+        type: 'define-function',
+        name: name,
+        params: params,
+        body: body
+    };
+};
 // ----------------------------------------------------------------------------
 // | Expr constructors                                                        |
 // ----------------------------------------------------------------------------
 exports.PrimitiveExpr = function (t, v) {
     if ((t === 'String' || t === 'Id') && (typeof v === 'string')) {
-        return { type: t, expr: v };
+        return { type: t, "const": v };
     }
     else if (t === 'Num' && (typeof v === 'number')) {
-        return { type: t, expr: v };
+        return { type: t, "const": v };
     }
     else if (t === 'Bool' && (typeof v === 'boolean')) {
-        return { type: t, expr: v };
+        return { type: t, "const": v };
     }
     throw new Error('Mismatch in primitive Expr type/value');
 };
@@ -69,39 +94,11 @@ exports.NumExpr = function (v) { return exports.PrimitiveExpr('Num', v); };
 exports.IdExpr = function (v) { return exports.PrimitiveExpr('Id', v); };
 exports.StringExpr = function (v) { return exports.PrimitiveExpr('String', v); };
 exports.BooleanExpr = function (v) { return exports.PrimitiveExpr('Bool', v); };
-exports.FunctionExpr = function (fid, args) {
-    return {
-        type: 'Call',
-        expr: {
-            op: fid,
-            args: args
-        }
-    };
-};
-exports.VarDefn = function (varName, body) {
-    return {
-        type: 'define',
-        header: varName,
-        body: body
-    };
-};
-exports.FnDefn = function (name, params, body) {
-    return {
-        type: 'define',
-        header: {
-            name: name,
-            params: params
-        },
-        body: body
-    };
-};
 exports.Call = function (op, args) {
     return {
         type: 'Call',
-        expr: {
-            op: op,
-            args: args
-        }
+        op: op,
+        args: args
     };
 };
 exports.ExprErr = function (e, v) {
@@ -113,15 +110,29 @@ exports.DefnErr = function (e, v) {
 // ----------------------------------------------------------------------------
 // | Value constructors                                                       |
 // ----------------------------------------------------------------------------
+exports.MakeNothing = function () {
+    return { type: 'nothing' };
+};
+function MakeJust(t) {
+    return { type: 'just', thing: t };
+}
+exports.MakeJust = MakeJust;
+exports.Bind = function (d, v) {
+    return {
+        type: 'define',
+        defined: d,
+        toBe: v
+    };
+};
 exports.NFn = function (v) {
     return { type: 'NonFunction', value: v };
 };
 exports.BFn = function (v) {
     return { type: 'BuiltinFunction', value: v };
 };
-function Fn(a, e, b) {
+function Clos(a, e, b) {
     return {
-        type: 'Function',
+        type: 'Closure',
         value: {
             args: a,
             env: e,
@@ -129,9 +140,15 @@ function Fn(a, e, b) {
         }
     };
 }
-exports.Fn = Fn;
-exports.ValErr = function (e, d) {
-    return { valueError: e, deforexprs: d };
+exports.Clos = Clos;
+exports.ValErr = function (err, e) {
+    return { valueError: err, expr: e };
+};
+exports.BindingErr = function (err, d) {
+    return {
+        bindingError: err,
+        definition: d
+    };
 };
 /**
  * Converts a boolean string in BSL into a boolean.
@@ -160,3 +177,4 @@ exports.CP = (_a = [
     exports.Tok(types_1.TokenType.CloseBraceParen, '}'),
     exports.Tok(types_1.TokenType.Whitespace, '\n')
 ], _a[0]), exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7];
+exports.NOP = { type: 'nothing' };

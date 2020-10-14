@@ -60,34 +60,33 @@ exports.isDefOrExpr = function (x) {
 exports.isDefinition = function (x) {
     return (typeof x === 'object'
         && x.type
-        && x.header
+        && x.name
         && x.body
-        && x.type === 'define'
-        && isHeader(x.header)
+        && (x.type === 'define-constant'
+            || (x.type === 'define-function'
+                && x.params && x.params.every(function (_) { return typeof _ === 'string'; })))
         && exports.isExpr(x.body)) || exports.isDefinitionError(x);
-};
-var isHeader = function (x) {
-    return typeof x === 'string'
-        || (typeof x === 'object'
-            && x.name
-            && x.params
-            && typeof x.name === 'string'
-            && x.params.every(function (_) { return typeof _ === 'string'; }));
 };
 exports.isExpr = function (x) {
     return (typeof x === 'object'
         && x.type
-        && x.expr
         && (x.type === 'String'
-            && typeof x.expr === 'string')
+            && x["const"] && typeof x["const"] === 'string')
         && (x.type === 'Num'
-            && typeof x.expr === 'number')
+            && x["const"] && typeof x["const"] === 'number')
         && (x.type === 'Id'
-            && typeof x.expr === 'string')
+            && x["const"] && typeof x["const"] === 'string')
         && (x.type === 'Bool'
-            && typeof x.expr === 'boolean')
+            && x["const"] && typeof x["const"] === 'boolean')
         && (x.type === 'Call'
-            && isCall(x.expr))) || exports.isExprError(x);
+            && x.op
+            && x.args
+            && typeof x.op === 'string'
+            && Array.isArray(x.args)
+            && x.args.every(exports.isExpr))) || exports.isExprError(x);
+};
+exports.isExprArray = function (x) {
+    return Array.isArray(x) && x.every(exports.isExpr);
 };
 var isCall = function (x) {
     return typeof x === 'object'
@@ -115,7 +114,6 @@ exports.isDefinitionError = function (x) {
             || x.defnError === 'The body given is not a valid Expr')
         && Array.isArray(x.sexps)
         && x.sexps.every(exports.isSExp))
-        || exports.isTokenError(x)
         || exports.isReadError(x);
 };
 exports.isExprError = function (x) {
@@ -131,21 +129,17 @@ exports.isExprError = function (x) {
         || exports.isReadError(x);
 };
 // ----------------------------------------------------------------------------
-exports.isValue = function (x) {
-    return exports.isDefinitionValue(x) || exports.isExprValue(x);
+exports.isResult = function (x) {
+    return exports.isDefinitionResult(x) || exports.isExprValue(x);
 };
-exports.isDefinitionValue = function (x) {
-    return (typeof x === 'object'
-        && x.type
-        && x.defined
-        && x.toBe
-        && x.type === 'define'
-        && typeof x.defined === 'string'
-        && exports.isValue(x.toBe))
-        || exports.isDefinitionError(x);
+exports.isDefinitionResult = function (x) {
+    return exports.isBinding(x) || exports.isBindingError(x);
 };
 exports.isExprValue = function (x) {
-    return (typeof x === 'object'
+    return exports.isValue(x) || exports.isValueError(x);
+};
+exports.isValue = function (x) {
+    return typeof x === 'object'
         && x.type
         && x.value
         && ((x.type === 'NonFunction'
@@ -155,10 +149,9 @@ exports.isExprValue = function (x) {
             || (x.type === 'BuiltinFunction'
                 && typeof x.value === 'function')
             || (x.type === 'Function'
-                && exports.isFunc(x.value))))
-        || exports.isValueError(x);
+                && exports.isClos(x.value)));
 };
-exports.isFunc = function (x) {
+exports.isClos = function (x) {
     return typeof x === 'object'
         && x.args
         && x.env
@@ -167,6 +160,15 @@ exports.isFunc = function (x) {
         && x.args.every(function (_) { return typeof _ === 'string'; })
         && exports.isEnv(x.env)
         && exports.isExpr(x.body);
+};
+exports.isBinding = function (x) {
+    return typeof x === 'object'
+        && x.type
+        && x.defined
+        && x.toBe
+        && x.type === 'define'
+        && typeof x.defined === 'string'
+        && exports.isExprValue(x.toBe);
 };
 exports.isEnv = function (x) {
     return x instanceof Map;
@@ -179,4 +181,12 @@ exports.isValueError = function (x) {
         && Array.isArray(x.deforexprs)
         && x.deforexprs.every(exports.isDefOrExpr))
         || exports.isExprError(x);
+};
+exports.isBindingError = function (x) {
+    return (typeof x === 'object'
+        && x.bindingError
+        && x.definition
+        && x.bindingError === 'Repeated definition of the same name'
+        && exports.isDefinition(x.definition))
+        || exports.isDefinitionError(x);
 };
