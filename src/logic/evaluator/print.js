@@ -1,5 +1,6 @@
 "use strict";
 exports.__esModule = true;
+exports.printResults = exports.print = void 0;
 var predicates_1 = require("../predicates");
 var eval_1 = require("./eval");
 exports.print = function (exp) {

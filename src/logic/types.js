@@ -1,6 +1,7 @@
 "use strict";
 // Types used in the student language evaluator.
 exports.__esModule = true;
+exports.TokenType = void 0;
 var TokenType;
 (function (TokenType) {
     TokenType["OpenParen"] = "OpenParen";

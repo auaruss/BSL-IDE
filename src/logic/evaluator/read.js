@@ -1,5 +1,6 @@
 'use strict';
 exports.__esModule = true;
+exports.read = exports.readTokens = exports.readSexps = exports.readSexp = void 0;
 /**
  * An S-exp reader for the student languages.
  */

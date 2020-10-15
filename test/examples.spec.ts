@@ -1264,7 +1264,7 @@ t('(+ 2 4) (+ 4 7',
 t('(+ 2 4) (+ 4 7)',
   [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7'), CP],
   [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), SExps(IdAtom('+'), NumAtom(4), NumAtom(7))],
-  [ Call('+', [NumExpr(2), NumExpr(4)]), Call('+', [NumExpr(2), NumExpr(4)]) ],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), Call('+', [NumExpr(4), NumExpr(7)]) ],
   [ NFn(6), NFn(11) ],
   '6\n' +
   '11'

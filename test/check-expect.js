@@ -1,5 +1,6 @@
 "use strict";
 exports.__esModule = true;
+exports.checkExpectMultiple = exports.checkExpect = void 0;
 var expect = require('chai').expect;
 function checkExpect(res, expected) {
     expect(res).to.deep.equal(expected);
