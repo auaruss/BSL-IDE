@@ -1218,7 +1218,7 @@ t('(+ 2 4',
 );
 
 t('(+ 2 4)',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP],
+  [OP, SPACE, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4'), CP],
   [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)) ],
   [ Call('+', [NumExpr(2), NumExpr(4)]) ],
   [ NFn(6) ],
