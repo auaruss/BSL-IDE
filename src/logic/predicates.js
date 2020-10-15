@@ -1,6 +1,5 @@
 "use strict";
 exports.__esModule = true;
-exports.isBindingError = exports.isValueError = exports.isEnv = exports.isBinding = exports.isClos = exports.isValue = exports.isExprValue = exports.isDefinitionResult = exports.isResult = exports.isExprError = exports.isDefinitionError = exports.isExprArray = exports.isExpr = exports.isDefinition = exports.isDefOrExpr = exports.isReadError = exports.isSExp = exports.isTokenError = exports.isToken = void 0;
 exports.isToken = function (x) {
     return (typeof x === 'object'
         && (x.type === 'OpenParen'

@@ -1,7 +1,6 @@
 "use strict";
 var _a;
 exports.__esModule = true;
-exports.NOP = exports.NL = exports.CBP = exports.OBP = exports.CSP = exports.OSP = exports.SPACE = exports.OP = exports.CP = exports.BindingErr = exports.ValErr = exports.Clos = exports.BFn = exports.NFn = exports.Bind = exports.MakeJust = exports.MakeNothing = exports.DefnErr = exports.ExprErr = exports.Call = exports.BooleanExpr = exports.StringExpr = exports.IdExpr = exports.NumExpr = exports.PrimitiveExpr = exports.FnDefn = exports.VarDefn = exports.ReadErr = exports.Res = exports.SExpsFromArray = exports.SExps = exports.BooleanAtom = exports.StringAtom = exports.IdAtom = exports.NumAtom = exports.Atom = exports.TokErr = exports.BooleanTok = exports.StringTok = exports.IdTok = exports.NumTok = exports.Tok = void 0;
 var types_1 = require("./types");
 // ----------------------------------------------------------------------------
 // | Token constructors                                                       |
@@ -177,5 +176,5 @@ exports.CP = (_a = [
     exports.Tok(types_1.TokenType.OpenBraceParen, '{'),
     exports.Tok(types_1.TokenType.CloseBraceParen, '}'),
     exports.Tok(types_1.TokenType.Whitespace, '\n')
-], _a[0], exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7]);
+], _a[0]), exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7];
 exports.NOP = { type: 'nothing' };
