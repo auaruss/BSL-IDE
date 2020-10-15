@@ -15,7 +15,7 @@ export const print = (exp: string): string => {
 export const printResults = (rs: Result[]): string => {
   return rs.reduce(
     (acc, elem) => {
-      return acc + '\n' + printResult(elem);
+      return `${acc}\n ${printResult(elem)}`;
     },
     ''
   );
@@ -47,7 +47,7 @@ const printExprResult = (er: ExprResult): string => {
 }
 
 const printBinding = (b: Binding): string => {
-  return 'Defined ' + b.defined + ' to be' + printExprResult(b.toBe) + '.';
+  return `Defined ${b.defined} to be ${printExprResult(b.toBe)}.`;
 }
 
 const printValue = (v: Value): string => {
@@ -68,7 +68,7 @@ const printBindingError = (be: BindingError): string => {
   } else if (isDefinitionError(be)) {
     return printDefinitionError(be);
   } else {
-    return 'BindingError: ' + be.bindingError + ' in ' + printDefinition(be.definition);
+    return `BindingError: ${be.bindingError} in ${printDefinition(be.definition)}`;
   }
 }
 
@@ -80,30 +80,30 @@ const printValueError = (ve: ValueError): string => {
   } else if (isExprError(ve)) {
     return printExprError(ve);
   } else {
-    return 'Value Error: ' + ve.valueError + ' in ' + printExpr(ve.expr);
+    return `Value Error: ${ve.valueError} in ${printExpr(ve.expr)}`;
   }
 }
 
 const printTokenError = (te: TokenError): string => {
-  return 'Token Error: ' + te.tokenError + ' ' + te.string;
+  return `Token Error: ${te.tokenError} in ${te.string}`;
 }
 
 const printReadError = (re: ReadError): string => {
   if (isTokenError(re)) {
     return printTokenError(re);
   } else {
-    return 'Read Error: ' + re.readError + ' in ' + printTokens(re.tokens);
+    return `Read Error: ${re.readError} in ${printTokens(re.tokens)}`;
   }
 }
 
 const printDefinitionError = (de: DefinitionError): string => {
   if (isReadError(de)) return printReadError(de);
-  return 'Definition Error: ' + de.defnError + ' in ' + printSexps(de.sexps); 
+  return `Definition Error: ${de.defnError} in ${printSexps(de.sexps)}`; 
 }
 
 const printExprError = (ee: ExprError): string => {
   if (isReadError(ee)) return printReadError(ee);
-  return 'Expression Error: ' + ee.exprError + ' in ' + printSexps(ee.sexps);
+  return `Expression Error: ${ee.exprError} in ${printSexps(ee.sexps)}`;
 }
 
 const printTokens = (ts: Token[]): string => {
@@ -121,11 +121,11 @@ const printSexps = (sexps: SExp[]): string => {
   return sexps.reduce(
     (acc, elem) => {
       if (isReadError(elem)) 
-        return printReadError(elem) + '\n';
+        return printReadError(elem);
       else if (Array.isArray(elem.sexp)) 
-        return acc + printSexps(elem.sexp) + '\n';
+        return acc + printSexps(elem.sexp);
       else
-        return acc + elem.sexp.toString() + '\n';
+        return acc + elem.sexp.toString();
     },
     ''
   )
@@ -137,12 +137,12 @@ const printDefinition = (d: Definition): string => {
     return d.type + ' ' + d.name + ' ' + printExpr(d.body);
   else
     return (
-      d.type + ' (' + d.name + ' ' + 
-      d.params.reduce(
-        (acc, elem) => elem + ' ',
-        ''
-      ) + ')' +
-      printExpr(d.body)
+      `${d.type} (${d.name} ${ 
+        d.params.reduce(
+          (acc, elem) => elem + ' ',
+          ''
+        )
+      }) ${printExpr(d.body)}`
     );
 }
 
@@ -150,11 +150,11 @@ const printExpr = (e: Expr): string => {
   if (isExprError(e)) return printExprError(e);
   else if (e.type === 'Call')
     return (
-      '(' + e.op + ' ' + 
-      e.args.reduce(
-        (acc, elem) => elem + ' ',
-        ''
-      ) + ')'
+      `(${e.op} ${
+        e.args.reduce(
+          (acc, elem) => elem + ' ',
+          ''
+        )})`
     );
   else return e.const.toString();
 }
