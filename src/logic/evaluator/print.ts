@@ -13,12 +13,15 @@ export const print = (exp: string): string => {
 }
 
 export const printResults = (rs: Result[]): string => {
-  return rs.reduce(
-    (acc, elem) => {
-      return `${acc}\n ${printResult(elem)}`;
-    },
-    ''
-  );
+    if (rs.length === 0)
+        return '';
+
+    return rs.slice(1).reduce(
+        (acc, elem) => {
+            return `${acc}\n${printResult(elem)}`;
+        },
+        printResult(rs[0])
+    );
 }
 
 const printResult = (r: Result): string => {

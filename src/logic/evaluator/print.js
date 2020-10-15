@@ -7,9 +7,11 @@ exports.print = function (exp) {
     return exports.printResults(eval_1.evaluate(exp));
 };
 exports.printResults = function (rs) {
-    return rs.reduce(function (acc, elem) {
-        return acc + "\n " + printResult(elem);
-    }, '');
+    if (rs.length === 0)
+        return '';
+    return rs.slice(1).reduce(function (acc, elem) {
+        return acc + "\n" + printResult(elem);
+    }, printResult(rs[0]));
 };
 var printResult = function (r) {
     if (predicates_1.isDefinitionResult(r)) {
