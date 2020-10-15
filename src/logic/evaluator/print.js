@@ -7,7 +7,7 @@ exports.print = function (exp) {
 };
 exports.printResults = function (rs) {
     return rs.reduce(function (acc, elem) {
-        return acc + '\n' + printResult(elem);
+        return acc + "\n " + printResult(elem);
     }, '');
 };
 var printResult = function (r) {
@@ -35,7 +35,7 @@ var printExprResult = function (er) {
     }
 };
 var printBinding = function (b) {
-    return 'Defined ' + b.defined + ' to be' + printExprResult(b.toBe) + '.';
+    return "Defined " + b.defined + " to be " + printExprResult(b.toBe) + ".";
 };
 var printValue = function (v) {
     if (v.type === 'NonFunction') {
@@ -59,7 +59,7 @@ var printBindingError = function (be) {
         return printDefinitionError(be);
     }
     else {
-        return 'BindingError: ' + be.bindingError + ' in ' + printDefinition(be.definition);
+        return "BindingError: " + be.bindingError + " in " + printDefinition(be.definition);
     }
 };
 var printValueError = function (ve) {
@@ -73,29 +73,29 @@ var printValueError = function (ve) {
         return printExprError(ve);
     }
     else {
-        return 'Value Error: ' + ve.valueError + ' in ' + printExpr(ve.expr);
+        return "Value Error: " + ve.valueError + " in " + printExpr(ve.expr);
     }
 };
 var printTokenError = function (te) {
-    return 'Token Error: ' + te.tokenError + ' ' + te.string;
+    return "Token Error: " + te.tokenError + " in " + te.string;
 };
 var printReadError = function (re) {
     if (predicates_1.isTokenError(re)) {
         return printTokenError(re);
     }
     else {
-        return 'Read Error: ' + re.readError + ' in ' + printTokens(re.tokens);
+        return "Read Error: " + re.readError + " in " + printTokens(re.tokens);
     }
 };
 var printDefinitionError = function (de) {
     if (predicates_1.isReadError(de))
         return printReadError(de);
-    return 'Definition Error: ' + de.defnError + ' in ' + printSexps(de.sexps);
+    return "Definition Error: " + de.defnError + " in " + printSexps(de.sexps);
 };
 var printExprError = function (ee) {
     if (predicates_1.isReadError(ee))
         return printReadError(ee);
-    return 'Expression Error: ' + ee.exprError + ' in ' + printSexps(ee.sexps);
+    return "Expression Error: " + ee.exprError + " in " + printSexps(ee.sexps);
 };
 var printTokens = function (ts) {
     return ts.reduce(function (acc, elem) {
@@ -109,11 +109,11 @@ var printTokens = function (ts) {
 var printSexps = function (sexps) {
     return sexps.reduce(function (acc, elem) {
         if (predicates_1.isReadError(elem))
-            return printReadError(elem) + '\n';
+            return printReadError(elem);
         else if (Array.isArray(elem.sexp))
-            return acc + printSexps(elem.sexp) + '\n';
+            return acc + printSexps(elem.sexp);
         else
-            return acc + elem.sexp.toString() + '\n';
+            return acc + elem.sexp.toString();
     }, '');
 };
 var printDefinition = function (d) {
@@ -122,16 +122,13 @@ var printDefinition = function (d) {
     else if (d.type === 'define-constant')
         return d.type + ' ' + d.name + ' ' + printExpr(d.body);
     else
-        return (d.type + ' (' + d.name + ' ' +
-            d.params.reduce(function (acc, elem) { return elem + ' '; }, '') + ')' +
-            printExpr(d.body));
+        return (d.type + " (" + d.name + " " + d.params.reduce(function (acc, elem) { return elem + ' '; }, '') + ") " + printExpr(d.body));
 };
 var printExpr = function (e) {
     if (predicates_1.isExprError(e))
         return printExprError(e);
     else if (e.type === 'Call')
-        return ('(' + e.op + ' ' +
-            e.args.reduce(function (acc, elem) { return elem + ' '; }, '') + ')');
+        return ("(" + e.op + " " + e.args.reduce(function (acc, elem) { return elem + ' '; }, '') + ")");
     else
         return e["const"].toString();
 };
