@@ -2,8 +2,6 @@
 exports.__esModule = true;
 exports.isToken = function (x) {
     return (typeof x === 'object'
-        && x.type
-        && x.token
         && (x.type === 'OpenParen'
             || x.type === 'OpenSquareParen'
             || x.type === 'OpenBraceParen'
@@ -19,16 +17,12 @@ exports.isToken = function (x) {
 };
 exports.isTokenError = function (x) {
     return typeof x === 'object'
-        && x.tokenError
-        && x.string
         && x.tokenError === 'Unidentified Token'
         && typeof x.string === 'string';
 };
 // ----------------------------------------------------------------------------
 exports.isSExp = function (x) {
     return (typeof x === 'object'
-        && x.type
-        && x.sexp
         && (x.type === 'SExp Array'
             && Array.isArray(x.sexp)
             && x.sexp.every(exports.isSExp))
@@ -43,8 +37,6 @@ exports.isSExp = function (x) {
 };
 exports.isReadError = function (x) {
     return (typeof x === 'object'
-        && x.readError
-        && x.tokens
         && (x.readError === 'No Valid SExp'
             || x.readError === 'No Closing Paren'
             || x.readError === 'No Open Paren'
@@ -59,9 +51,6 @@ exports.isDefOrExpr = function (x) {
 };
 exports.isDefinition = function (x) {
     return (typeof x === 'object'
-        && x.type
-        && x.name
-        && x.body
         && (x.type === 'define-constant'
             || (x.type === 'define-function'
                 && x.params && x.params.every(function (_) { return typeof _ === 'string'; })))
@@ -70,17 +59,15 @@ exports.isDefinition = function (x) {
 exports.isExpr = function (x) {
     return (typeof x === 'object'
         && x.type
-        && (x.type === 'String'
-            && x["const"] && typeof x["const"] === 'string')
-        && (x.type === 'Num'
-            && x["const"] && typeof x["const"] === 'number')
-        && (x.type === 'Id'
-            && x["const"] && typeof x["const"] === 'string')
-        && (x.type === 'Bool'
-            && x["const"] && typeof x["const"] === 'boolean')
-        && (x.type === 'Call'
-            && x.op
-            && x.args
+        || (x.type === 'String'
+            && typeof x["const"] === 'string')
+        || (x.type === 'Num'
+            && typeof x["const"] === 'number')
+        || (x.type === 'Id'
+            && typeof x["const"] === 'string')
+        || (x.type === 'Bool'
+            && typeof x["const"] === 'boolean')
+        || (x.type === 'Call'
             && typeof x.op === 'string'
             && Array.isArray(x.args)
             && x.args.every(exports.isExpr))) || exports.isExprError(x);
@@ -90,16 +77,12 @@ exports.isExprArray = function (x) {
 };
 var isCall = function (x) {
     return typeof x === 'object'
-        && x.op
-        && x.args
         && typeof x.op === 'string'
         && Array.isArray(x.args)
         && x.args.every(exports.isExpr);
 };
 exports.isDefinitionError = function (x) {
     return (typeof x === 'object'
-        && x.defnError
-        && x.sexps
         && (x.defnError === 'Invalid expression passed where function name was expected'
             || x.defnError === 'Invalid expression passed where function argument was expected'
             || x.defnError === 'A definition requires two parts, but found none'
@@ -118,8 +101,6 @@ exports.isDefinitionError = function (x) {
 };
 exports.isExprError = function (x) {
     return (typeof x === 'object'
-        && x.exprError
-        && x.sexps
         && (x.exprError === 'Empty Expr'
             || x.exprError === 'Defn inside Expr'
             || x.exprError === 'No function name after open paren'
@@ -140,8 +121,6 @@ exports.isExprValue = function (x) {
 };
 exports.isValue = function (x) {
     return typeof x === 'object'
-        && x.type
-        && x.value
         && ((x.type === 'NonFunction'
             && (typeof x.value === 'string'
                 || typeof x.value === 'number'
@@ -153,9 +132,6 @@ exports.isValue = function (x) {
 };
 exports.isClos = function (x) {
     return typeof x === 'object'
-        && x.args
-        && x.env
-        && x.body
         && Array.isArray(x.args)
         && x.args.every(function (_) { return typeof _ === 'string'; })
         && exports.isEnv(x.env)
@@ -163,9 +139,6 @@ exports.isClos = function (x) {
 };
 exports.isBinding = function (x) {
     return typeof x === 'object'
-        && x.type
-        && x.defined
-        && x.toBe
         && x.type === 'define'
         && typeof x.defined === 'string'
         && exports.isExprValue(x.toBe);
@@ -175,8 +148,6 @@ exports.isEnv = function (x) {
 };
 exports.isValueError = function (x) {
     return (typeof x === 'object'
-        && x.valueError
-        && x.deforexprs
         && x.valueError === 'Id not in environment'
         && Array.isArray(x.deforexprs)
         && x.deforexprs.every(exports.isDefOrExpr))
@@ -184,8 +155,6 @@ exports.isValueError = function (x) {
 };
 exports.isBindingError = function (x) {
     return (typeof x === 'object'
-        && x.bindingError
-        && x.definition
         && x.bindingError === 'Repeated definition of the same name'
         && exports.isDefinition(x.definition))
         || exports.isDefinitionError(x);

@@ -8,8 +8,6 @@ import {
 
 export const isToken = (x: any): x is Token => {
   return (typeof x === 'object'
-    && x.type
-    && x.token
     && ( x.type === 'OpenParen'
       || x.type === 'OpenSquareParen'
       || x.type === 'OpenBraceParen'
@@ -26,8 +24,6 @@ export const isToken = (x: any): x is Token => {
 
 export const isTokenError = (x: any): x is TokenError => {
   return typeof x === 'object'
-    && x.tokenError
-    && x.string
     && x.tokenError === 'Unidentified Token'
     && typeof x.string === 'string';
 }
@@ -36,8 +32,6 @@ export const isTokenError = (x: any): x is TokenError => {
 
 export const isSExp = (x: any): x is SExp => {
   return (typeof x === 'object'
-    && x.type
-    && x.sexp
     && ( x.type === 'SExp Array'
       && Array.isArray(x.sexp)
       && x.sexp.every(isSExp) 
@@ -58,8 +52,6 @@ export const isSExp = (x: any): x is SExp => {
 
 export const isReadError = (x: any): x is ReadError => {
   return (typeof x === 'object'
-    && x.readError
-    && x.tokens
     && ( x.readError === 'No Valid SExp'
       || x.readError === 'No Closing Paren'
       || x.readError === 'No Open Paren'
@@ -79,9 +71,6 @@ export const isDefOrExpr = (x: any): x is DefOrExpr => {
 
 export const isDefinition = (x: any): x is Definition => {
   return (typeof x === 'object'
-    && x.type
-    && x.name
-    && x.body
     && (   x.type === 'define-constant' 
        || (   x.type === 'define-function'
            && x.params && x.params.every((_: any) => typeof _ === 'string')))
@@ -91,26 +80,24 @@ export const isDefinition = (x: any): x is Definition => {
 export const isExpr = (x: any): x is Expr => {
   return (typeof x === 'object'
   && x.type
-  && (
+  || (
     x.type === 'String'
-    && x.const && typeof x.const === 'string'
+    && typeof x.const === 'string'
   )
-  && (
+  || (
     x.type === 'Num'
-    && x.const && typeof x.const === 'number'
+    && typeof x.const === 'number'
   )
-  && (
+  || (
     x.type === 'Id'
-    && x.const && typeof x.const === 'string'
+    && typeof x.const === 'string'
   )
-  && (
+  || (
     x.type === 'Bool'
-    && x.const && typeof x.const === 'boolean'
+    && typeof x.const === 'boolean'
   )
-  && (
+  || (
     x.type === 'Call'
-    && x.op
-    && x.args
     && typeof x.op === 'string'
     && Array.isArray(x.args)
     && x.args.every(isExpr)
@@ -123,8 +110,6 @@ export const isExprArray = (x: any): x is Expr[] => {
 
 const isCall = (x: any): boolean => {
   return typeof x === 'object'
-    && x.op
-    && x.args
     && typeof x.op === 'string'
     && Array.isArray(x.args)
     && x.args.every(isExpr);
@@ -132,8 +117,6 @@ const isCall = (x: any): boolean => {
 
 export const isDefinitionError = (x: any): x is DefinitionError => {
   return (typeof x === 'object'
-    && x.defnError
-    && x.sexps
     && ( x.defnError === 'Invalid expression passed where function name was expected'
       || x.defnError === 'Invalid expression passed where function argument was expected'
       || x.defnError === 'A definition requires two parts, but found none'
@@ -153,8 +136,6 @@ export const isDefinitionError = (x: any): x is DefinitionError => {
 
 export const isExprError = (x: any): x is ExprError => {
   return (typeof x === 'object'
-    && x.exprError
-    && x.sexps
     && ( x.exprError === 'Empty Expr'
       || x.exprError === 'Defn inside Expr'
       || x.exprError === 'No function name after open paren'
@@ -180,8 +161,6 @@ export const isExprValue = (x: any): x is ExprResult => {
 
 export const isValue = (x: any): x is ValueError => {
   return typeof x === 'object'
-    && x.type
-    && x.value
     && (( x.type === 'NonFunction'
         && (typeof x.value === 'string'
         ||  typeof x.value === 'number'
@@ -194,9 +173,6 @@ export const isValue = (x: any): x is ValueError => {
 
 export const isClos = (x: any): x is Closure => {
   return typeof x === 'object'
-    && x.args
-    && x.env
-    && x.body
     && Array.isArray(x.args)
     && x.args.every((_: any) => typeof _ === 'string')
     && isEnv(x.env)
@@ -205,9 +181,6 @@ export const isClos = (x: any): x is Closure => {
 
 export const isBinding = (x: any): x is Binding => {
   return typeof x === 'object'
-    && x.type
-    && x.defined
-    && x.toBe
     && x.type === 'define'
     && typeof x.defined === 'string'
     && isExprValue(x.toBe);
@@ -219,8 +192,6 @@ export const isEnv = (x: any): x is Env => {
 
 export const isValueError = (x: any): x is ValueError => {
   return (typeof x === 'object'
-    && x.valueError
-    && x.deforexprs
     && x.valueError === 'Id not in environment'
     && Array.isArray(x.deforexprs)
     && x.deforexprs.every(isDefOrExpr))
@@ -229,8 +200,6 @@ export const isValueError = (x: any): x is ValueError => {
 
 export const isBindingError = (x: any): x is BindingError => {
   return (typeof x === 'object'
-    && x.bindingError
-    && x.definition
     && x.bindingError === 'Repeated definition of the same name'
     && isDefinition(x.definition))
   || isDefinitionError(x);
