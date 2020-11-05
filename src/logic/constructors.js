@@ -1,5 +1,4 @@
 "use strict";
-var _a;
 exports.__esModule = true;
 var types_1 = require("./types");
 // ----------------------------------------------------------------------------
@@ -167,14 +166,12 @@ var whichBool = function (s) {
     }
     return false;
 };
-exports.CP = (_a = [
-    exports.Tok(types_1.TokenType.CloseParen, ')'),
-    exports.Tok(types_1.TokenType.OpenParen, '('),
-    exports.Tok(types_1.TokenType.Whitespace, ' '),
-    exports.Tok(types_1.TokenType.OpenSquareParen, '['),
-    exports.Tok(types_1.TokenType.CloseSquareParen, ']'),
-    exports.Tok(types_1.TokenType.OpenBraceParen, '{'),
-    exports.Tok(types_1.TokenType.CloseBraceParen, '}'),
-    exports.Tok(types_1.TokenType.Whitespace, '\n')
-], _a[0]), exports.OP = _a[1], exports.SPACE = _a[2], exports.OSP = _a[3], exports.CSP = _a[4], exports.OBP = _a[5], exports.CBP = _a[6], exports.NL = _a[7];
+exports.CP = exports.Tok(types_1.TokenType.CloseParen, ')');
+exports.OP = exports.Tok(types_1.TokenType.OpenParen, '(');
+exports.SPACE = exports.Tok(types_1.TokenType.Whitespace, ' ');
+exports.OSP = exports.Tok(types_1.TokenType.OpenSquareParen, '[');
+exports.CSP = exports.Tok(types_1.TokenType.CloseSquareParen, ']');
+exports.OBP = exports.Tok(types_1.TokenType.OpenBraceParen, '{');
+exports.CBP = exports.Tok(types_1.TokenType.CloseBraceParen, '}');
+exports.NL = exports.Tok(types_1.TokenType.Whitespace, '\n');
 exports.NOP = { type: 'nothing' };

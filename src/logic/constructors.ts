@@ -232,16 +232,13 @@ const whichBool = (s: string): boolean => {
   return false;
 }
 
-export const [ CP, OP, SPACE, OSP, CSP, OBP, CBP, NL ]: Token[] =
-    [
-        Tok(TokenType.CloseParen,       ')'),
-        Tok(TokenType.OpenParen,        '('), 
-        Tok(TokenType.Whitespace,       ' '),
-        Tok(TokenType.OpenSquareParen,  '['),
-        Tok(TokenType.CloseSquareParen, ']'),
-        Tok(TokenType.OpenBraceParen,   '{'),
-        Tok(TokenType.CloseBraceParen,  '}'),
-        Tok(TokenType.Whitespace,       '\n')
-    ];
+export const CP: Token    = Tok(TokenType.CloseParen,        ')');
+export const OP: Token    = Tok(TokenType.OpenParen,         '(');
+export const SPACE: Token = Tok(TokenType.Whitespace,        ' ');
+export const OSP: Token   = Tok(TokenType.OpenSquareParen,   '[');
+export const CSP: Token   = Tok(TokenType.CloseSquareParen,  ']');
+export const OBP: Token   = Tok(TokenType.OpenBraceParen,    '{');
+export const CBP: Token   = Tok(TokenType.CloseBraceParen,   '}');
+export const NL: Token    = Tok(TokenType.Whitespace,       '\n');
 
 export const NOP: Nothing = { type: 'nothing' };
