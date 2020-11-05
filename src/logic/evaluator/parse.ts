@@ -7,7 +7,7 @@ import {
 
 import {
   IdAtom, StringExpr, NumExpr, IdExpr, BooleanExpr,
-  ExprErr, Call, DefnErr, FnDefn, VarDefn
+  ExprErr, Call, DefnErr, FnDefn, VarDefn, SExps
 } from '../constructors';
 
 /**
@@ -36,7 +36,7 @@ export const parseSexp = (sexp: SExp): DefOrExpr => {
   } else switch (sexp.type) {
     case 'SExp Array':
       let sexps = sexp.sexp;
-      if (sexps.length === 0)  return ExprErr('Empty Expr', []);
+      if (sexps.length === 0)  return ExprErr('Empty Expr', [ SExps() ]);
       let firstSexp = sexps[0];
       if (isReadError(firstSexp) || Array.isArray(firstSexp)) {
         return ExprErr('No function name after open paren', sexps);

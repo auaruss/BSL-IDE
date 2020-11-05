@@ -14,7 +14,7 @@ export const print = (exp: string): string => {
 
 export const printResults = (rs: Result[]): string => {
     if (rs.length === 0)
-        return '';
+        return '\n';
 
     return rs.slice(1).reduce(
         (acc, elem) => {
@@ -126,7 +126,7 @@ const printSexps = (sexps: SExp[]): string => {
       if (isReadError(elem)) 
         return printReadError(elem);
       else if (Array.isArray(elem.sexp)) 
-        return acc + printSexps(elem.sexp);
+        return acc + '(' + printSexps(elem.sexp) + ')';
       else
         return acc + elem.sexp.toString();
     },

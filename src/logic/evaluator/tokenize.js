@@ -8,7 +8,6 @@
  * @todo The tokenizer should transform booleans
  */
 exports.__esModule = true;
-exports.tokenize = exports.tokenExpressions = void 0;
 var types_1 = require("../types");
 var constructors_1 = require("../constructors");
 // Regexp Definitions.

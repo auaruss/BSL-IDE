@@ -1,6 +1,5 @@
 "use strict";
 exports.__esModule = true;
-exports.printResults = exports.print = void 0;
 var predicates_1 = require("../predicates");
 var eval_1 = require("./eval");
 exports.print = function (exp) {
@@ -8,7 +7,7 @@ exports.print = function (exp) {
 };
 exports.printResults = function (rs) {
     if (rs.length === 0)
-        return '';
+        return '\n';
     return rs.slice(1).reduce(function (acc, elem) {
         return acc + "\n" + printResult(elem);
     }, printResult(rs[0]));
@@ -114,7 +113,7 @@ var printSexps = function (sexps) {
         if (predicates_1.isReadError(elem))
             return printReadError(elem);
         else if (Array.isArray(elem.sexp))
-            return acc + printSexps(elem.sexp);
+            return acc + '(' + printSexps(elem.sexp) + ')';
         else
             return acc + elem.sexp.toString();
     }, '');

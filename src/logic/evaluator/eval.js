@@ -1,6 +1,5 @@
 'use strict';
 exports.__esModule = true;
-exports.evaluateDefOrExprs = exports.evaluate = void 0;
 var predicates_1 = require("../predicates");
 var parse_1 = require("./parse");
 var constructors_1 = require("../constructors");
