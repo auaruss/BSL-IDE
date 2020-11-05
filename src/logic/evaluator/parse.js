@@ -37,7 +37,7 @@ exports.parseSexp = function (sexp) {
             case 'SExp Array':
                 var sexps = sexp.sexp;
                 if (sexps.length === 0)
-                    return constructors_1.ExprErr('Empty Expr', []);
+                    return constructors_1.ExprErr('Empty Expr', [constructors_1.SExps()]);
                 var firstSexp = sexps[0];
                 if (predicates_1.isReadError(firstSexp) || Array.isArray(firstSexp)) {
                     return constructors_1.ExprErr('No function name after open paren', sexps);

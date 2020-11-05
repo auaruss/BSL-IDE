@@ -192,9 +192,16 @@ export const isEnv = (x: any): x is Env => {
 
 export const isValueError = (x: any): x is ValueError => {
   return (typeof x === 'object'
-    && x.valueError === 'Id not in environment'
-    && Array.isArray(x.deforexprs)
-    && x.deforexprs.every(isDefOrExpr))
+    && (   x.valueError === 'Id not in environment'
+        || x.valueError === 'Id referenced before definition'
+        || x.valueError === 'Arity mismatch'
+        || x.valueError === 'Function used as a predicate'
+        || x.valueError === 'Non-boolean value used as a predicate'
+        || x.valueError === 'Expression undefined in program'
+        || x.valueError === 'Expression defined later in program'
+        || x.valueError === 'Nonfunction applied as a function'
+    )
+    && isExpr(x.expr))
   || isExprError(x);
 }
 

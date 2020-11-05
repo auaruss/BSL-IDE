@@ -148,9 +148,15 @@ exports.isEnv = function (x) {
 };
 exports.isValueError = function (x) {
     return (typeof x === 'object'
-        && x.valueError === 'Id not in environment'
-        && Array.isArray(x.deforexprs)
-        && x.deforexprs.every(exports.isDefOrExpr))
+        && (x.valueError === 'Id not in environment'
+            || x.valueError === 'Id referenced before definition'
+            || x.valueError === 'Arity mismatch'
+            || x.valueError === 'Function used as a predicate'
+            || x.valueError === 'Non-boolean value used as a predicate'
+            || x.valueError === 'Expression undefined in program'
+            || x.valueError === 'Expression defined later in program'
+            || x.valueError === 'Nonfunction applied as a function')
+        && exports.isExpr(x.expr))
         || exports.isExprError(x);
 };
 exports.isBindingError = function (x) {
