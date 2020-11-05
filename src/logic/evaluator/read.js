@@ -13,7 +13,7 @@ var constructors_1 = require("../constructors");
  */
 exports.readSexp = function (tokens) {
     if (tokens.length === 0) {
-        return { thing: { readError: 'No Valid SExp', tokens: [] }, remain: [] };
+        return { thing: constructors_1.ReadErr('No Valid SExp', []), remain: [] };
     }
     var firstToken = tokens[0];
     if (predicates_1.isTokenError(firstToken)) {
@@ -42,8 +42,8 @@ exports.readSexp = function (tokens) {
                 // This also means if the remain is empty we return a failure.
                 if (readRest.remain.length === 0) {
                     return {
-                        thing: constructors_1.ReadErr('No Closing Paren', [firstToken]),
-                        remain: tokens.slice(1)
+                        thing: constructors_1.ReadErr('No Closing Paren', tokens),
+                        remain: []
                     };
                 }
                 else {
