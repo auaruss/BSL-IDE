@@ -9,7 +9,7 @@ exports.printResults = function (rs) {
     if (rs.length === 0)
         return '\n';
     return rs.slice(1).reduce(function (acc, elem) {
-        return acc + "\n" + printResult(elem);
+        return "" + acc + printResult(elem);
     }, printResult(rs[0]) + '\n');
 };
 var printResult = function (r) {
@@ -107,8 +107,11 @@ var printTokens = function (ts) {
     return ts.reduce(function (acc, elem) {
         if (predicates_1.isTokenError(elem)) {
             return printTokenError(elem) + '\n';
-        }
-        else
+        } // else if (   elem.type === TokenType.OpenParen
+        //  || elem.type === TokenType.OpenSquareParen
+        //  || elem.type === TokenType.OpenBraceParen) {
+        // return acc + elem.token;
+        /*}*/ else
             return acc + elem.token;
     }, '');
 };

@@ -3,7 +3,7 @@ import { isTokenError, isBindingError, isDefinitionError, isDefinitionResult, is
 import {
   DefinitionResult, ExprResult, Result, Binding, BindingError,
   ValueError, TokenError, ReadError, Token, SExp, Definition, Expr,
-  Value, DefinitionError, ExprError
+  Value, DefinitionError, ExprError, TokenType
 } from '../types';
 
 import { evaluate } from './eval';
@@ -18,7 +18,7 @@ export const printResults = (rs: Result[]): string => {
 
     return rs.slice(1).reduce(
         (acc, elem) => {
-            return `${acc}\n${printResult(elem)}`;
+            return `${acc}${printResult(elem)}`;
         },
         printResult(rs[0]) + '\n'
     );
@@ -116,7 +116,11 @@ const printTokens = (ts: Token[]): string => {
     (acc, elem) => {
       if (isTokenError(elem)) {
         return printTokenError(elem) + '\n';
-      } else return acc + elem.token;
+      } // else if (   elem.type === TokenType.OpenParen
+                //  || elem.type === TokenType.OpenSquareParen
+                //  || elem.type === TokenType.OpenBraceParen) {
+        // return acc + elem.token;
+      /*}*/ else return acc + elem.token;
     },
     ''
   );
