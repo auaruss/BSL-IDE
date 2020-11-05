@@ -27,7 +27,7 @@ import {
  */
 export const readSexp = (tokens: Token[]): ReadResult<SExp> | ReadResult<ReadError> => {
   if (tokens.length === 0) {
-    return { thing: {readError: 'No Valid SExp', tokens: []}, remain: [] }
+    return { thing: ReadErr('No Valid SExp', []), remain: [] }
   }
 
   const firstToken = tokens[0];
@@ -59,8 +59,8 @@ export const readSexp = (tokens: Token[]): ReadResult<SExp> | ReadResult<ReadErr
         // This also means if the remain is empty we return a failure.
         if (readRest.remain.length === 0) {
           return {
-            thing: ReadErr('No Closing Paren', [firstToken]),
-            remain: tokens.slice(1)
+            thing: ReadErr('No Closing Paren', tokens),
+            remain: []
           }
         } else {
           const firstUnprocessedToken = readRest.remain[0];
