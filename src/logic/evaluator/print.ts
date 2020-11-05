@@ -20,7 +20,7 @@ export const printResults = (rs: Result[]): string => {
         (acc, elem) => {
             return `${acc}\n${printResult(elem)}`;
         },
-        printResult(rs[0])
+        printResult(rs[0]) + '\n'
     );
 }
 
@@ -55,6 +55,8 @@ const printBinding = (b: Binding): string => {
 
 const printValue = (v: Value): string => {
   if (v.type === 'NonFunction') {
+    if (v.value === true) return "#t";
+    if (v.value === false) return "#f";
     return v.value.toString();
   } else if (v.type === 'BuiltinFunction') {
     return 'Builtin function.' // Do these two ever get printed in BSL?
@@ -83,7 +85,7 @@ const printValueError = (ve: ValueError): string => {
   } else if (isExprError(ve)) {
     return printExprError(ve);
   } else {
-    return `Value Error: ${ve.valueError} in ${printExpr(ve.expr)}`;
+    return `Value Error: ${ve.valueError}; value: ${printExpr(ve.expr)}`;
   }
 }
 
@@ -95,7 +97,7 @@ const printReadError = (re: ReadError): string => {
   if (isTokenError(re)) {
     return printTokenError(re);
   } else {
-    return `Read Error: ${re.readError} in ${printTokens(re.tokens)}`;
+    return `Read Error: ${re.readError} for ${printTokens(re.tokens)}`;
   }
 }
 

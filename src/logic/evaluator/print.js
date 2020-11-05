@@ -10,7 +10,7 @@ exports.printResults = function (rs) {
         return '\n';
     return rs.slice(1).reduce(function (acc, elem) {
         return acc + "\n" + printResult(elem);
-    }, printResult(rs[0]));
+    }, printResult(rs[0]) + '\n');
 };
 var printResult = function (r) {
     if (predicates_1.isDefinitionResult(r)) {
@@ -41,6 +41,10 @@ var printBinding = function (b) {
 };
 var printValue = function (v) {
     if (v.type === 'NonFunction') {
+        if (v.value === true)
+            return "#t";
+        if (v.value === false)
+            return "#f";
         return v.value.toString();
     }
     else if (v.type === 'BuiltinFunction') {
@@ -75,7 +79,7 @@ var printValueError = function (ve) {
         return printExprError(ve);
     }
     else {
-        return "Value Error: " + ve.valueError + " in " + printExpr(ve.expr);
+        return "Value Error: " + ve.valueError + "; value: " + printExpr(ve.expr);
     }
 };
 var printTokenError = function (te) {
@@ -86,7 +90,7 @@ var printReadError = function (re) {
         return printTokenError(re);
     }
     else {
-        return "Read Error: " + re.readError + " in " + printTokens(re.tokens);
+        return "Read Error: " + re.readError + " for " + printTokens(re.tokens);
     }
 };
 var printDefinitionError = function (de) {
