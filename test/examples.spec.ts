@@ -130,16 +130,21 @@ const t = (
  * regardless of live editing behavior.                                      *
  *****************************************************************************/
 
-t('', [], [], [], []);
+t('', [], [], [], [], '\n');
 
-t('()' /* ... */);
+t('()',
+  [ OP, CP ],
+  [ SExps() ],
+  [ ExprErr('Empty Expr', [ SExps() ]) ],
+  [ ExprErr('Empty Expr', [ SExps() ]) ],
+  'Expression Error: Empty Expr in ()\n');
 
 t('123',
   [ NumTok('123') ],
   [ NumAtom(123) ],
   [ NumExpr(123) ],
   [ NFn(123) ], 
-  '123'
+  '123\n'
 );
 
 t('"hello"',
@@ -147,7 +152,7 @@ t('"hello"',
   [ StringAtom('hello') ],
   [ StringExpr('hello')],
   [ NFn('hello') ],
-  'hello'
+  'hello\n'
 );
 
 t('hello',
@@ -155,7 +160,7 @@ t('hello',
   [ IdAtom('hello') ],
   [ IdExpr('hello') ],
   [ ValErr('Id not in environment', IdExpr('hello') )],
-  'hello: Id not in environment'
+  'Value Error: Id not in environment; value: hello\n'
 );
 
 t('#true',
@@ -163,7 +168,7 @@ t('#true',
   [ BooleanAtom('#true') ],
   [ BooleanExpr(true) ],
   [ NFn(true)],
-  '#t'
+  '#t\n'
 );
 
 t('(', 
@@ -171,7 +176,7 @@ t('(',
   [ ReadErr('No Closing Paren', [ OP ]) ],
   [ ReadErr('No Closing Paren', [ OP ]) ],
   [ ReadErr('No Closing Paren', [ OP ]) ],
-  'ReadError: No Closing Paren for ('
+  'Read Error: No Closing Paren for (\n'
 );
 
 
@@ -180,7 +185,7 @@ t('[',
   [ ReadErr('No Closing Paren', [ OSP ]) ],
   [ ReadErr('No Closing Paren', [ OSP ]) ],
   [ ReadErr('No Closing Paren', [ OSP ]) ],
-  'ReadError: No Closing Paren for ['
+  'Read Error: No Closing Paren for [\n'
 );
 
 t('{',
@@ -188,7 +193,7 @@ t('{',
   [ ReadErr('No Closing Paren', [ OBP ]) ],
   [ ReadErr('No Closing Paren', [ OBP ]) ],
   [ ReadErr('No Closing Paren', [ OBP ]) ],
-  'ReadError: No Closing Paren for {'
+  'Read Error: No Closing Paren for {\n'
 );
 
 t(')',
@@ -196,7 +201,7 @@ t(')',
   [ ReadErr('No Open Paren', [ CP ]) ],
   [ ReadErr('No Open Paren', [ CP ]) ],
   [ ReadErr('No Open Paren', [ CP ]) ],
-  'ReadError: No Open Paren for )'
+  'Read Error: No Open Paren for )\n'
 );
 
 t(']',
@@ -204,7 +209,7 @@ t(']',
   [ ReadErr('No Open Paren', [ CSP ]) ],
   [ ReadErr('No Open Paren', [ CSP ]) ],
   [ ReadErr('No Open Paren', [ CSP ]) ],
-  'ReadError: No Open Paren for ]'
+  'Read Error: No Open Paren for ]\n'
 );
 
 t('}',
@@ -212,7 +217,7 @@ t('}',
   [ ReadErr('No Open Paren', [ CBP ]) ],
   [ ReadErr('No Open Paren', [ CBP ]) ],
   [ ReadErr('No Open Paren', [ CBP ]) ],
-  'ReadError: No Open Paren for }'
+  'Read Error: No Open Paren for }\n'
 );
 
 t('#t', [ BooleanTok('#t') ], [ BooleanAtom('#t') ]);
@@ -367,7 +372,8 @@ t('(define bool #t123)',
     SPACE,
     IdTok('bool'),
     SPACE,
-    TokErr('#t123'),
+    TokErr('#'),
+    IdTok('t123'),
     CP
   ],
 
@@ -375,7 +381,8 @@ t('(define bool #t123)',
     SExps(
       IdAtom('define'),
       IdAtom('bool'),
-      TokErr('#t123')
+      TokErr('#'),
+      IdAtom('t123'),
     )
   ],
 
@@ -1159,11 +1166,10 @@ t('', [], [], [], [], '');
 
 t('(',
   [OP],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
-  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(".'
+  [ReadErr('No Closing Paren', [OP])],
+  [ReadErr('No Closing Paren', [OP])],
+  [ReadErr('No Closing Paren', [OP])],
+  'Read Error: No Closing Paren for (\n'
 );
 
 t('(+',
@@ -1171,50 +1177,46 @@ t('(+',
   [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
   [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
   [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
-  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+".'
+  'Read Error: No Closing Paren for (+\n'
 );
 
 // t('(+ ');
 
 t('(+ 2',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2')])],
-  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+ 2".'
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2')])],
+  'Read Error: No Closing Paren for (+ 2\n'
 );
 
 t('(+ 2 3',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3')])],
-  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+ 2 3".'
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '3')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '3')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '3')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '3')])],
+  'Read Error: No Closing Paren for (+ 2 3\n'
 );
 
 
 t('(+ 2 3)',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '3'), CP],
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '3'), CP],
   [ SExps(IdAtom('+'), NumAtom(2), NumAtom(3)) ],
   [ Call('+', [NumExpr(2), NumExpr(3)]) ],
   [ NFn(5) ],
-  '5'
+  '5\n'
 );
 
-// t('(+ 2 3');
-// t('(+ 2 ');
+// // t('(+ 2 3');
+// // t('(+ 2 ');
 
 
 t('(+ 2 4',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
-  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4')])],
-  'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+ 2 4".'
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4')],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4')])],
+  [ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4')])],
+  'Read Error: No Closing Paren for (+ 2 4\n'
 );
 
 t('(+ 2 4)',
@@ -1222,47 +1224,44 @@ t('(+ 2 4)',
   [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)) ],
   [ Call('+', [NumExpr(2), NumExpr(4)]) ],
   [ NFn(6) ],
-  '6'
+  '6\n'
 );
 
-// t('(+ 2 4) ');
+// // t('(+ 2 4) ');
 
 t('(+ 2 4) (+',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+')],
-  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')])],
-  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
-  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4'), CP, SPACE, OP, Tok(TokenType.Identifier, '+')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
+  [ NFn(6), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+')]) ],
   '6\n'
-  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+".'
+  + 'Read Error: No Closing Paren for (+'
 );
 
-// t('(+ 2 4) (+ ');
+// // t('(+ 2 4) (+ ');
 
 t('(+ 2 4) (+ 4',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')],
-  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')])],
-  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')]) ],
-  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4')]) ],
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4'), CP, SPACE, OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4')]) ],
+  [ NFn(6), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4')]) ],
   '6\n'
-  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+ 4".'
+  + 'Read Error: No Closing Paren for (+ 4'
 );
 
 // t('(+ 2 4) (+ 4 ');
 
 t('(+ 2 4) (+ 4 7',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')],
-  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')])],
-  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
-  [ NFn(6), ReadErr('No Open Paren', [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7')]) ],
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4'), CP, SPACE, OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4'), SPACE, Tok(TokenType.Number, '7')],
+  [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4'), SPACE, Tok(TokenType.Number, '7')])],
+  [ Call('+', [NumExpr(2), NumExpr(4)]), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4'), SPACE, Tok(TokenType.Number, '7')]) ],
+  [ NFn(6), ReadErr('No Closing Paren', [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4'), SPACE, Tok(TokenType.Number, '7')]) ],
   '6\n'
-  + 'ReadError: Found an opening parenthesis without a closing parenthesis.\n'
-  + 'Found in: "(+ 4 7".'
+  + 'Read Error: No Closing Paren for (+ 4 7'
 );
 
 t('(+ 2 4) (+ 4 7)',
-  [OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '2'), Tok(TokenType.Number, '4'), CP, OP, Tok(TokenType.Identifier, '+'), Tok(TokenType.Number, '4'), Tok(TokenType.Number, '7'), CP],
+  [OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '2'), SPACE, Tok(TokenType.Number, '4'), CP, SPACE, OP, Tok(TokenType.Identifier, '+'), SPACE, Tok(TokenType.Number, '4'), SPACE, Tok(TokenType.Number, '7'), CP],
   [ SExps(IdAtom('+'), NumAtom(2), NumAtom(4)), SExps(IdAtom('+'), NumAtom(4), NumAtom(7))],
   [ Call('+', [NumExpr(2), NumExpr(4)]), Call('+', [NumExpr(4), NumExpr(7)]) ],
   [ NFn(6), NFn(11) ],
