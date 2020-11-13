@@ -46,6 +46,8 @@ var printValue = function (v) {
             return "#t";
         if (v.value === false)
             return "#f";
+        if (typeof v.value === 'string')
+            return "\"" + v.value + "\"";
         return v.value.toString();
     }
     else if (v.type === 'BuiltinFunction') {

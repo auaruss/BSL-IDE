@@ -57,6 +57,7 @@ const printValue = (v: Value): string => {
   if (v.type === 'NonFunction') {
     if (v.value === true) return "#t";
     if (v.value === false) return "#f";
+    if (typeof v.value === 'string') return `"${v.value}"`
     return v.value.toString();
   } else if (v.type === 'BuiltinFunction') {
     return 'Builtin function.' // Do these two ever get printed in BSL?
