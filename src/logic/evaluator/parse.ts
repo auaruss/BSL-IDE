@@ -125,11 +125,11 @@ export const parseDefinition = (d: {type: 'Id', sexp: 'define'}, sexps: SExp[]):
                 return DefnErr('Invalid expression passed where function name was expected', [d, ...sexps]);
             }
           }
-        case 'String':
+        case 'Id':
           let x = varOrHeader.sexp;
           return VarDefn(varOrHeader.sexp, body);
         case 'Num':
-        case 'Id':
+          case 'String':
         case 'Bool':
           return DefnErr('Expected a variable name, or a function header', [d, ...sexps]);
       }

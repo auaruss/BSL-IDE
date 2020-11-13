@@ -131,11 +131,11 @@ exports.parseDefinition = function (d, sexps) {
                                         return constructors_1.DefnErr('Invalid expression passed where function name was expected', __spreadArrays([d], sexps));
                                 }
                         }
-                    case 'String':
+                    case 'Id':
                         var x = varOrHeader.sexp;
                         return constructors_1.VarDefn(varOrHeader.sexp, body);
                     case 'Num':
-                    case 'Id':
+                    case 'String':
                     case 'Bool':
                         return constructors_1.DefnErr('Expected a variable name, or a function header', __spreadArrays([d], sexps));
                 }
