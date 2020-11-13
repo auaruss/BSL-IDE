@@ -143,7 +143,7 @@ const printSexps = (sexps: SExp[]): string => {
 const printDefinition = (d: Definition): string => {
   if (isDefinitionError(d)) return printDefinitionError(d);
   else if (d.type === 'define-constant')
-    return d.type + ' ' + d.name + ' ' + printExpr(d.body);
+    return '(define' + ' ' + d.name + ' ' + printExpr(d.body) + ')';
   else
     return (
       `${d.type} (${d.name} ${ 

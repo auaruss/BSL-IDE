@@ -129,7 +129,7 @@ var printDefinition = function (d) {
     if (predicates_1.isDefinitionError(d))
         return printDefinitionError(d);
     else if (d.type === 'define-constant')
-        return d.type + ' ' + d.name + ' ' + printExpr(d.body);
+        return '(define' + ' ' + d.name + ' ' + printExpr(d.body) + ')';
     else
         return (d.type + " (" + d.name + " " + d.params.reduce(function (acc, elem) { return elem + ' '; }, '') + ") " + printExpr(d.body));
 };
