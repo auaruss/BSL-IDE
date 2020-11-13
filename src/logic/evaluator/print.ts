@@ -103,12 +103,12 @@ const printReadError = (re: ReadError): string => {
 
 const printDefinitionError = (de: DefinitionError): string => {
   if (isReadError(de)) return printReadError(de);
-  return `Definition Error: ${de.defnError} in ${printSexps(de.sexps)}`; 
+  return `Definition Error: ${de.defnError} in (${printSexps(de.sexps)})`; 
 }
 
 const printExprError = (ee: ExprError): string => {
   if (isReadError(ee)) return printReadError(ee);
-  return `Expression Error: ${ee.exprError} in ${printSexps(ee.sexps)}`;
+  return `Expression Error: ${ee.exprError} in (${printSexps(ee.sexps)})`;
 }
 
 const printTokens = (ts: Token[]): string => {
@@ -134,10 +134,10 @@ const printSexps = (sexps: SExp[]): string => {
       else if (Array.isArray(elem.sexp)) 
         return acc + '(' + printSexps(elem.sexp) + ')';
       else
-        return acc + elem.sexp.toString();
+        return acc + elem.sexp.toString() + ' ';
     },
     ''
-  )
+  ).trim();
 }
 
 const printDefinition = (d: Definition): string => {
@@ -161,9 +161,9 @@ const printExpr = (e: Expr): string => {
     return (
       `(${e.op} ${
         e.args.reduce(
-          (acc, elem) => elem + ' ',
+          (acc, elem) => printExpr(elem) + ' ',
           ''
-        )})`
+        ).trim()})`
     );
   else return e.const.toString();
 }
