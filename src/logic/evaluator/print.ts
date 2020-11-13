@@ -116,14 +116,14 @@ const printTokens = (ts: Token[]): string => {
     (acc, elem) => {
       if (isTokenError(elem)) {
         return printTokenError(elem) + '\n';
-      } // else if (   elem.type === TokenType.OpenParen
-                //  || elem.type === TokenType.OpenSquareParen
-                //  || elem.type === TokenType.OpenBraceParen) {
-        // return acc + elem.token;
-      /*}*/ else return acc + elem.token;
+      } else if (    elem.type === TokenType.OpenParen
+                  || elem.type === TokenType.OpenSquareParen
+                  || elem.type === TokenType.OpenBraceParen) {
+        return acc + elem.token;
+      } else return acc + elem.token + ' ';
     },
     ''
-  );
+  ).trim();
 }
 
 const printSexps = (sexps: SExp[]): string => {
