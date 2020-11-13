@@ -124,7 +124,7 @@ exports.readSexps = function (tokens) {
     }
 };
 exports.readTokens = function (ts) {
-    var tokens = ts.slice();
+    var tokens = ts.slice().filter(function (t) { return predicates_1.isTokenError(t) ? true : t.type !== types_1.TokenType.Whitespace; });
     var sexps = [];
     while (tokens.length !== 0) {
         var next = exports.readSexp(tokens);

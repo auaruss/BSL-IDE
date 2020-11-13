@@ -143,7 +143,7 @@ export const readSexps = (tokens: Token[]): ReadResult<SExp[]> => {
 }
 
 export const readTokens = (ts: Token[]): SExp[] => {
-  let tokens = ts.slice(); 
+  let tokens = ts.slice().filter((t: Token) => isTokenError(t) ? true : t.type !== TokenType.Whitespace); 
   let sexps = [];
   
   while (tokens.length !== 0) {
