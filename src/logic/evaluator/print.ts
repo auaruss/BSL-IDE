@@ -18,7 +18,7 @@ export const printResults = (rs: Result[]): string => {
 
     return rs.slice(1).reduce(
         (acc, elem) => {
-            return `${acc}${printResult(elem)}`;
+            return `${acc}${printResult(elem)}\n`;
         },
         printResult(rs[0]) + '\n'
     );

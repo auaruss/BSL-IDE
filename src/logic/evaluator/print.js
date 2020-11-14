@@ -10,7 +10,7 @@ exports.printResults = function (rs) {
     if (rs.length === 0)
         return '\n';
     return rs.slice(1).reduce(function (acc, elem) {
-        return "" + acc + printResult(elem);
+        return "" + acc + printResult(elem) + "\n";
     }, printResult(rs[0]) + '\n');
 };
 var printResult = function (r) {
