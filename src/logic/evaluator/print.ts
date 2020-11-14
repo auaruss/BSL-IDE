@@ -74,7 +74,7 @@ const printBindingError = (be: BindingError): string => {
   } else if (isDefinitionError(be)) {
     return printDefinitionError(be);
   } else {
-    return `BindingError: ${be.bindingError} in ${printDefinition(be.definition)}`;
+    return `Binding Error: ${be.bindingError} in ${printDefinition(be.definition)}`;
   }
 }
 
@@ -147,12 +147,12 @@ const printDefinition = (d: Definition): string => {
     return '(define' + ' ' + d.name + ' ' + printExpr(d.body) + ')';
   else
     return (
-      `${d.type} (${d.name} ${ 
+      `(define (${d.name} ${ 
         d.params.reduce(
-          (acc, elem) => elem + ' ',
+          (acc, elem) => acc.concat(elem).concat(' '),
           ''
-        )
-      }) ${printExpr(d.body)}`
+        ).trim()
+      }) ${printExpr(d.body)})`
     );
 }
 
@@ -162,7 +162,7 @@ const printExpr = (e: Expr): string => {
     return (
       `(${e.op} ${
         e.args.reduce(
-          (acc, elem) => printExpr(elem) + ' ',
+          (acc, elem) => acc + printExpr(elem) + ' ',
           ''
         ).trim()})`
     );

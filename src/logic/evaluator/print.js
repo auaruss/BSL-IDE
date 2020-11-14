@@ -68,7 +68,7 @@ var printBindingError = function (be) {
         return printDefinitionError(be);
     }
     else {
-        return "BindingError: " + be.bindingError + " in " + printDefinition(be.definition);
+        return "Binding Error: " + be.bindingError + " in " + printDefinition(be.definition);
     }
 };
 var printValueError = function (ve) {
@@ -136,13 +136,13 @@ var printDefinition = function (d) {
     else if (d.type === 'define-constant')
         return '(define' + ' ' + d.name + ' ' + printExpr(d.body) + ')';
     else
-        return (d.type + " (" + d.name + " " + d.params.reduce(function (acc, elem) { return elem + ' '; }, '') + ") " + printExpr(d.body));
+        return ("(define (" + d.name + " " + d.params.reduce(function (acc, elem) { return acc.concat(elem).concat(' '); }, '').trim() + ") " + printExpr(d.body) + ")");
 };
 var printExpr = function (e) {
     if (predicates_1.isExprError(e))
         return printExprError(e);
     else if (e.type === 'Call')
-        return ("(" + e.op + " " + e.args.reduce(function (acc, elem) { return printExpr(elem) + ' '; }, '').trim() + ")");
+        return ("(" + e.op + " " + e.args.reduce(function (acc, elem) { return acc + printExpr(elem) + ' '; }, '').trim() + ")");
     else
         return e["const"].toString();
 };
