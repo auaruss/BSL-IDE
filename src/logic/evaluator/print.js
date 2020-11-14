@@ -51,10 +51,10 @@ var printValue = function (v) {
         return v.value.toString();
     }
     else if (v.type === 'BuiltinFunction') {
-        return 'Builtin function.'; // Do these two ever get printed in BSL?
+        return 'Builtin function.';
     }
     else {
-        return 'Closure.'; // Do these two ever get printed in BSL?
+        return printExpr(v.value.body);
     }
 };
 var printBindingError = function (be) {
