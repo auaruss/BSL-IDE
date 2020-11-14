@@ -134,7 +134,7 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
         } else if (body.type === 'NonFunction') {
           return ValErr('Nonfunction applied as a function', e);
         } else if (body.type === 'BuiltinFunction') {
-          let valuesWithoutError:Value[] = [];
+          let valuesWithoutError: Value[] = [];
           let possibleErrors: ValueError[] = []; 
           valuesWithoutError = e.args.reduce(
             (acc, elem) => {
@@ -155,18 +155,17 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
           let clos = body.value;
           if (clos.args.length === e.args.length) {
             let localEnv = new Map<String, Maybe<ExprResult>>(clos.env);
-            let zipped: [string, Expr][] = clos.args.map(
-              (_, i) => [_, e.args[i]]
+            let zipped: [string, ExprResult][] = clos.args.map(
+              (_, i) => [_, evaluateExpr(e.args[i], env)]
             );
 
             for (let elem of zipped) {
               let [param, exp] = elem;
-              let arg = evaluateExpr(exp, clos.env);
-              if (isValueError(arg)) {
-                return arg;
+              if (isValueError(exp)) {
+                return exp;
               } else {
                 extendEnv(param, localEnv);
-                mutateEnv(param, MakeJust(arg), localEnv);
+                mutateEnv(param, MakeJust(exp), localEnv);
               }
             }
             
@@ -275,22 +274,28 @@ const builtinEnv = (): Env => {
   //   )
   // );
 
-  // m.set('-',
-  //   BFn(
-  //     (vs: Value[]) => {
-  //       let ns = vs.map(v => v.value);
-  //       if (isNumberArray(ns)) {
-  //         if (ns.length === 0) throw new Error('-: expects at least 1 argument, but found none');
-  //         if (ns.length === 1) return NFn(-ns[0]);
-  //         return NFn(
-  //           ns.slice(1).reduce((acc: number, elem: number) => acc - elem, ns[0])
-  //         );
-  //       } else {
-  //         throw new Error('-: All arguments to - must be numbers.');
-  //       }
-  //     }
-  //   )
-  // );
+  m.set('-',
+    MakeJust(BFn(
+      (vs: Value[]) => {
+        let ns:number[] = vs.map( v => {
+          if (typeof v.value == 'number') {
+            return v.value;
+          } else {
+            return 0;
+            // error non-num passed to +
+          }
+        });
+
+        if (ns) {
+          return NFn(
+            ns.slice(1).reduce((acc: number, elem: number) => acc - elem, ns[0])
+          );
+        } else {
+          //  Error '-: All arguments to - must be numbers.'
+          return NFn(0);
+        }
+      }
+    )));
 
   // m.set('/',
   //   BFn(
