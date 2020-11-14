@@ -167,7 +167,7 @@ export const isValue = (x: any): x is ValueError => {
         ||  typeof x.value === 'boolean'))
       || ( x.type === 'BuiltinFunction'
         && typeof x.value === 'function' )
-      || ( x.type === 'Function'
+      || ( x.type === 'Closure'
         && isClos(x.value)));
 }
 

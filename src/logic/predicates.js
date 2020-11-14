@@ -127,7 +127,7 @@ exports.isValue = function (x) {
                 || typeof x.value === 'boolean'))
             || (x.type === 'BuiltinFunction'
                 && typeof x.value === 'function')
-            || (x.type === 'Function'
+            || (x.type === 'Closure'
                 && exports.isClos(x.value)));
 };
 exports.isClos = function (x) {
