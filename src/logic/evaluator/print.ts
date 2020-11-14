@@ -109,6 +109,7 @@ const printDefinitionError = (de: DefinitionError): string => {
 
 const printExprError = (ee: ExprError): string => {
   if (isReadError(ee)) return printReadError(ee);
+  if (ee.exprError === 'Empty Expr') return 'Expression Error: Empty Expr in ()';
   return `Expression Error: ${ee.exprError} in (${printSexps(ee.sexps)})`;
 }
 

@@ -104,6 +104,8 @@ var printDefinitionError = function (de) {
 var printExprError = function (ee) {
     if (predicates_1.isReadError(ee))
         return printReadError(ee);
+    if (ee.exprError === 'Empty Expr')
+        return 'Expression Error: Empty Expr in ()';
     return "Expression Error: " + ee.exprError + " in (" + printSexps(ee.sexps) + ")";
 };
 var printTokens = function (ts) {
