@@ -66,6 +66,11 @@ var evaluateDefinition = function (d, env) {
         }
     }
 };
+/**
+ * Evaluates an expression.
+ * @param e
+ * @param env
+ */
 var evaluateExpr = function (e, env) {
     if (predicates_1.isExprError(e)) {
         return e;
@@ -157,10 +162,11 @@ var evaluateExpr = function (e, env) {
                                     return arg;
                                 }
                                 else {
+                                    extendEnv(param, localEnv);
                                     mutateEnv(param, constructors_1.MakeJust(arg), localEnv);
                                 }
                             }
-                            return evaluateExpr(clos.body, env);
+                            return evaluateExpr(clos.body, localEnv);
                         }
                         else {
                             return constructors_1.ValErr('Arity mismatch', e);
@@ -171,12 +177,18 @@ var evaluateExpr = function (e, env) {
 };
 /**
  * Puts a definition into an environment.
- * @param d
+ * @param d a definition (used for top level defines)
+ *          or string (used for lexical scoping of function calls)
  * @param env
  */
 var extendEnv = function (d, env) {
     if (predicates_1.isDefinitionError(d)) {
         return env;
+    }
+    else if (typeof d === 'string') {
+        var e = new Map(env);
+        e.set(d, constructors_1.MakeNothing());
+        return e;
     }
     else {
         var e = new Map(env);

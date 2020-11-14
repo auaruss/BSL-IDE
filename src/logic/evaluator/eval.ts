@@ -80,7 +80,11 @@ const evaluateDefinition = (d: Definition, env: Env): DefinitionResult => {
   }
 }
 
-
+/**
+ * Evaluates an expression.
+ * @param e 
+ * @param env 
+ */
 const evaluateExpr = (e: Expr, env: Env): ExprResult => {
   if (isExprError(e)) {
     return e;
@@ -161,11 +165,12 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
               if (isValueError(arg)) {
                 return arg;
               } else {
+                extendEnv(param, localEnv);
                 mutateEnv(param, MakeJust(arg), localEnv);
               }
             }
             
-            return evaluateExpr(clos.body, env);
+            return evaluateExpr(clos.body, localEnv);
           } else {
             return ValErr('Arity mismatch', e);
           }
@@ -178,12 +183,17 @@ const evaluateExpr = (e: Expr, env: Env): ExprResult => {
 
 /**
  * Puts a definition into an environment.
- * @param d 
+ * @param d a definition (used for top level defines)
+ *          or string (used for lexical scoping of function calls)
  * @param env 
  */
-const extendEnv = (d: Definition, env: Env): Env => {
+const extendEnv = (d: string|Definition, env: Env): Env => {
   if (isDefinitionError(d)) {
     return env;
+  } else if (typeof d === 'string') {
+    let e: Env = new Map(env);
+    e.set(d, MakeNothing());
+    return e;
   } else {
     let e: Env = new Map(env);
     e.set(d.name, MakeNothing());
@@ -299,17 +309,17 @@ const builtinEnv = (): Env => {
   //   )
   // );
 
-  // m.set('=',
-  //   BFn(
-  //     (vs: Value[]) => {
-  //       if (vs.length === 0) throw new Error('=: expects at least 1 argument, but found none');
-  //       let valToBeEqualTo = vs[0].value;
-  //       return NFn(
-  //         vs.slice(1).reduce((acc: boolean, elem: Value) => acc && elem.value === valToBeEqualTo, true)
-  //       );
-  //     }
-  //   )
-  // );
+  m.set('=',
+    MakeJust(BFn(
+      (vs: Value[]) => {
+        if (vs.length === 0) throw new Error('=: expects at least 1 argument, but found none');
+        let valToBeEqualTo = vs[0].value;
+        return NFn(
+          vs.slice(1).reduce((acc: boolean, elem: Value) => acc && elem.value === valToBeEqualTo, true)
+        );
+      }
+    ))
+  );
 
   return m;
 }
