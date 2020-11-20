@@ -110,7 +110,7 @@ var t = function (input, tokens, sexps, deforexprs, values, output) {
 t('', [], [], [], [], '\n');
 t('()', [constructors_1.OP, constructors_1.CP], [constructors_1.SExps()], [constructors_1.ExprErr('Empty Expr', [constructors_1.SExps()])], [constructors_1.ExprErr('Empty Expr', [constructors_1.SExps()])], 'Expression Error: Empty Expr in ()\n');
 t('123', [constructors_1.NumTok('123')], [constructors_1.NumAtom(123)], [constructors_1.NumExpr(123)], [constructors_1.NFn(123)], '123\n');
-t('"hello"', [constructors_1.StringTok('hello')], [constructors_1.StringAtom('hello')], [constructors_1.StringExpr('hello')], [constructors_1.NFn('hello')], 'hello\n');
+t('"hello"', [constructors_1.StringTok('hello')], [constructors_1.StringAtom('hello')], [constructors_1.StringExpr('hello')], [constructors_1.NFn('hello')], '"hello"\n');
 t('hello', [constructors_1.IdTok('hello')], [constructors_1.IdAtom('hello')], [constructors_1.IdExpr('hello')], [constructors_1.ValErr('Id not in environment', constructors_1.IdExpr('hello'))], 'Value Error: Id not in environment; value: hello\n');
 t('#true', [constructors_1.BooleanTok('#true')], [constructors_1.BooleanAtom('#true')], [constructors_1.BooleanExpr(true)], [constructors_1.NFn(true)], '#t\n');
 t('(', [constructors_1.OP], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], [constructors_1.ReadErr('No Closing Paren', [constructors_1.OP])], 'Read Error: No Closing Paren for (\n');

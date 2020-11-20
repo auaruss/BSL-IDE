@@ -243,6 +243,25 @@ var builtinEnv = function () {
             return constructors_1.NFn(0);
         }
     })));
+    //special thanks to Leona
+    m.set('string-append', constructors_1.MakeJust(constructors_1.BFn(function (vs) {
+        var strings = vs.map(function (v) {
+            if (typeof v.value == 'string') {
+                return v.value;
+            }
+            else {
+                return '';
+                // error non-num passed to +
+            }
+        });
+        if (strings) {
+            return constructors_1.NFn(strings.reduce(function (acc, elem) { return acc.concat(elem); }, ''));
+        }
+        else {
+            //  Error '+: All arguments to + must be numbers.'
+            return constructors_1.NFn('');
+        }
+    })));
     // m.set('*',
     //   BFn(
     //   (vs: Value[]) => {
@@ -271,7 +290,7 @@ var builtinEnv = function () {
             return constructors_1.NFn(ns.slice(1).reduce(function (acc, elem) { return acc - elem; }, ns[0]));
         }
         else {
-            //  Error '+: All arguments to + must be numbers.'
+            //  Error '-: All arguments to - must be numbers.'
             return constructors_1.NFn(0);
         }
     })));

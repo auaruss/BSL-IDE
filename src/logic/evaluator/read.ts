@@ -148,6 +148,12 @@ export const readTokens = (ts: Token[]): SExp[] => {
   
   while (tokens.length !== 0) {
     let next = readSexp(tokens);
+    if (isReadError(next.thing))
+      if (isTokenError(next.thing)) {}
+      else if (next.thing.readError === 'No Valid SExp') {
+        sexps.push(ReadErr('No Valid SExp', tokens));
+        return sexps;
+      }
     sexps.push(next.thing);
     tokens = next.remain;
   }

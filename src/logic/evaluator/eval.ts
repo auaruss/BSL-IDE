@@ -259,6 +259,31 @@ const builtinEnv = (): Env => {
     ))
   );
 
+  //special thanks to Leona
+  m.set('string-append',
+   MakeJust(BFn(
+     (vs: Value[]) => {
+      let strings:string[] = vs.map( v => {
+        if (typeof v.value == 'string') {
+          return v.value;
+        } else {
+          return '';
+          // error non-num passed to +
+        }
+      });
+
+      if (strings) {
+        return NFn(
+          strings.reduce((acc: string, elem: string) => acc.concat(elem), '')
+        );
+      } else {
+        //  Error '+: All arguments to + must be numbers.'
+        return NFn('');
+      }
+     }
+   ))
+  );
+
   // m.set('*',
   //   BFn(
   //   (vs: Value[]) => {

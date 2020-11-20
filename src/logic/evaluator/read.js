@@ -128,6 +128,12 @@ exports.readTokens = function (ts) {
     var sexps = [];
     while (tokens.length !== 0) {
         var next = exports.readSexp(tokens);
+        if (predicates_1.isReadError(next.thing))
+            if (predicates_1.isTokenError(next.thing)) { }
+            else if (next.thing.readError === 'No Valid SExp') {
+                sexps.push(constructors_1.ReadErr('No Valid SExp', tokens));
+                return sexps;
+            }
         sexps.push(next.thing);
         tokens = next.remain;
     }

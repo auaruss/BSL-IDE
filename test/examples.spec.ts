@@ -152,7 +152,7 @@ t('"hello"',
   [ StringAtom('hello') ],
   [ StringExpr('hello')],
   [ NFn('hello') ],
-  'hello\n'
+  '"hello"\n'
 );
 
 t('hello',
@@ -331,20 +331,7 @@ t('([[[][][][][][])))[][])))){}{}{}',
   ],
 
   [
-    SExps(
-      ReadErr('No Closing Paren', [ OSP ]),
-      ReadErr('No Closing Paren', [ OSP ]),
-      SExps(), SExps(), SExps(), SExps(), SExps(), SExps()
-    ),
-    ReadErr('No Open Paren', [ CP ]),
-    ReadErr('No Open Paren', [ CP ]),
-    SExps(), SExps(),
-    ReadErr('No Open Paren', [ CP ]),
-    ReadErr('No Open Paren', [ CP ]),
-    ReadErr('No Open Paren', [ CP ]),
-    ReadErr('No Open Paren', [ CP ]),
-    SExps(),
-    SExps()
+   re
   ]
 );
 
