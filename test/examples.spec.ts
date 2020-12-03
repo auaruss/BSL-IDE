@@ -26,7 +26,7 @@ import { checkExpect } from './check-expect';
 
 import { assert } from 'chai';
 
-const t = (
+const t  = (
   input?: string,
   tokens?: Token[],
   sexps?: SExp[],
@@ -331,8 +331,42 @@ t('([[[][][][][][])))[][])))){}{}{}',
   ],
 
   [
-   re
-  ]
+    ReadErr('Mismatched Parens',
+      [
+        OP,
+        OSP,
+        OSP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        CP,
+        CP,
+        CP,
+        OSP,
+        CSP,
+        OSP,
+        CSP,
+        CP,
+        CP,
+        CP,
+        CP,
+        OBP,
+        CBP,
+        OBP,
+        CBP,
+        OBP,
+        CBP
+      ])
+    ]
 );
 
 t(') (hello)',
@@ -990,7 +1024,7 @@ t('(define (fib n) (if (or (= n 0) (= n 1)) 1 (+ (fib (- n 1)) (fib (- n 2)))))'
     CP,
     CP,
     SPACE,
-    IdTok('n'),
+    NumTok('1'),
     SPACE,
     OP,
     IdTok('+'),
